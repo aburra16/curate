@@ -77,6 +77,12 @@ export interface ListModelInput {
 export const listHref = (root: string, version?: string): string =>
   `/list?c=${encodeURIComponent(root)}${version ? `&version=${encodeURIComponent(version)}` : ""}`;
 
+/** The address the page is at, without `edit`: the form it asked for has closed. */
+export function withoutEdit(current: Iterable<[string, string]>): string {
+  const next = new URLSearchParams();
+  for (const [key, value] of current) if (key !== "edit") next.append(key, value);
+  return `/list?${next}`;
+}
 
 /** The key of the list a link names: an address as written, an id as the header that has it is kept. */
 function keyNamed(c: string, headers: HeaderEvent[]): string | null {

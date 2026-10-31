@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import type { HeaderEvent } from "@/lib/conceptResolution";
 import foodCopies from "@/test/fixtures/food.copies.json";
 import foodHeader from "@/test/fixtures/food.header.json";
-import { listModel, type ListModel } from "./list-model";
+import { listHref, listModel, withoutEdit, type ListModel } from "./list-model";
 
 const CURATOR = "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450";
 const HOUSE = "be7bf5de068c1d842ed34a7c270507ec940f5ea51671cfd062a95e9d09420d0a";
@@ -299,5 +299,19 @@ describe("listModel", () => {
       expect(model.source).toBe("community");
       expect(model.handles).toEqual([slug]);
     });
+  });
+});
+
+describe("the page's address", () => {
+  it("is the same without `edit`, once the form it asked for has closed", () => {
+    const at = new URLSearchParams({ c: FOOD, version: HOUSE, edit: "mine" });
+
+    expect(withoutEdit(at)).toBe(listHref(FOOD, HOUSE));
+  });
+
+  it("keeps the panel and whatever else the address carried", () => {
+    const at = new URLSearchParams({ c: FOOD, edit: "mine", item: "a".repeat(64) });
+
+    expect(withoutEdit(at)).toBe(`/list?c=${encodeURIComponent(FOOD)}&item=${"a".repeat(64)}`);
   });
 });

@@ -4,26 +4,24 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UNTITLED_LIST } from "@/app/discover-model";
-import { EditHeaderForm } from "@/components/edit-header-form";
 import { EventPanel, type PanelCopy } from "@/components/event-panel";
 import { FieldsPanel } from "@/components/fields-panel";
 import { RelayStatusLine } from "@/components/relay-status-line";
 import { UserIdentity } from "@/components/user-identity";
 import { VersionsMenu } from "@/components/versions-menu";
 import { useReader } from "@/hooks/use-reader";
-import { B_DEFERRED, type HeaderEvent } from "@/lib/conceptResolution";
-import { headerEditIsLossless } from "@/lib/curate/editGuard";
+import type { HeaderEvent } from "@/lib/conceptResolution";
+import { isWithdrawnHeader, type ListEdit } from "@/lib/curate/listActions";
 import { formatRelativeTime } from "@/lib/format";
-import { parseListHeader } from "@/lib/nostr/parsers";
-import type { ListHeader } from "@/lib/nostr/types";
 import { conceptRefOf, groupConcepts, handleOf } from "@/services/concepts";
 import { houseCopyAuthors, loadConceptHeaders } from "@/services/dictionary";
 import { shownItems } from "@/services/items";
 import { namesOf } from "@/services/jsonData";
 import type { NostrEvent } from "nostr-tools/pure";
 import { itemKindsOf } from "./items-model";
+import { ListChanges } from "./list-changes";
 import { ListItems } from "./list-items";
-import { listHref, listModel, type ListModel } from "./list-model";
+import { listHref, listModel, withoutEdit, type ListModel } from "./list-model";
 import { panelHref } from "./panel-model";
 import { useListItems } from "./use-list-items";
 import { usePanelEvent } from "./use-panel-event";
@@ -47,7 +45,8 @@ const NO_KINDS = "[]";
  *
  * The event panel's state travels beside it: `&item=<address or id>` for an
  * item (or any event a link in the panel names), `&event=header` for the
- * list's header.
+ * list's header. `&edit=mine` opens the form for the reader's own version,
+ * where the Create page sends a reader who chose to make one.
  */
 export default function ListPage() {
   return (
@@ -63,9 +62,10 @@ function ListRoute() {
   const version = params.get("version") || null;
   const item = params.get("item")?.trim() || null;
   const headerOpen = params.get("event") === "header";
+  const editMine = params.get("edit") === "mine";
   // A new list starts from nothing: nothing of the last one's state carries over.
   return c ? (
-    <ListView key={c} c={c} version={version} item={item} headerOpen={headerOpen} query={params} />
+    <ListView key={c} c={c} version={version} item={item} headerOpen={headerOpen} editMine={editMine} query={params} />
   ) : (
     <Shell>
       <NotFound heading="No list chosen" detail="Open a list from Discover." />
@@ -168,6 +168,7 @@ function ListView({
   version,
   item,
   headerOpen,
+  editMine,
   query,
 }: {
   c: string;
@@ -176,13 +177,14 @@ function ListView({
   item: string | null;
   /** `?event=header`. */
   headerOpen: boolean;
+  /** `?edit=mine`. */
+  editMine: boolean;
   /** The page's query, to build the panel's links from. */
   query: Iterable<[string, string]>;
 }) {
   const router = useRouter();
   const reader = useReader();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [showEditHeader, setShowEditHeader] = useState(false);
 
   // The list's headers: its own, and every one that points at it. Neither read rejects.
   useEffect(() => {
@@ -300,29 +302,40 @@ function ListView({
     />
   );
 
-  // -- the writing features that stay until spec 2 replaces them -----------
+  // -- changing the list -----------------------------------------------------
 
-  // They write to the community header, as they did when a list opened at its own address; failing that,
-  // to the version shown. Neither is possible for a 39999 header or one that wasn't found.
-  const writeHeader = useMemo((): ListHeader | null => {
-    if (!loaded || !shown) return null;
-    const community = groupConcepts(loaded.headers).groups.find((g) => g.root === shown.root)?.rootHeader ?? null;
-    // Headers come off a relay signed; HeaderEvent only leaves out what these readers never use.
-    return parseListHeader((community ?? shown.definition.event) as NostrEvent);
-  }, [loaded, shown]);
+  // The concept the page shows, as the headers read group it.
+  const group = useMemo(
+    () => (loaded && shown ? (groupConcepts(loaded.headers).groups.find((g) => g.root === shown.root) ?? null) : null),
+    [loaded, shown],
+  );
+  const root = group?.root ?? null;
 
-  const handleHeaderUpdated = useCallback((updated: ListHeader) => {
-    // The new version joins the headers, and the top reads it from there.
-    setLoaded((prev) => (prev ? { ...prev, headers: [...prev.headers, updated.raw as HeaderEvent] } : prev));
-    setShowEditHeader(false);
+  // A write the list relay took joins the headers read, and the top reads it from there.
+  const join = useCallback((header: NostrEvent) => {
+    setLoaded((prev) => (prev ? { ...prev, headers: [...prev.headers, header as HeaderEvent] } : prev));
   }, []);
 
-  // Edit rebuilds the header from a lossy model, so offer it only where an
-  // unchanged save would publish the same event.
-  const canEditHeader = useMemo(
-    () => (writeHeader && reader.pubkey === writeHeader.author ? headerEditIsLossless(writeHeader.raw) : false),
-    [writeHeader, reader.pubkey],
+  const handleSaved = useCallback(
+    (edit: ListEdit, header: NostrEvent) => {
+      join(header);
+      // A version of one's own is read by its author's name, like any version picked from the menu.
+      if (edit.kind !== "edit" && root) router.replace(listHref(root, header.pubkey));
+      else if (editMine) router.replace(withoutEdit(query));
+    },
+    [join, root, editMine, router, query],
   );
+  const handleWithdrawn = useCallback(
+    (header: NostrEvent) => {
+      join(header);
+      // The version just withdrawn is no longer one to read.
+      if (root && version === header.pubkey) router.replace(listHref(root));
+    },
+    [join, root, version, router],
+  );
+  const handleClosed = useCallback(() => {
+    if (editMine) router.replace(withoutEdit(query));
+  }, [editMine, router, query]);
 
   // -- drawing ---------------------------------------------------------------
 
@@ -380,9 +393,8 @@ function ListView({
   const names = namesOf(definition.event);
   const plural = names.plural || UNTITLED_LIST;
   const image = definition.display.listImage;
-  const editsShown = writeHeader?.raw.id === definition.event.id;
   // A header that opted out of the concept (`["b","b-tag-deferred"]`) is opened by a link to it, and says so.
-  const withdrawn = definition.event.tags.some((t) => t[0] === "b" && t[1] === B_DEFERRED);
+  const withdrawn = isWithdrawnHeader(definition.event);
 
   return (
     <Shell>
@@ -458,27 +470,18 @@ function ListView({
         </div>
 
         <RelayStatusLine />
-
-        {canEditHeader && !showEditHeader ? (
-          <button
-            type="button"
-            onClick={() => setShowEditHeader(true)}
-            className="mt-4 text-[12px] text-mute hover:text-accent transition-colors"
-          >
-            {editsShown ? "Edit list details" : "Edit the community header"}
-          </button>
-        ) : null}
       </header>
 
-      {showEditHeader && writeHeader ? (
-        <div className="mt-6 border border-accent/20 bg-surface p-5" style={{ borderRadius: "var(--radius-card)" }}>
-          <EditHeaderForm
-            header={writeHeader}
-            onUpdated={handleHeaderUpdated}
-            onCancel={() => setShowEditHeader(false)}
-          />
-        </div>
-      ) : null}
+      <ListChanges
+        reader={reader.pubkey}
+        group={group}
+        shown={definition.event}
+        plural={plural}
+        openAtLoad={editMine}
+        onSaved={handleSaved}
+        onWithdrawn={handleWithdrawn}
+        onClosed={handleClosed}
+      />
 
       <div className="mt-6">
         <FieldsPanel fields={definition.fields} />
