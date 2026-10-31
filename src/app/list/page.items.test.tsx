@@ -1200,6 +1200,49 @@ describe("voting on an item", () => {
     expect(upvote("Alpha").textContent).not.toMatch(/\d/);
   });
 
+  describe("for a reader with no item on the page, whom the scorer ranks inside the line", () => {
+    it("asks the scorer about the reader with the authors, and a first vote moves the count", async () => {
+      reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+      ranksInside(LISTER, reader);
+      open(FOOD);
+      await screen.findByRole("heading", { level: 3, name: "Alpha" });
+      await settle();
+
+      expect(ranking.fetchAuthorRanks).toHaveBeenCalledTimes(1);
+      expect(ranking.fetchAuthorRanks).toHaveBeenCalledWith(expect.arrayContaining([LISTER, reader]), reader);
+      fireEvent.click(upvote("Alpha"));
+
+      await vi.waitFor(() => expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+      expect(upvote("Alpha").textContent).toContain("1");
+      expect(downvote("Alpha").textContent).not.toMatch(/\d/);
+    });
+
+    it("moves both sides when a vote read back is switched", async () => {
+      const alpha = place("Alpha", 1_792_000_100);
+      relays([
+        ...(foodHeader as NostrEvent[]),
+        voted(friendKey, alpha, "+", 1_792_000_200),
+        voted(readerKey, alpha, "+", 1_792_000_300),
+      ]);
+      reads.loadItemsPage.mockResolvedValueOnce(page([alpha], null));
+      ranksInside(LISTER, friend, reader);
+      open(FOOD);
+      await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+      // Both votes are read, the reader's own among the counted: up is 2, and the reader's is up.
+      await vi.waitFor(() => expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+      expect(upvote("Alpha").textContent).toContain("2");
+      expect(downvote("Alpha").textContent).not.toMatch(/\d/);
+
+      fireEvent.click(downvote("Alpha"));
+
+      await vi.waitFor(() => expect(downvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+      expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("false");
+      expect(upvote("Alpha").textContent).toContain("1");
+      expect(downvote("Alpha").textContent).toContain("1");
+    });
+  });
+
   it("changes nothing when the list relay refuses the vote, and counts it when Retry gets it there", async () => {
     reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100, reader)], null));
     ranksInside(reader);

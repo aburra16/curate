@@ -93,8 +93,14 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
   const visible = useMemo(() => shownItems(withoutRemoved(all, items.removed)), [all, items.removed]);
   const authors = useMemo(() => visible.map((item) => item.pubkey), [visible]);
 
-  // Authors the scorer didn't answer for are asked again as authors or pages come in.
-  const { ranks, answered, rankMore } = useAuthorRanks(authors, observer, items.pages);
+  // The reader is ranked with the authors, so their own vote moves the count when the scorer ranks them inside
+  // the line, as a read of the votes does. They have no items here to fold unless they are an author already.
+  const ranked = useMemo(
+    () => (reader.pubkey && authors.length ? [...authors, reader.pubkey] : authors),
+    [authors, reader.pubkey],
+  );
+  // Anyone the scorer didn't answer for is asked again as authors or pages come in.
+  const { ranks, answered, rankMore } = useAuthorRanks(ranked, observer, items.pages);
   // Votes are counted once the scorer has answered at all.
   const { counts: reactions, setCount } = useReactions(
     visible,
