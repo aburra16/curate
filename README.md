@@ -15,14 +15,41 @@ is no server and no account: the site is static files, and everything it shows c
   event: Item (the item drawn the way its list defines it, as Brainstorm's item page draws it: its picture,
   title, summary, links, facts, audio or video, and a map that loads only when you ask, drawn with MapLibre
   from OpenFreeMap's tiles on `map-tiles-server.brainstorm.world`), Pretty and Raw.
-- **Create** (`/create`) and the edit forms: make a list, add and edit items, and vote. Reading never
-  signs; writing asks your NIP-07 extension (nos2x, Alby and the like).
+- **Create** (`/create`): make a list. The rest of writing (items, your own version of a list, votes)
+  happens on the list's page; see "Writing" below.
 - **Settings** (`/settings`): extra relays to read lists from.
 
 Lists are read from `wss://dcosl.brainstorm.world` and, in parallel, the search index at
 `wss://search.brainstorm.world`, which also answers counts. Trust ranks come from the `30382:rank`
 provider your own kind 10040 names; signed out, or with none named, from the one Brainstorm's house names
 in its kind 10040. A rank only decides what is shown and what is counted; Curate never shows anyone's rank.
+
+## Writing
+
+Reading never signs. To write, connect your nostr browser extension (nos2x, Alby and the like) with
+Connect in the header. Curate asks the extension to sign each change and never sees your private key. If
+the extension switches to another account while the page is open, Curate stops and asks you to connect
+again.
+
+- **Create a list** (`/create`): a quick form for the list's names, a description, the fields each item
+  holds and a short name. Brainstorm's checks run as you type, and Publish waits until none would stop the
+  list. If a shared concept already goes by the same name, Curate asks first: make your own version of that
+  concept, or offer a new shared concept anyway.
+- **Add and edit items**: a list that defines fields shows an Add button, and its form is drawn from the
+  list's own fields. Edit on an item you added opens the same form, and keeps every tag the item has. An
+  item that cannot be replaced (kind 9999) has Delete only.
+- **Your own version of a list**: on the page of a list someone else wrote, "Make my own version" copies
+  it to your account, at a free short name. "Edit my version" changes your copy, and "Withdraw my version"
+  takes it back, so it stops counting as a version of that concept. A list you wrote yourself has
+  "Edit list".
+- **Delete your own items**: Delete asks first, then removes every version of the item that you made.
+  Relays that honour deletions drop it. Items other people added are not touched.
+- **Votes**: each row has an up and a down vote. Your own vote shows pressed; to change it, vote the other
+  way.
+- **Saved**: a change is saved when the list relay accepted it. Curate also sends it to the relays your own
+  relay list (kind 10002) marks for writing, and says which of them missed it. If the list relay did not
+  take it, Curate shows the relay's words and a Retry that sends the same event again. Nothing is written
+  to the search index.
 
 ## Run it
 
