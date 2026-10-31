@@ -2,20 +2,16 @@
 
 import { memo, useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import type { NostrEvent } from "nostr-tools/pure";
-import { AddItemForm } from "@/components/add-item-form";
-import { EditItemForm } from "@/components/edit-item-form";
+import { ItemForm } from "@/components/item-form";
 import { ItemRow } from "@/components/item-row";
 import { ReactionButtons } from "@/components/reaction-buttons";
 import { TrustFold } from "@/components/trust-fold";
 import { useReader } from "@/hooks/use-reader";
 import { useTemplates } from "@/hooks/use-templates";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
-import { itemEditIsLossless } from "@/lib/curate/editGuard";
 import { ITEM_ORDERS, type ItemOrder } from "@/lib/dictionaryItems";
-import { coordinateOf } from "@/lib/dlistFields";
+import { coordinateOf, DLIST_ITEM_KIND, headerReference } from "@/lib/dlistFields";
 import { itemLinks, type LinkRef, type UrlTemplate } from "@/lib/linkTemplates";
-import { parseListItem } from "@/lib/nostr/parsers";
-import type { ListHeader } from "@/lib/nostr/types";
 import { cn } from "@/lib/utils";
 import type { ItemEvent } from "@/services/concepts";
 import { mergePages, shownItems } from "@/services/items";
@@ -34,12 +30,10 @@ import {
 interface Props {
   /** What the list's items are filed under. */
   handles: string[];
-  /** The definition the page shows; null when no header was found, and every row is untitled. */
+  /** The definition the page shows, which items are added and changed under; null when no header was found, and every row is untitled. */
   definition: ConceptDefinition | null;
   /** The pages and live items read so far (`useListItems`). */
   items: Loaded;
-  /** Where the add and edit forms write (until spec 2 replaces them); null when no header can take them. */
-  writeHeader: ListHeader | null;
   /** Opens an item's event panel, handed the element that opened it. */
   onOpenItem?: (identity: string, opener: HTMLElement) => void;
 }
@@ -80,7 +74,7 @@ function RowWindow({ rows, draw }: { rows: RowModel[]; draw: (row: RowModel) => 
  * "Load more". Rows are read through the definition the page shows, and
  * drawn 500 at a time; search, order and the fold read every row loaded.
  */
-export function ListItems({ handles, definition, items, writeHeader, onOpenItem }: Props) {
+export function ListItems({ handles, definition, items, onOpenItem }: Props) {
   const reader = useReader();
   const observer = reader.pubkey ?? "house";
   const { on: showEverything } = useShowEverything();
@@ -108,7 +102,9 @@ export function ListItems({ handles, definition, items, writeHeader, onOpenItem 
     [all, definition, ranks, answered, showEverything, searched, order],
   );
 
-  const plural = (definition && namesOf(definition.event).plural) || "items";
+  const names = definition ? namesOf(definition.event) : null;
+  const plural = names?.plural || "items";
+  const singular = names?.singular || "item";
   const loaded = useMemo(() => shownItems(items.held).length, [items.held]);
   const total = count ?? (items.firstLoaded ? loaded : null);
   const searching = searched.trim() !== "";
@@ -122,7 +118,7 @@ export function ListItems({ handles, definition, items, writeHeader, onOpenItem 
       refs={refs}
       templates={templates}
       reactions={reactions.get(r.identity) ?? null}
-      writeHeader={writeHeader}
+      definition={definition}
       reader={reader.pubkey}
       onSaved={items.add}
       onOpenItem={onOpenItem}
@@ -154,14 +150,15 @@ export function ListItems({ handles, definition, items, writeHeader, onOpenItem 
             ) : null}
           </p>
 
-          {writeHeader && !showAddForm ? (
+          {definition && !showAddForm ? (
             <button
               type="button"
+              disabled={!reader.pubkey}
               onClick={() => setShowAddForm(true)}
-              className="text-[12px] font-medium px-4 py-1.5 bg-accent text-ink hover:brightness-110 transition-all"
+              className="text-[12px] font-medium px-4 py-1.5 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ borderRadius: "var(--radius-input)" }}
             >
-              + Add {writeHeader.nameSingular}
+              {reader.pubkey ? `+ Add ${singular}` : `Connect to add a ${singular}`}
             </button>
           ) : null}
         </div>
@@ -208,13 +205,14 @@ export function ListItems({ handles, definition, items, writeHeader, onOpenItem 
         ) : null}
       </div>
 
-      {showAddForm && writeHeader ? (
+      {showAddForm && definition ? (
         <div className="mb-6 border border-accent/20 bg-surface p-5" style={{ borderRadius: "var(--radius-card)" }}>
-          <AddItemForm
-            header={writeHeader}
-            onPublished={(item) => {
-              items.add([item.raw]);
+          <ItemForm
+            definition={definition}
+            templates={templates}
+            onSaved={(event) => {
               setShowAddForm(false);
+              items.add([event]);
             }}
             onCancel={() => setShowAddForm(false)}
           />
@@ -239,7 +237,7 @@ export function ListItems({ handles, definition, items, writeHeader, onOpenItem 
           <p className="mt-2 text-[13px] text-mute">
             {searching
               ? "Try a different search term."
-              : writeHeader
+              : definition
                 ? "Be the first to add something to this list."
                 : null}
           </p>
@@ -273,17 +271,16 @@ export function ListItems({ handles, definition, items, writeHeader, onOpenItem 
 }
 
 /**
- * A row, and its Edit while the reader is its author. Edit rebuilds the item
- * from a lossy model, so it's offered only where an unchanged save would
- * publish the same event (`itemEditIsLossless`). Drawn again only when a
- * prop changes.
+ * A row, and its Edit while the reader is the author of an addressable item
+ * (a kind 9999 can't be replaced). Edit keeps every tag the item has, so any
+ * such item can be changed. Drawn again only when a prop changes.
  */
 const EditableRow = memo(function EditableRow({
   row,
   refs,
   templates,
   reactions,
-  writeHeader,
+  definition,
   reader,
   onSaved,
   onOpenItem,
@@ -292,7 +289,8 @@ const EditableRow = memo(function EditableRow({
   refs: LinkRef[];
   templates: Map<string, UrlTemplate>;
   reactions: ReactionCount | null;
-  writeHeader: ListHeader | null;
+  /** The definition the page shows; null when no header was found, and nothing can be changed. */
+  definition: ConceptDefinition | null;
   reader: string | null;
   /** Merges what an edit published into the list. */
   onSaved: (events: ItemEvent[]) => void;
@@ -306,22 +304,19 @@ const EditableRow = memo(function EditableRow({
   );
   // Items come off a relay signed; ItemEvent only leaves out what the readers never use.
   const event = row.item as NostrEvent;
-  const editable = useMemo(() => {
-    if (!writeHeader || !reader || reader !== event.pubkey) return null;
-    const parsed = parseListItem(event);
-    return parsed && itemEditIsLossless(event, writeHeader.raw) ? parsed : null;
-  }, [event, writeHeader, reader]);
+  const editable = !!definition && !!reader && reader === event.pubkey && event.kind === DLIST_ITEM_KIND;
   const links = useMemo(() => itemLinks(event, refs, templates), [event, refs, templates]);
 
-  if (editing && editable && writeHeader) {
+  if (editing && editable && definition) {
     return (
       <div className="border border-accent/20 bg-surface px-5 py-4" style={{ borderRadius: "var(--radius-card)" }}>
-        <EditItemForm
-          header={writeHeader}
-          item={editable}
-          onUpdated={(updated) => {
-            onSaved([updated.raw]);
+        <ItemForm
+          definition={definition}
+          templates={templates}
+          item={row.item}
+          onSaved={(saved) => {
             setEditing(false);
+            onSaved([saved]);
           }}
           onCancel={() => setEditing(false)}
         />
@@ -350,7 +345,7 @@ const EditableRow = memo(function EditableRow({
             itemAddress={coordinateOf(event) ?? undefined}
             itemAuthor={event.pubkey}
             itemKind={event.kind}
-            parentListUuid={writeHeader?.uuid}
+            parentListUuid={(definition && headerReference(definition.event)) || undefined}
             counts={reactions}
           />
         </>

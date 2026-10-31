@@ -6,19 +6,20 @@
  * saying so and asked again only when the reader asks, live items starting
  * once the first page is in (a blank one removing its row), the header's
  * item kinds going to every read, the index searched past what's loaded,
- * Edit offered only where saving would change nothing, and items folded
- * only for authors the scorer actually answered for. The headers are read
- * from a pretend set of relays, as on the real page.
+ * items added and changed through the list's own definition (Edit offered only
+ * on the reader's own addressable items), and items folded only for authors the
+ * scorer actually answered for. The headers are read from a pretend set of
+ * relays, as on the real page.
  */
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { Filter, NostrEvent } from "nostr-tools";
 import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildListItemEvent } from "@/lib/nostr/events";
 import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
 import type { ItemEvent } from "@/services/concepts";
 import { NOT_STARTED, type ItemsPage } from "@/services/items";
 import { clearSeenOn } from "@/services/nostr";
+import type { PublishResult } from "@/services/publish";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB } from "@/services/relays";
 import { setTransport, type RelayTransport } from "@/services/transport";
 import { clearTrustCaches, type AuthorRanks } from "@/services/trust";
@@ -28,6 +29,7 @@ import { useSigner } from "@/stores/signer";
 import { useView } from "@/stores/view";
 import { relayCorpus } from "@/test/relayCorpus";
 import foodHeader from "@/test/fixtures/food.header.json";
+import tagsHeaders from "@/test/fixtures/tags.headers.json";
 
 const nav = vi.hoisted(() => ({
   params: new URLSearchParams(),
@@ -64,6 +66,8 @@ vi.mock("@/services/items", async (importOriginal) => ({
   ...reads,
 }));
 
+vi.mock("@/services/publish", () => ({ signAndPublish: vi.fn(), retryPublish: vi.fn() }));
+
 // The scorer is real unless a test scripts what it answers.
 const ranking = vi.hoisted(() => ({
   fetchAuthorRanks: vi.fn(),
@@ -75,11 +79,15 @@ vi.mock("@/services/trust", async (importOriginal) => {
   return { ...actual, fetchAuthorRanks: ranking.fetchAuthorRanks };
 });
 
+import { signAndPublish } from "@/services/publish";
 import ListPage from "./page";
 
 const CURATOR = "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450";
 const FOOD = `39998:${CURATOR}:food-and-drink-places`;
 const LISTER = "4".repeat(64);
+const READER = "5".repeat(64);
+/** Where the real Tags concept lives. */
+const TAGS_ROOT = "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag";
 
 let n = 0;
 /** A Food item by `pubkey`. Item reads are scripted here, so it needn't be signed. */
@@ -157,6 +165,7 @@ function open(c: string) {
 
 const rowTitles = () => screen.queryAllByRole("heading", { level: 3 }).map((h) => h.textContent);
 const loadMore = () => screen.getByRole("button", { name: "Load more" });
+const type = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
 beforeEach(() => {
   n = 0;
@@ -168,6 +177,7 @@ beforeEach(() => {
   useSettings.setState({ relays: [...DEFAULT_RELAYS] });
   useView.setState({ on: false, loaded: true });
   useSigner.setState({ pubkey: null, status: "disconnected", error: null });
+  vi.mocked(signAndPublish).mockReset();
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({ ok: true, json: async () => ({ names: { _: "f".repeat(64) } }) })),
@@ -379,32 +389,173 @@ describe("searching a list", () => {
   });
 });
 
-describe("editing an item", () => {
-  it("offers Edit only on the reader's own items that would save unchanged", async () => {
-    const reader = generateSecretKey();
-    const me = getPublicKey(reader);
-    const own = (name: string, extra: string[][] = []) => {
-      const template = buildListItemEvent({ parentListUuid: FOOD, fields: { category: "cafe" }, name, dTag: name });
-      return finalizeEvent({ ...template, tags: [...template.tags, ...extra] }, reader) as ItemEvent;
+const signIn = (pubkey: string) =>
+  useSigner.setState({ pubkey, method: "extension", status: "connected", error: null });
+
+/** What the list relay would hand back for a template: the template, signed by `pubkey`, as the newest event there is. */
+const signedBy = (pubkey: string, template: { kind: number; content: string; tags: string[][] }): PublishResult => {
+  const event: NostrEvent = {
+    ...template,
+    id: "f".repeat(64),
+    pubkey,
+    created_at: 1_793_000_000,
+    sig: "5".repeat(128),
+  };
+  return { event, onHub: true, hubMessage: null, accepted: [DCOSL], failed: [] };
+};
+
+const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
+const rowOf = (title: string) => screen.getByRole("heading", { level: 3, name: title }).closest("article")!;
+
+describe("adding an item", () => {
+  it("offers the list's singular name on the button, from the list's own header", async () => {
+    signIn(READER);
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    open(FOOD);
+
+    expect(await screen.findByRole("button", { name: "+ Add Food and Drink Place" })).toBeTruthy();
+  });
+
+  it('reads "+ Add tag" on the Tags list', async () => {
+    signIn(READER);
+    relays(tagsHeaders as NostrEvent[]);
+    reads.loadItemsPage.mockResolvedValueOnce(page([], null));
+    nav.params = new URLSearchParams({ c: TAGS_ROOT });
+    render(<ListPage />);
+
+    expect(await screen.findByRole("button", { name: "+ Add tag" })).toBeTruthy();
+  });
+
+  it("invites a reader who isn't connected to connect, and opens no form", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    const invite = screen.getByRole("button", { name: "Connect to add a Food and Drink Place" }) as HTMLButtonElement;
+    expect(invite.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: /^\+ Add/ })).toBeNull();
+  });
+
+  it("asks for the list's fields, publishes the item under the list, and shows it at the top once the list relay has it", async () => {
+    signIn(READER);
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    vi.mocked(signAndPublish).mockImplementation(async (template) => signedBy(READER, template));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Food and Drink Place" }));
+    type("name", "Cafe Luna");
+    type("category", "cafe");
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+    const { tags } = vi.mocked(signAndPublish).mock.calls[0][0];
+    expect(tags).toContainEqual(["z", FOOD]);
+    expect(tags).toContainEqual(["name", "Cafe Luna"]);
+    expect(rowTitles()).toEqual(["Cafe Luna", "Alpha"]);
+    // The form has gone, and the button is back.
+    expect(screen.queryByRole("form")).toBeNull();
+    expect(screen.getByRole("button", { name: "+ Add Food and Drink Place" })).toBeTruthy();
+  });
+
+  it("leaves the list as it was when the person cancels", async () => {
+    signIn(READER);
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Food and Drink Place" }));
+    expect(screen.getByRole("form", { name: "Add Food and Drink Place" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("form")).toBeNull();
+    expect(signAndPublish).not.toHaveBeenCalled();
+  });
+
+  it("offers nothing to add to when the list's header wasn't found", async () => {
+    signIn(READER);
+    const GHOST = `39998:${"a".repeat(64)}:ghost`;
+    const ghost = {
+      ...place("Ghost", 1_792_000_100, READER),
+      tags: [
+        ["d", "ghost"],
+        ["z", GHOST],
+        ["name", "Ghost"],
+      ],
     };
+    reads.loadItemsPage.mockResolvedValueOnce(page([ghost], null));
+    open(GHOST);
+    // With no header, every row is untitled.
+    await screen.findAllByRole("heading", { level: 3 });
+
+    expect(screen.queryByRole("button", { name: /Add|Connect to add/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+  });
+});
+
+describe("editing an item", () => {
+  const own = (name: string, created_at: number, extra: string[][] = []) => place(name, created_at, READER, extra);
+
+  it("offers Edit on the reader's own addressable items, whatever else they carry, and on no other", async () => {
     reads.loadItemsPage.mockResolvedValueOnce(
       page(
         [
-          own("Mine"),
-          // A tag the form doesn't model: saving it would drop the tag.
-          own("Mine, tagged", [["t", "coffee"]]),
-          place("Theirs", 1),
+          own("Mine", 1_792_000_500),
+          // Tags the list doesn't declare: saving keeps them.
+          own("Mine, tagged", 1_792_000_400, [["t", "coffee"], ["hours", "7 to 5"]]),
+          // A 9999 can't be replaced by an edit.
+          { ...own("Mine, short", 1_792_000_300), kind: 9999 },
+          place("Theirs", 1_792_000_200),
         ],
         null,
       ),
     );
-    useSigner.setState({ pubkey: me, status: "connected" });
+    signIn(READER);
     open(FOOD);
     await screen.findByRole("heading", { level: 3, name: "Theirs" });
 
     const edits = screen.getAllByRole("button", { name: "Edit" });
-    expect(edits).toHaveLength(1);
-    expect(edits[0].closest("article")?.querySelector("h3")?.textContent).toBe("Mine");
+    expect(edits.map((edit) => edit.closest("article")?.querySelector("h3")?.textContent)).toEqual([
+      "Mine",
+      "Mine, tagged",
+    ]);
+  });
+
+  it("offers Edit to no one who isn't connected", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([own("Mine", 1_792_000_500)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Mine" });
+
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+  });
+
+  it("starts from the item's values, publishes the changed field only, and shows the change in place", async () => {
+    const mine = own("Cafe Luna", 1_792_000_500, [["locality", "Lisbon"], ["t", "coffee"]]);
+    reads.loadItemsPage.mockResolvedValueOnce(page([mine, place("Alpha", 1_792_000_100)], null));
+    vi.mocked(signAndPublish).mockImplementation(async (template) => {
+      const result = signedBy(READER, template);
+      return { ...result, event: { ...result.event, tags: template.tags } };
+    });
+    signIn(READER);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+
+    fireEvent.click(within(rowOf("Cafe Luna")).getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("form", { name: "Edit Food and Drink Place" })).toBeTruthy();
+    expect(field("name").value).toBe("Cafe Luna");
+    expect(field("locality").value).toBe("Lisbon");
+
+    type("name", "Cafe Lua");
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+
+    await screen.findByRole("heading", { level: 3, name: "Cafe Lua" });
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(signAndPublish).mock.calls[0][0].tags).toEqual(
+      mine.tags.map((t) => (t[0] === "name" ? ["name", "Cafe Lua"] : t)),
+    );
+    expect(rowTitles()).toEqual(["Cafe Lua", "Alpha"]);
+    expect(screen.queryByRole("form")).toBeNull();
   });
 });
 

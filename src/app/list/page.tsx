@@ -368,7 +368,6 @@ function ListView({
             handles={handles}
             definition={null}
             items={items}
-            writeHeader={null}
             onOpenItem={openItem}
           />
         </div>
@@ -490,7 +489,6 @@ function ListView({
           handles={handles}
           definition={definition}
           items={items}
-          writeHeader={writeHeader}
           onOpenItem={openItem}
         />
       </div>
