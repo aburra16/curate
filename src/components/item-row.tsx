@@ -3,6 +3,7 @@
 import { useRef, useState, type MouseEvent, type ReactNode } from "react";
 import type { RowModel } from "@/app/list/items-model";
 import { UserIdentity } from "@/components/user-identity";
+import { distinctLinks } from "@/lib/curate/links";
 import { formatRelativeTime } from "@/lib/format";
 import { isSpot, osmEmbedUrl, osmPageUrl } from "@/lib/geohash";
 import type { ItemLink } from "@/lib/linkTemplates";
@@ -35,12 +36,6 @@ function Label({ children }: { children: string }) {
 /** What a click on the row leaves to the element clicked: a link, a control, a player. */
 const INTERACTIVE = "a, button, input, select, textarea, label, summary, audio, video, iframe";
 
-/** The item's own link (a URL-typed field the definition shows as its link), then the template links, each once. */
-function linksOf(row: RowModel, links: ItemLink[]): ItemLink[] {
-  const all = row.p.link ? [row.p.link, ...links] : links;
-  return all.filter((l, i) => all.findIndex((m) => m.href === l.href) === i);
-}
-
 /**
  * One item of a list, read through its definition (tier 2): its title,
  * summary and picture; its links, each showing where it goes; its audio or
@@ -62,7 +57,7 @@ export function ItemRow({ row, links, actions, onOpen }: Props) {
     if (window.getSelection()?.toString()) return;
     onOpen(opener.current);
   };
-  const shownLinks = linksOf(row, links);
+  const shownLinks = distinctLinks(p.link, links);
   const untitled = p.title === null;
   // A video shows the item's picture as its poster, so the row doesn't show it twice.
   const thumb = p.media?.kind === "video" ? null : p.image;
