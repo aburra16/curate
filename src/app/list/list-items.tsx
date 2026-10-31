@@ -8,6 +8,7 @@ import { ItemRow } from "@/components/item-row";
 import { ReactionButtons } from "@/components/reaction-buttons";
 import { TrustFold } from "@/components/trust-fold";
 import { useReader } from "@/hooks/use-reader";
+import { useTemplates } from "@/hooks/use-templates";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
 import { itemEditIsLossless } from "@/lib/curate/editGuard";
 import { ITEM_ORDERS, type ItemOrder } from "@/lib/dictionaryItems";
@@ -27,7 +28,6 @@ import {
   useItemCount,
   useReactions,
   useSearchedItems,
-  useTemplates,
   type ListItems as Loaded,
 } from "./use-list-items";
 

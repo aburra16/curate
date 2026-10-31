@@ -17,12 +17,11 @@
  * - `useAuthorRanks`: the reader's scorer's ranks of the items' authors,
  *   and which authors it answered for. An author whose read didn't end is
  *   asked again with the next request (new authors, or a new page).
- * - `useReactions`, `useTemplates`, `useItemCount`, `useSearchedItems`: the
- *   votes on what's loaded, the URL templates the definition pins, the
- *   index's count, and the index's search past what's loaded.
+ * - `useReactions`, `useItemCount`, `useSearchedItems`: the votes on
+ *   what's loaded, the index's count, and the index's search past what's
+ *   loaded.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { LinkRef, UrlTemplate } from "@/lib/linkTemplates";
 import { filedItems, itemIdentity, type ItemEvent } from "@/services/concepts";
 import {
   countItems,
@@ -36,7 +35,6 @@ import {
   type ItemsPage,
 } from "@/services/items";
 import { loadReactions, type ReactionCount } from "@/services/reactions";
-import { fetchTemplates } from "@/services/templates";
 import { fetchAuthorRanks, type RankObserver } from "@/services/trust";
 
 // -- items -------------------------------------------------------------------
@@ -326,31 +324,7 @@ export function useReactions(
 
 const EMPTY_COUNTS = new Map<string, ReactionCount>();
 
-// -- templates, count, search ------------------------------------------------
-
-const NO_TEMPLATES = new Map<string, UrlTemplate>();
-
-/** The URL templates the definition's links pin (`fetchTemplates`), by id. */
-export function useTemplates(refs: LinkRef[]): Map<string, UrlTemplate> {
-  const key = JSON.stringify(refs);
-  const [found, setFound] = useState<{ key: string; templates: Map<string, UrlTemplate> } | null>(null);
-
-  useEffect(() => {
-    const pinned = JSON.parse(key) as LinkRef[];
-    if (!pinned.length) return;
-    let cancelled = false;
-    fetchTemplates(pinned)
-      .then((templates) => {
-        if (!cancelled) setFound({ key, templates });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [key]);
-
-  return found?.key === key ? found.templates : NO_TEMPLATES;
-}
+// -- count, search -------------------------------------------------------------
 
 /**
  * How many items are filed under the list, by COUNT on the index: everything
