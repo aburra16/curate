@@ -9,6 +9,8 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { NostrEvent } from "nostr-tools/pure";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
+import booksHeaders from "@/test/fixtures/books.header.json";
+import booksItems from "@/test/fixtures/books.items.json";
 import foodCopies from "@/test/fixtures/food.copies.json";
 import foodHeaders from "@/test/fixtures/food.header.json";
 import foodItems from "@/test/fixtures/food.items.json";
@@ -32,7 +34,9 @@ const HEX = "ab".repeat(32);
 const foodHeader = foodHeaders[0] as NostrEvent;
 const food = definitionOf(foodHeader as HeaderEvent);
 const tags = definitionOf(tagHeaders[0] as HeaderEvent);
+const books = definitionOf(booksHeaders[0] as HeaderEvent);
 const steak = foodItems[0] as NostrEvent;
+const survey = booksItems[0] as NostrEvent;
 const classics = tagItems.find((e) => e.content.includes("Classics")) as NostrEvent;
 
 const event = (over: Partial<NostrEvent> & { tags: string[][] }): NostrEvent => ({
@@ -57,6 +61,7 @@ function panel(props: Partial<EventPanelProps> = {}) {
 const tab = (name: string) => screen.getByRole("tab", { name });
 const openTab = (name: string) => fireEvent.click(tab(name));
 const pre = (container: HTMLElement) => container.querySelector("pre")!;
+const openMore = () => fireEvent.click(screen.getByRole("button", { name: /^More fields/ }));
 
 /** The tag table's row for the first tag of this name. */
 const rowFor = (name: string) => {
@@ -215,36 +220,78 @@ describe("the tabs", () => {
 });
 
 describe("Item", () => {
-  it("shows every declared field through its definition, with the header's words", () => {
+  /** What the Item tab draws, apart from the dialog's own title. */
+  const itemPage = () => within(screen.getByRole("tabpanel"));
+
+  it("draws the item the way its list defines it: its title, summary, link and facts", () => {
     panel();
-    expect(screen.getByText("Fields")).toBeTruthy();
-    for (const f of food.fields) expect(screen.getByText(f.name, { selector: "dt span" })).toBeTruthy();
-    expect(screen.getByText("Steak 'n Shake", { selector: "dd span" })).toBeTruthy();
-    expect(screen.getByText("Name of the business")).toBeTruthy();
-    expect(screen.queryByText("missing required field")).toBeNull();
-    // A url field is a link, to http(s) only.
-    const site = screen.getByRole("link", { name: /steaknshake\.com/ });
+    expect(itemPage().getByRole("heading", { name: "Steak 'n Shake" })).toBeTruthy();
+    expect(itemPage().getByText("7515 North Grand Prairie Drive Peoria 61615")).toBeTruthy();
+    expect(itemPage().getByText("Food and Drink Place", { selector: "p" })).toBeTruthy();
+    // A url field the list shows as its link is a button showing where it goes, to http(s) only.
+    const site = itemPage().getByRole("link", { name: "Website www.steaknshake.com" });
     expect(site.getAttribute("rel")).toContain("noopener");
+    expect(site.getAttribute("target")).toBe("_blank");
+    // No field list: what the page shows once isn't listed again, and the rest is folded.
+    expect(screen.queryByText("Fields")).toBeNull();
+    expect(screen.queryByText("Name of the business")).toBeNull();
+    expect(itemPage().getByRole("button", { name: "More fields (15)" }).getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("flags a required field the item doesn't give", () => {
+  it("offers the map and loads none until it is asked for", () => {
+    const { container } = panel();
+    expect(container.querySelector("iframe")).toBeNull();
+    fireEvent.click(itemPage().getByRole("button", { name: /show on map/i }));
+    expect(container.querySelector("iframe")?.getAttribute("src")).toMatch(/^https:\/\/www\.openstreetmap\.org\//);
+  });
+
+  it("says a required field the item doesn't give is missing", () => {
     panel({ event: event({ tags: [["d", "x"], ["z", FOOD], ["category", "cafe"]] }) });
-    expect(screen.getAllByText("missing required field")).toHaveLength(1);
+    expect(screen.getByRole("note").textContent).toBe("Missing name. The list requires it.");
     expect(screen.getByRole("dialog", { name: "Untitled Food and Drink Place" })).toBeTruthy();
   });
 
-  it("lists what the header never declared under More fields", () => {
+  it("keeps what the header never declared apart, under More fields", () => {
     panel({ event: event({ tags: [["d", "x"], ["name", "A"], ["category", "cafe"], ["vibe", "loud"]] }) });
-    expect(screen.getByText("More fields")).toBeTruthy();
-    expect(screen.getByText("vibe")).toBeTruthy();
-    expect(screen.getByText("loud")).toBeTruthy();
+    openMore();
+    const outside = screen.getByRole("group", { name: "Outside this list’s definition" });
+    expect(within(outside).getByText("vibe")).toBeTruthy();
+    expect(within(outside).getByText("loud")).toBeTruthy();
+  });
+
+  it("reads a title the list keeps in JSON", () => {
+    panel({ event: classics, definition: tags });
+    expect(itemPage().getByRole("heading", { name: "Classics" })).toBeTruthy();
+    expect(screen.queryByText(/Brainstorm/)).toBeNull();
+  });
+
+  it("builds the links the definition's URL templates pin, once they are read", async () => {
+    const OPEN_LIBRARY = "e722c94c9ee31ed28b79687b17daa313c0d02a9936a1c07dc73fbab4288fbc10";
+    templates.fetchTemplates.mockResolvedValue(
+      new Map([[OPEN_LIBRARY, { id: OPEN_LIBRARY, pubkey: CURATOR, name: "Open Library", template: "https://openlibrary.org/works/{id}" }]]),
+    );
+    panel({ event: survey, definition: books });
+    expect(itemPage().queryByRole("link")).toBeNull();
+    const link = await itemPage().findByRole("link", { name: "Open Library openlibrary.org" });
+    expect(link.getAttribute("href")).toBe("https://openlibrary.org/works/OL8307868W");
+    expect(templates.fetchTemplates).toHaveBeenCalledWith(books.links);
+  });
+
+  it("says which version of the list it is read through, when the panel knows", () => {
+    const { unmount } = panel({ copies: [{ label: "house", author: CURATOR, event: foodHeader }] });
+    expect(itemPage().getByText("Read through Brainstorm’s version of Food and Drink Places.")).toBeTruthy();
+    unmount();
+    // A copy other than the one that governs says nothing of which does.
+    panel({ copies: [{ label: "house", author: CURATOR, event: { ...foodHeader, id: HEX } }] });
+    expect(itemPage().getByText("Read through the Food and Drink Places list.")).toBeTruthy();
   });
 
   it("says why it can't render an item whose list's header wasn't found; Pretty and Raw still work", () => {
     const { container } = panel({ definition: null });
     expect(screen.getByRole("dialog", { name: "Untitled item" })).toBeTruthy();
     expect(screen.getByRole("note").textContent).toMatch(/header was not found/);
-    expect(screen.queryByText("Fields")).toBeNull();
+    expect(itemPage().queryByRole("heading")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^More fields/ })).toBeNull();
     openTab("Pretty");
     expect(rowFor("name")).toBeTruthy();
     openTab("Raw");

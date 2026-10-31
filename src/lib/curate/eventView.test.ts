@@ -7,7 +7,7 @@ import foodHeaders from "@/test/fixtures/food.header.json";
 import foodItems from "@/test/fixtures/food.items.json";
 import tagHeaders from "@/test/fixtures/tags.headers.json";
 import tagItems from "@/test/fixtures/tags.items.json";
-import { classifyTags, eventIdentity, itemView, jsonOf, prettyJson } from "./eventView";
+import { classifyTags, eventIdentity, itemNotice, jsonOf, prettyJson } from "./eventView";
 
 const CURATOR = "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450";
 const FOOD = `39998:${CURATOR}:food-and-drink-places`;
@@ -240,64 +240,20 @@ describe("eventIdentity", () => {
   });
 });
 
-describe("itemView", () => {
-  it("reads an item through its definition", () => {
-    const view = itemView(steak, food);
-    expect(view.notice).toBeNull();
-    // Every declared field, in the definition's order, each through fieldCell.
-    expect(view.fields.map((f) => f.decl.name)).toEqual(food.fields.map((f) => f.name));
-    const name = view.fields.find((f) => f.decl.name === "name")!;
-    expect(name.cell).toMatchObject({ value: "Steak 'n Shake", missing: false });
-    const website = view.fields.find((f) => f.decl.name === "website")!;
-    expect(website.cell.href).toBe("https://www.steaknshake.com/locations/il-peoria-n-grand-prairie-drive/");
-    // Steak 'n Shake gives nothing the definition doesn't declare.
-    expect(view.more).toEqual([]);
+describe("itemNotice", () => {
+  it("has nothing to say about an item its list's definition can read", () => {
+    expect(itemNotice(steak, food)).toBeNull();
+    expect(itemNotice(event({ tags: [["d", "x"], ["z", FOOD], ["category", "cafe"]] }), food)).toBeNull();
   });
 
-  it("shows the definition's facts, labelled", () => {
-    const header = foodHeaders[0] as HeaderEvent;
-    const withFacts = definitionOf({
-      ...header,
-      tags: [...header.tags, ["display", "fact", "cuisine", "Kitchen"], ["display", "fact", "locality"], ["display", "fact", "osm-id"]],
-    });
-    const view = itemView({ ...steak, tags: steak.tags.filter((t) => t[0] !== "osm-id") }, withFacts);
-    // A fact the item has no value for is left out; a label comes from the header, else the field's name as words.
-    expect(view.facts.map(({ label, value }) => [label, value])).toEqual([
-      ["Kitchen", "burger"],
-      ["Locality", "Peoria"],
-    ]);
-    expect(view.title).toBe("Steak 'n Shake");
-  });
-
-  it("lists what the definition doesn't declare under more fields", () => {
-    // Single-letter tags are the protocol's, and client and alt are metadata: none of them is "more".
-    const extra = { ...steak, tags: [...steak.tags, ["client", "Curate"], ["rating", "5"], ["rating", "4"], ["vibe", "loud"]] };
-    expect(itemView(extra, food).more).toEqual([
-      { name: "rating", value: "5" },
-      { name: "rating", value: "4" },
-      { name: "vibe", value: "loud" },
-    ]);
-  });
-
-  it("flags a required field that is missing", () => {
-    const view = itemView(event({ tags: [["d", "x"], ["z", FOOD], ["category", "cafe"]] }), food);
-    expect(view.fields.find((f) => f.decl.name === "name")!.cell.missing).toBe(true);
-    expect(view.fields.find((f) => f.decl.name === "category")!.cell.missing).toBe(false);
-    expect(view.fields.find((f) => f.decl.name === "address")!.cell.missing).toBe(false);
-  });
-
-  it("says why there is nothing to show when the list's header wasn't found", () => {
-    const view = itemView(steak, null);
-    expect(view.notice).toMatch(/header/i);
-    expect(view.fields).toEqual([]);
-    expect(view.facts).toEqual([]);
-    expect(view.more).toEqual([]);
+  it("says why there is nothing to draw when the list's header wasn't found", () => {
+    expect(itemNotice(steak, null)).toMatch(/header was not found/);
   });
 
   it("says why when a JSON list's item has no readable JSON", () => {
     const bad = event({ content: "{not json", tags: [["d", "x"], ["z", tags.coordinate]] });
-    expect(itemView(bad, tags).notice).toMatch(/JSON/);
+    expect(itemNotice(bad, tags)).toMatch(/JSON could not be read/);
     // A tag item whose JSON reads has nothing to flag; the data is in Pretty.
-    expect(itemView(espresso, tags).notice).toBeNull();
+    expect(itemNotice(espresso, tags)).toBeNull();
   });
 });

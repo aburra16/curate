@@ -18,27 +18,18 @@
  *   the `json` tag first, then `content`. Only an object or an array counts
  *   as JSON worth printing; anything else (bad JSON, `42`, a sentence) is
  *   null and shown as the text it is. Nothing here throws.
- * - **`itemView`** is the Item tab: the definition's facts, every declared
- *   field through `fieldCell`, what the definition doesn't declare, and why
- *   there is nothing to show when the definition can't read the item.
+ * - **`itemNotice`** says why the Item tab can't draw an item the way its
+ *   list defines it: no header was found, or the JSON the list keeps its
+ *   items' data in can't be read for this item.
  *
  * No rank, weight or score of a person appears in anything here.
  */
 import { nip19 } from "nostr-tools";
 import type { NostrEvent } from "nostr-tools/pure";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
-import {
-  coordinateOf,
-  fieldCell,
-  formatCoordinate,
-  httpUrl,
-  parseCoordinate,
-  undeclaredFields,
-  type FieldCell,
-  type FieldDecl,
-} from "@/lib/dlistFields";
+import { coordinateOf, formatCoordinate, httpUrl, parseCoordinate, type FieldDecl } from "@/lib/dlistFields";
 import { DCOSL } from "@/services/relays";
-import { jsonDataOf, jsonKeyOf, presentCurateItem } from "@/services/jsonData";
+import { jsonDataOf, jsonKeyOf } from "@/services/jsonData";
 
 /** What the view reads of an event. A relay's event also carries its `sig`, which Raw shows. */
 export type EventFields = Pick<NostrEvent, "id" | "pubkey" | "kind" | "created_at" | "content" | "tags">;
@@ -184,40 +175,19 @@ export const prettyJson = (event: EventFields): string | null => jsonOf(event)?.
 
 // -- the Item tab ----------------------------------------------------------------
 
-export interface ItemView {
-  /** Why the item can't be read through its list, or null when it can. */
-  notice: string | null;
-  /** The item's title, as its list reads it. */
-  title: string | null;
-  /** The definition's facts this item has a value for, labelled. */
-  facts: { field: string; label: string; value: string; href: string | null; extra: number }[];
-  /** Every field the definition declares, in its order, with what the item gives it. */
-  fields: { decl: FieldDecl; cell: FieldCell }[];
-  /** Tags the definition never declared. */
-  more: { name: string; value: string }[];
-}
+const NO_HEADER =
+  "This list’s header was not found, so Curate cannot tell which of this item’s tags are fields. Pretty and Raw show the event as it is.";
+const NO_JSON =
+  "This list keeps its items’ data in JSON, and this item’s JSON could not be read. Pretty and Raw show the event as it is.";
 
-const NO_VIEW: Omit<ItemView, "notice"> = { title: null, facts: [], fields: [], more: [] };
-
-export function itemView(event: EventFields, definition: ConceptDefinition | null): ItemView {
-  if (!definition) {
-    return {
-      ...NO_VIEW,
-      notice:
-        "This list’s header was not found, so Curate cannot tell which of this item’s tags are fields. Pretty and Raw show the event as it is.",
-    };
-  }
-  const p = presentCurateItem(event, definition);
+/**
+ * Why the Item tab can't draw an item the way its list defines it, or null
+ * when it can: the list's header wasn't found (no definition to read by), or
+ * the list keeps its items' data in JSON and this item has none that reads.
+ */
+export function itemNotice(event: EventFields, definition: ConceptDefinition | null): string | null {
+  if (!definition) return NO_HEADER;
   // A list that declares no fields and keeps its items' data in JSON: the data is what the item says.
   const key = definition.fields.length === 0 ? jsonKeyOf(definition.event) : null;
-  const unreadable = key !== null && jsonDataOf(event, key) === null;
-  return {
-    notice: unreadable
-      ? "This list keeps its items’ data in JSON, and this item’s JSON could not be read. Pretty and Raw show the event as it is."
-      : null,
-    title: p.title,
-    facts: p.facts.map(({ field, label, value, href, extra }) => ({ field, label, value, href, extra })),
-    fields: definition.fields.map((decl) => ({ decl, cell: fieldCell(event, decl) })),
-    more: undeclaredFields(event, definition.fields),
-  };
+  return key !== null && jsonDataOf(event, key) === null ? NO_JSON : null;
 }

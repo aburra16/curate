@@ -15,12 +15,14 @@ import type { NostrEvent } from "nostr-tools/pure";
 import { UNTITLED_LIST } from "@/app/discover-model";
 import { singularOf } from "@/app/list/items-model";
 import { listHref, type VersionLabel } from "@/app/list/list-model";
+import { ItemHero } from "@/components/item-hero";
 import { UserIdentity } from "@/components/user-identity";
+import { useTemplates } from "@/hooks/use-templates";
 import { B_DEFERRED, bLinksOf, type ConceptDefinition } from "@/lib/conceptResolution";
 import {
   classifyTags,
   eventIdentity,
-  itemView,
+  itemNotice,
   jsonOf,
   type EventIdentity,
   type TagRole,
@@ -521,103 +523,43 @@ function Pretty({
 
 // -- Item --------------------------------------------------------------------------
 
-function Value({ value, href }: { value: string; href: string | null }) {
-  if (!href) return <span className="break-words [overflow-wrap:anywhere]">{value}</span>;
-  return /^https?:/i.test(href) ? (
-    <a href={href} {...OUT} className={link}>
-      {value}
-    </a>
-  ) : (
-    // A call or a mail: it opens an app, not a page.
-    <a href={href} className={link}>
-      {value}
-    </a>
-  );
-}
-
-function ItemTab({ event, definition }: { event: NostrEvent; definition: ConceptDefinition | null }) {
-  const view = useMemo(() => itemView(event, definition), [event, definition]);
-
+/**
+ * The Item tab: the item drawn the way its list defines it (tier 2). A list
+ * whose header wasn't found, or whose JSON can't be read for this item,
+ * has nothing to define it by, and the tab says so; Pretty and Raw still show
+ * the event as it is.
+ */
+function ItemTab({ event, definition, copies }: { event: NostrEvent; definition: ConceptDefinition | null; copies: PanelCopy[] }) {
+  const notice = useMemo(() => itemNotice(event, definition), [event, definition]);
   return (
-    <div>
-      {view.notice ? (
+    <div className="flex flex-col gap-5">
+      {notice ? (
         <p
           role="note"
           className="border border-rule bg-surface p-3 text-[13px] leading-[1.55] text-ink-soft"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          {view.notice}
+          {notice}
         </p>
       ) : null}
-
-      {view.facts.length ? (
-        <Section title="Facts">
-          <dl className="flex flex-col gap-2">
-            {view.facts.map((fact) => (
-              <div key={fact.field}>
-                <dt className="text-[11px] text-mute">{fact.label}</dt>
-                <dd className="text-[13px] text-ink-soft">
-                  <Value value={fact.value} href={fact.href} />
-                  {fact.extra ? <span className="ml-2 text-[11px] text-mute">+{fact.extra} more</span> : null}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </Section>
-      ) : null}
-
-      {definition && !view.notice ? (
-        <Section title="Fields">
-          {view.fields.length ? (
-            <dl className="flex flex-col gap-3">
-              {view.fields.map(({ decl, cell }) => (
-                <div key={decl.name}>
-                  <dt className="flex flex-wrap items-baseline gap-x-2 text-[11px] text-mute">
-                    <span className="font-mono text-[12px] text-ink">{decl.name}</span>
-                    <span>{decl.requirement}</span>
-                    {cell.missing ? <span className="text-accent">missing required field</span> : null}
-                  </dt>
-                  {decl.description ? (
-                    <dd className="text-[11px] leading-[1.45] text-mute">{decl.description}</dd>
-                  ) : null}
-                  <dd className="mt-0.5 text-[13px] text-ink-soft">
-                    {cell.value !== null ? (
-                      <>
-                        <Value value={cell.value} href={cell.href} />
-                        {cell.extra ? <span className="ml-2 text-[11px] text-mute">+{cell.extra} more</span> : null}
-                      </>
-                    ) : (
-                      <span className="text-mute">&mdash;</span>
-                    )}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="text-[13px] leading-[1.55] text-mute">
-              This list declares no fields. What the item says is in its tags and JSON: see Pretty.
-            </p>
-          )}
-        </Section>
-      ) : null}
-
-      {view.more.length ? (
-        <Section title="More fields">
-          <p className="mb-2 text-[11px] leading-[1.45] text-mute">
-            Tags this list&apos;s header does not declare. They are outside its definition.
-          </p>
-          <dl className="flex flex-col gap-2">
-            {view.more.map((m, i) => (
-              <div key={`${m.name}:${i}`}>
-                <dt className="font-mono text-[12px] text-ink">{m.name}</dt>
-                <dd className="break-words text-[13px] text-ink-soft [overflow-wrap:anywhere]">{m.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </Section>
-      ) : null}
+      {definition ? <DefinedItem event={event} definition={definition} copies={copies} /> : null}
     </div>
   );
+}
+
+/** An item and the definition that reads it. The version that governs is the copy whose header it is, when the panel holds it. */
+function DefinedItem({
+  event,
+  definition,
+  copies,
+}: {
+  event: NostrEvent;
+  definition: ConceptDefinition;
+  copies: PanelCopy[];
+}) {
+  const templates = useTemplates(definition.links);
+  const version = copies.find((c) => c.event.id === definition.event.id)?.label ?? null;
+  return <ItemHero item={event} definition={definition} templates={templates} version={version} />;
 }
 
 // -- Raw ---------------------------------------------------------------------------
@@ -822,7 +764,7 @@ export function EventPanel({
             >
               {/* The event is the key: a link to another event starts that event's views afresh. */}
               <div key={event.id}>
-                {current === "item" ? <ItemTab event={event} definition={definition} /> : null}
+                {current === "item" ? <ItemTab event={event} definition={definition} copies={copies} /> : null}
                 {current === "pretty" ? (
                   <Pretty event={event} definition={classifiedBy} header={header} eventHref={eventHref} />
                 ) : null}

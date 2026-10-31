@@ -161,10 +161,11 @@ const header = sign(
   recently - 1_000,
 );
 
+// An item's panel counts the fields its page leaves to "More fields": with a phone, 3, and not 37 or 2.
 const place = (name: string, by: Uint8Array, age: number): NostrEvent =>
   sign(
     39999,
-    [["d", name.toLowerCase()], ["z", LIST], ["name", name], ["category", "cafe"], ["address", `${name} Street`]],
+    [["d", name.toLowerCase()], ["z", LIST], ["name", name], ["category", "cafe"], ["address", `${name} Street`], ["phone", "555 0100"]],
     by,
     "",
     recently - age,

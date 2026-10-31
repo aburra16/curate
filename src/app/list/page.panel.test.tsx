@@ -169,11 +169,14 @@ describe("opening the panel", () => {
     open({ item: STEAK });
 
     const d = await dialog();
-    expect(await within(d).findByRole("heading", { name: "Steak 'n Shake" })).toBeTruthy();
+    expect(await within(d).findByRole("heading", { level: 2, name: "Steak 'n Shake" })).toBeTruthy();
     expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Item", "Pretty", "Raw"]);
     expect(within(d).getByRole("tab", { name: "Item" }).getAttribute("aria-selected")).toBe("true");
-    // Read through the list's definition: its fields, with the header's words.
-    expect(within(d).getByText("Name of the business")).toBeTruthy();
+    // Read through the list's definition: its title, its link, and the rest folded away.
+    const item = within(within(d).getByRole("tabpanel"));
+    expect(item.getByRole("heading", { name: "Steak 'n Shake" })).toBeTruthy();
+    expect(item.getByRole("link", { name: "Website www.steaknshake.com" })).toBeTruthy();
+    expect(item.getByRole("button", { name: /^More fields/ })).toBeTruthy();
   });
 
   it("the Pretty tab labels g as a field and alt as metadata, and links the z to its list", async () => {
@@ -233,14 +236,14 @@ describe("an event the page doesn't hold", () => {
     // The page's own first page holds the other two; the third is only a link away.
     open({ item: `39999:${rows[2].pubkey}:osm-way-867841194` });
     const d = await dialog();
-    expect(await within(d).findByRole("heading", { name: "The Rare Smokey Mare" })).toBeTruthy();
+    expect(await within(d).findByRole("heading", { level: 2, name: "The Rare Smokey Mare" })).toBeTruthy();
     expect(within(d).getByRole("tab", { name: "Item" })).toBeTruthy();
   });
 
   it("an id works as well as an address", async () => {
     relays([...food, ...rows]);
     open({ item: rows[1].id });
-    expect(await within(await dialog()).findByRole("heading", { name: "Mi-Sant Banh Mi Co." })).toBeTruthy();
+    expect(await within(await dialog()).findByRole("heading", { level: 2, name: "Mi-Sant Banh Mi Co." })).toBeTruthy();
   });
 
   it("an event of another list is shown by Pretty and Raw alone", async () => {
@@ -359,7 +362,7 @@ describe("following a link inside the panel", () => {
     fireEvent.click(opener);
     follow(view.rerender, nav.router.push);
     const d = await dialog();
-    await within(d).findByRole("heading", { name: "Alpha" });
+    await within(d).findByRole("heading", { level: 2, name: "Alpha" });
     fireEvent.click(within(d).getByRole("tab", { name: "Pretty" }));
     return { ...view, opener, d };
   }
@@ -371,7 +374,7 @@ describe("following a link inside the panel", () => {
     fireEvent.click(link);
     expect(nav.router.replace).toHaveBeenCalledTimes(1);
     follow(rerender, nav.router.replace);
-    await within(await dialog()).findByRole("heading", { name: "Beta" });
+    await within(await dialog()).findByRole("heading", { level: 2, name: "Beta" });
 
     // The link that had focus went with Alpha's tags: focus is in the dialog, not on the page behind.
     expect(link.isConnected).toBe(false);
