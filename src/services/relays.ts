@@ -21,7 +21,7 @@ export const PROFILE_RELAYS = [
 ] as const;
 
 /** A relay's identity for comparing: scheme and host are case-blind, and a trailing slash is nothing. */
-function relayKey(url: string): string {
+export function relayKey(url: string): string {
   const trimmed = normalizeRelayUrl(url);
   try {
     const parsed = new URL(trimmed);
