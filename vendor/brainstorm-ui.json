@@ -1,6 +1,6 @@
 {
   "repo": "NosFabrica/Brainstorm-UI",
-  "commit": "b3a24e9a541d5bbdf8489b6ddaf480b6827ae77e",
+  "commit": "3a617f66d017d37c8e9dd7c02423edd890c852d6",
   "files": [
     {
       "upstream": "client/src/lib/dlistFields.ts",
@@ -121,6 +121,96 @@
       "upstream": "client/src/lib/noteContent.test.ts",
       "local": "src/lib/noteContent.test.ts",
       "sha256": "8004f8ba6dc54c90a33ffeeb6d2f73b757d29e0e29cbc5cf170822d88a6c6089"
+    },
+    {
+      "upstream": "client/src/lib/conceptCopy.ts",
+      "local": "src/lib/conceptCopy.ts",
+      "sha256": "831aaca91e5e501919d6f06146eb05b937efbd821952381e397e3bd401ab82f1"
+    },
+    {
+      "upstream": "client/src/lib/conceptCopy.test.ts",
+      "local": "src/lib/conceptCopy.test.ts",
+      "sha256": "f567e2b1d4145f5ab9e55ca19fc86475b497b0014202fc8ff3f19dfce10a2619"
+    },
+    {
+      "upstream": "client/src/lib/listDraft.ts",
+      "local": "src/lib/listDraft.ts",
+      "sha256": "bcbe599fa25baf045e0692d18e950320bf81b1f8027e433c999487fe5373665b"
+    },
+    {
+      "upstream": "client/src/lib/listDraft.test.ts",
+      "local": "src/lib/listDraft.test.ts",
+      "sha256": "bb19b088cb45967eb07ed8d2497e4f1bd4ded4516bb2467a6eaa250e5d7acf54"
+    },
+    {
+      "upstream": "client/src/lib/listItem.ts",
+      "local": "src/lib/listItem.ts",
+      "sha256": "9f073365d2559266c1f19d4a4bfd91ca9440077bd79717d8bd58c03dbf9982e7"
+    },
+    {
+      "upstream": "client/src/lib/listItem.test.ts",
+      "local": "src/lib/listItem.test.ts",
+      "sha256": "8ff765211e5d5bdc7d8cfe9b67bd2bed5fca7aeff6741166924c70637e79a194"
+    },
+    {
+      "upstream": "client/src/lib/listImport.ts",
+      "local": "src/lib/listImport.ts",
+      "sha256": "b77eeaf0501d411b68a156d5f048598e9eadc34239108f5778b5a777ce58164a"
+    },
+    {
+      "upstream": "client/src/lib/listImport.test.ts",
+      "local": "src/lib/listImport.test.ts",
+      "sha256": "91b582ec5e59c6e3747aaa275513e6f3a70be81aac7ec8fce2a63125d68a301a"
+    },
+    {
+      "upstream": "client/src/lib/templateDrafts.ts",
+      "local": "src/lib/templateDrafts.ts",
+      "sha256": "d36736566d268118f86de031dd00657f0485e14dd45b0bcd04f705b0c3cfd048"
+    },
+    {
+      "upstream": "client/src/lib/templateDrafts.test.ts",
+      "local": "src/lib/templateDrafts.test.ts",
+      "sha256": "71d6c90cf8cd4db83f8facf174c3d005aa75d7c5a36dfdb667443d4dc1080989"
+    },
+    {
+      "upstream": "client/src/lib/listPublish.ts",
+      "local": "src/lib/listPublish.ts",
+      "sha256": "b71e6768ed5cc383c7824ab4b7dca5bff7e78c6be9c0f778b2da605400a0de52"
+    },
+    {
+      "upstream": "client/src/lib/listPublish.test.ts",
+      "local": "src/lib/listPublish.test.ts",
+      "sha256": "555e8a6d5631088fdbada725e35c1cfa2b8a260d61b7ab223568ad928f810432"
+    },
+    {
+      "upstream": "client/src/lib/publishQuorum.ts",
+      "local": "src/lib/publishQuorum.ts",
+      "sha256": "108fc39bd2abff1df97a81937283ea38eb2dc021ebab4f99b89d67c1fb0e53ed"
+    },
+    {
+      "upstream": "client/src/lib/publishQuorum.test.ts",
+      "local": "src/lib/publishQuorum.test.ts",
+      "sha256": "1bfe76c7b9817de842baf3d96ea5dc1dbba293835d0ca4341d5989752771c5b0"
+    },
+    {
+      "upstream": "client/src/lib/itemEngagement.ts",
+      "local": "src/lib/itemEngagement.ts",
+      "sha256": "e50e83e63502d030d955738fd52db65f8189fdfee4da9bb23fd636d30b525a38"
+    },
+    {
+      "upstream": "client/src/lib/itemEngagement.test.ts",
+      "local": "src/lib/itemEngagement.test.ts",
+      "sha256": "830a7667cb25360e4f80af83003cf81608b7f884a74cd6b19bc475102c3e3c92"
+    },
+    {
+      "upstream": "client/src/lib/listCheck.ts",
+      "local": "src/lib/listCheck.ts",
+      "sha256": "063ade27d332393519dc4bb12fad49aafc0a5d4c00611f600ff8276c72c6102e"
+    },
+    {
+      "upstream": "client/src/lib/listCheck.test.ts",
+      "local": "src/lib/listCheck.test.ts",
+      "sha256": "a8252e4e3452a05ea02799cf4a41ef97c622259075983171a1132fa7790967ad"
     },
     {
       "upstream": "client/public/built-on/built-on-brainstorm.js",

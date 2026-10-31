@@ -22,6 +22,7 @@
  * refuses reads as empty; its outcome is in the relay-status store.
  */
 import type { Filter, NostrEvent } from "nostr-tools";
+import { URL_TEMPLATES_CONCEPT } from "@/config/dictionary";
 import {
   pointsAt,
   resolveConcept,
@@ -40,7 +41,7 @@ import { resolveHouseObserver, resolveTrustSource } from "@/services/trust";
 export const CURATOR_TAG = "39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator";
 
 /** URL Templates: the concept whose items links are built from (lib/linkTemplates). */
-export const URL_TEMPLATES_CONCEPT = "39998:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:url-templates";
+export { URL_TEMPLATES_CONCEPT };
 
 /** Concepts that play a role: their items render through them, but the Dictionary doesn't list them. */
 export const ROLE_CONCEPTS: readonly string[] = [URL_TEMPLATES_CONCEPT];
