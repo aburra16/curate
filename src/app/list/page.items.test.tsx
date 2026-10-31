@@ -416,14 +416,42 @@ describe("adding an item", () => {
     expect(await screen.findByRole("button", { name: "+ Add Food and Drink Place" })).toBeTruthy();
   });
 
-  it('reads "+ Add tag" on the Tags list', async () => {
+  it("reads the singular from the list's names, not from its short name", async () => {
+    signIn(READER);
+    const curator = generateSecretKey();
+    const header = finalizeEvent(
+      {
+        kind: 39998,
+        created_at: 1_792_000_000,
+        content: "",
+        tags: [
+          ["d", "videos"],
+          ["names", "clip", "clips"],
+          ["required", "title"],
+        ],
+      },
+      curator,
+    ) as NostrEvent;
+    relays([header]);
+    reads.loadItemsPage.mockResolvedValueOnce(page([], null));
+    nav.params = new URLSearchParams({ c: `39998:${getPublicKey(curator)}:videos` });
+    render(<ListPage />);
+
+    expect(await screen.findByRole("button", { name: "+ Add clip" })).toBeTruthy();
+  });
+
+  it("offers no form, and says why, on a list that declares no fields", async () => {
     signIn(READER);
     relays(tagsHeaders as NostrEvent[]);
     reads.loadItemsPage.mockResolvedValueOnce(page([], null));
     nav.params = new URLSearchParams({ c: TAGS_ROOT });
     render(<ListPage />);
 
-    expect(await screen.findByRole("button", { name: "+ Add tag" })).toBeTruthy();
+    expect(
+      await screen.findByText("This list declares no fields, so there is nothing for Curate's form to fill in."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Add|Connect to add/ })).toBeNull();
+    expect(screen.queryByText("Be the first to add something to this list.")).toBeNull();
   });
 
   it("invites a reader who isn't connected to connect, and opens no form", async () => {
@@ -457,6 +485,30 @@ describe("adding an item", () => {
     // The form has gone, and the button is back.
     expect(screen.queryByRole("form")).toBeNull();
     expect(screen.getByRole("button", { name: "+ Add Food and Drink Place" })).toBeTruthy();
+  });
+
+  it("keeps the form and the note when one of the author's own relays missed the item, and adds the item when Done is pressed", async () => {
+    signIn(READER);
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    vi.mocked(signAndPublish).mockImplementation(async (template) => ({
+      ...signedBy(READER, template),
+      failed: [{ ok: false, from: "wss://own.example.test", message: "timed out" }],
+    }));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Food and Drink Place" }));
+    type("name", "Cafe Luna");
+    type("category", "cafe");
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 3, name: "Cafe Luna" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(rowTitles()).toEqual(["Cafe Luna", "Alpha"]);
+    expect(screen.queryByRole("form")).toBeNull();
   });
 
   it("leaves the list as it was when the person cancels", async () => {
@@ -520,6 +572,28 @@ describe("editing an item", () => {
       "Mine",
       "Mine, tagged",
     ]);
+  });
+
+  it("offers no Edit on a list that declares no fields", async () => {
+    signIn(READER);
+    relays(tagsHeaders as NostrEvent[]);
+    const mine: ItemEvent = {
+      id: "7".repeat(64),
+      pubkey: READER,
+      kind: 39999,
+      created_at: 1_792_000_100,
+      content: "",
+      tags: [
+        ["d", "espresso"],
+        ["z", TAGS_ROOT],
+      ],
+    };
+    reads.loadItemsPage.mockResolvedValueOnce(page([mine], null));
+    nav.params = new URLSearchParams({ c: TAGS_ROOT });
+    render(<ListPage />);
+    await screen.findAllByRole("heading", { level: 3 });
+
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
   });
 
   it("offers Edit to no one who isn't connected", async () => {

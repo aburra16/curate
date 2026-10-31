@@ -13,6 +13,7 @@ import type { UrlTemplate } from "@/lib/linkTemplates";
 import { checkItemUnder, type Problem } from "@/lib/listCheck";
 import { itemProblems, itemTemplate, randomTail, type ItemValues } from "@/lib/listItem";
 import type { ItemEvent } from "@/services/concepts";
+import type { PublishResult } from "@/services/publish";
 import { namesOf } from "@/services/jsonData";
 
 interface Props {
@@ -44,7 +45,13 @@ const REQUIREMENT_WORDS = { required: "Required", recommended: "Recommended", op
  * An added item gets a `d` of its title and a random tail, chosen when the
  * form opens, so a second Publish after a refusal is the same item and not a
  * second one. A changed item keeps every tag it has; only the fields the
- * person changed are different.
+ * person changed are different, measured against what each field held when
+ * the form opened, so a newer version of the item that arrives meanwhile keeps
+ * its own changes.
+ *
+ * A save the list relay took closes the form at once (`onSaved`), unless one
+ * of the author's own relays missed it: then the form stays, says which, and
+ * hands the event on when the person is done.
  */
 export function ItemForm({ definition, templates, item, onSaved, onCancel }: Props) {
   const { pubkey } = useReader();
@@ -52,24 +59,29 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
   const headingId = useId();
   const singular = namesOf(definition.event).singular || "item";
 
-  /** Each field's value as the item has it now; empty for a new item. */
-  const prefill = useMemo(
-    (): ItemValues =>
-      Object.fromEntries(definition.fields.map((f) => [f.name, item ? (fieldCell(item, f).value ?? "") : ""])),
-    [definition.fields, item],
+  /** What each field held when the form opened; empty for a new item. */
+  const [prefill] = useState((): ItemValues =>
+    Object.fromEntries(definition.fields.map((f) => [f.name, item ? (fieldCell(item, f).value ?? "") : ""])),
   );
   const [values, setValues] = useState<ItemValues>(prefill);
   /** Problems stay quiet on a new item until the person has started. */
   const [touched, setTouched] = useState(item !== undefined);
   const [tail] = useState(randomTail);
+  /** The list relay took the item, and one of the author's own relays didn't: the event waits for Done. */
+  const [waiting, setWaiting] = useState<NostrEvent | null>(null);
 
-  /** The fields whose value the person changed, in the definition's order. */
+  /**
+   * The fields whose value the person changed, in the definition's order. A
+   * field the form didn't have when it opened (the list began to declare it
+   * since) counts as empty then.
+   */
   const changes = useMemo(
     () =>
       Object.fromEntries(
         definition.fields.flatMap((f) => {
           const typed = values[f.name] ?? "";
-          return typed === prefill[f.name] || typed.trim() === prefill[f.name] ? [] : [[f.name, typed.trim()]];
+          const was = prefill[f.name] ?? "";
+          return typed === was || typed.trim() === was ? [] : [[f.name, typed.trim()]];
         }),
       ),
     [definition.fields, values, prefill],
@@ -87,16 +99,20 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
   const aboutTheItem = problems.filter((problem) => problem.field === null || !declared.has(problem.field));
 
   const stopped = itemProblems(definition, values).length > 0 || hasBlocking(problems);
-  const canPublish = pubkey !== null && !stopped && !busy;
+  const canPublish = pubkey !== null && !stopped && !busy && waiting === null;
 
+  /** After a write: a save that reached every relay closes the form, one that missed an own relay says so first. */
+  const settled = (result: PublishResult | null) => {
+    if (!result?.onHub) return;
+    if (result.failed.length === 0) onSaved(result.event);
+    else setWaiting(result.event);
+  };
   const publish = async () => {
     if (!canPublish) return;
-    const result = await write(template);
-    if (result?.onHub) onSaved(result.event);
+    settled(await write(template));
   };
   const retryWrite = async () => {
-    const result = await retry();
-    if (result?.onHub) onSaved(result.event);
+    settled(await retry());
   };
 
   return (
@@ -114,17 +130,18 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
         <h3 id={headingId} className="font-serif text-[18px] text-ink">
           {item ? "Edit" : "Add"} {singular}
         </h3>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={busy}
-          className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
-        >
-          Cancel
-        </button>
+        {waiting ? null : (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
+          >
+            Cancel
+          </button>
+        )}
       </div>
 
-      {definition.fields.length === 0 ? <p className="text-[12px] text-mute">This list declares no fields.</p> : null}
       {definition.fields.map((field, i) => (
         <FieldInput
           key={field.name}
@@ -133,6 +150,7 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
           onChange={(value) => setValues((prev) => ({ ...prev, [field.name]: value }))}
           problems={touched ? problemsFor(problems, field.name) : []}
           first={i === 0}
+          disabled={waiting !== null}
         />
       ))}
       {touched ? <CheckProblems problems={aboutTheItem} /> : null}
@@ -140,14 +158,25 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
       <div className="flex flex-col gap-3">
         <PublishOutcome state={state} busy={busy} onRetry={() => void retryWrite()} />
         <div className="flex items-center justify-end gap-3">
-          <button
-            type="submit"
-            disabled={!canPublish}
-            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={inputStyle}
-          >
-            {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
-          </button>
+          {waiting ? (
+            <button
+              type="button"
+              onClick={() => onSaved(waiting)}
+              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
+              style={inputStyle}
+            >
+              Done
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!canPublish}
+              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={inputStyle}
+            >
+              {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
+            </button>
+          )}
         </div>
       </div>
     </form>
@@ -161,12 +190,14 @@ function FieldInput({
   onChange,
   problems,
   first,
+  disabled,
 }: {
   field: FieldDecl;
   value: string;
   onChange: (value: string) => void;
   problems: Problem[];
   first: boolean;
+  disabled: boolean;
 }) {
   const id = useId();
   const hintId = `${id}-hint`;
@@ -180,6 +211,7 @@ function FieldInput({
         type={INPUT_TYPES.get(field.type) ?? "text"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         aria-describedby={hintId}
         aria-invalid={hasBlocking(problems) || undefined}
         className={inputClass}

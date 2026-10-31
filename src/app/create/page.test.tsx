@@ -44,6 +44,11 @@ const SIGNED: NostrEvent = {
 };
 
 const saved: PublishResult = { event: SIGNED, onHub: true, hubMessage: null, accepted: [DCOSL], failed: [] };
+/** The list relay took it; one of the person's own relays didn't. */
+const missedOwnRelay: PublishResult = {
+  ...saved,
+  failed: [{ ok: false, from: "wss://own.example.test", message: "timed out" }],
+};
 const refusedByList: PublishResult = {
   event: SIGNED,
   onHub: false,
@@ -318,6 +323,39 @@ describe("Create", () => {
       await waitFor(() =>
         expect(nav.router.push).toHaveBeenCalledWith(`/list?c=${encodeURIComponent(`39998:${READER}:tags`)}`),
       );
+    });
+
+    it("says which of the person's own relays missed the list and opens it when the person chooses", async () => {
+      vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
+      render(<CreatePage />);
+      await nameIt();
+
+      click("Publish");
+
+      await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/);
+      expect(nav.router.push).not.toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
+
+      click("Open the list");
+
+      expect(nav.router.push).toHaveBeenCalledWith(`/list?c=${encodeURIComponent(`39998:${READER}:tags`)}`);
+      expect(signAndPublish).toHaveBeenCalledTimes(1);
+    });
+
+    it("waits for the person after a Retry too, when an own relay still misses the list", async () => {
+      vi.mocked(signAndPublish).mockResolvedValue(refusedByList);
+      vi.mocked(retryPublish).mockResolvedValue(missedOwnRelay);
+      render(<CreatePage />);
+      await nameIt();
+      click("Publish");
+      await screen.findByText(/Not saved to the list relay/);
+
+      click("Retry");
+
+      await screen.findByText(/Not saved to 1 of your own relays/);
+      expect(nav.router.push).not.toHaveBeenCalled();
+      click("Open the list");
+      expect(nav.router.push).toHaveBeenCalledTimes(1);
     });
 
     it("keeps every typed value when the signer refuses", async () => {

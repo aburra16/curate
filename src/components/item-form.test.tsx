@@ -95,6 +95,12 @@ const refusedByList: PublishResult = {
   failed: [{ ok: false, from: DCOSL, message: "blocked: not allowed" }],
 };
 
+/** The list relay took it; one of the author's own relays didn't. */
+const missedOwnRelay: PublishResult = {
+  ...saved,
+  failed: [{ ok: false, from: "wss://own.example.test", message: "timed out" }],
+};
+
 function signIn(pubkey: string | null) {
   useSigner.setState(
     pubkey
@@ -107,11 +113,10 @@ const noTemplates = new Map();
 const onSaved = vi.fn();
 const onCancel = vi.fn();
 
-function open(props: Partial<Parameters<typeof ItemForm>[0]> = {}) {
-  return render(
-    <ItemForm definition={places} templates={noTemplates} onSaved={onSaved} onCancel={onCancel} {...props} />,
-  );
-}
+const form = (props: Partial<Parameters<typeof ItemForm>[0]> = {}) => (
+  <ItemForm definition={places} templates={noTemplates} onSaved={onSaved} onCancel={onCancel} {...props} />
+);
+const open = (props: Partial<Parameters<typeof ItemForm>[0]> = {}) => render(form(props));
 
 const input = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
 const type = (label: string, value: string) => fireEvent.change(input(label), { target: { value } });
@@ -310,6 +315,54 @@ describe("what the list relay said", () => {
     expect(signAndPublish).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps the form open with the note when the list relay has it and one of the author's own relays missed it, and hands the event on from Done", async () => {
+    vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
+    open();
+    type("name", "Blue Bottle");
+    type("category", "cafe");
+    fireEvent.click(publishButton());
+
+    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
+    expect(onSaved).not.toHaveBeenCalled();
+    // Nothing is left to publish or to change.
+    expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(input("name").disabled).toBe(true);
+    fireEvent.submit(screen.getByRole("form"));
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(onSaved).toHaveBeenCalledWith(SIGNED);
+  });
+
+  it("does the same for a Retry that gets the list relay to take it while an own relay still misses it", async () => {
+    vi.mocked(signAndPublish).mockResolvedValue(refusedByList);
+    vi.mocked(retryPublish).mockResolvedValue(missedOwnRelay);
+    open();
+    type("name", "Blue Bottle");
+    type("category", "cafe");
+    fireEvent.click(publishButton());
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText(/Not saved to 1 of your own relays/)).toBeTruthy();
+    expect(onSaved).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onSaved).toHaveBeenCalledWith(SIGNED);
+  });
+
+  it("keeps a changed item's form open with the note too", async () => {
+    vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
+    open({ item: ITEM });
+    fireEvent.click(publishButton());
+
+    expect(await screen.findByText(/Not saved to 1 of your own relays/)).toBeTruthy();
+    expect(onSaved).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onSaved).toHaveBeenCalledWith(SIGNED);
+  });
+
   it("disables Publish and Cancel while the write is in flight", async () => {
     let settle!: (result: PublishResult) => void;
     vi.mocked(signAndPublish).mockReturnValue(new Promise((resolve) => (settle = resolve)));
@@ -407,6 +460,49 @@ describe("changing an item", () => {
 
     expect(around("website").getByText('"website" is given 2 times; only the first shows.')).toBeTruthy();
     expect(screen.getByText(/places don't declare "hours"/)).toBeTruthy();
+  });
+
+  it("changes only the person's field of a newer version that arrives while the form is open", async () => {
+    const view = open({ item: ITEM });
+    type("name", "Red Bottle");
+
+    // Someone else's later version of the item: another field changed, another tag added.
+    const NEWER: ItemEvent = {
+      ...ITEM,
+      id: "b".repeat(64),
+      created_at: ITEM.created_at + 60,
+      tags: [...ITEM.tags.map((t) => (t[0] === "category" ? ["category", "bakery"] : t)), ["phone", "+1 555 0100"]],
+    };
+    view.rerender(form({ item: NEWER }));
+    fireEvent.click(publishButton());
+
+    await waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+    expect(sentTags()).toEqual(NEWER.tags.map((t) => (t[0] === "name" ? ["name", "Red Bottle"] : t)));
+  });
+
+  it("publishes a newer version unchanged when the person changed nothing", async () => {
+    const view = open({ item: ITEM });
+    const NEWER: ItemEvent = {
+      ...ITEM,
+      id: "b".repeat(64),
+      created_at: ITEM.created_at + 60,
+      tags: ITEM.tags.map((t) => (t[0] === "website" ? ["website", "https://other.example.test"] : t)),
+    };
+    view.rerender(form({ item: NEWER }));
+    fireEvent.click(publishButton());
+
+    await waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+    expect(sentTags()).toEqual(NEWER.tags);
+  });
+
+  it("keeps the tag of a field the list began to declare while the form was open", async () => {
+    const view = open({ item: ITEM });
+    const declaresHours = definitionOf({ ...PLACES, tags: [...PLACES.tags, ["optional", "hours"]] });
+    view.rerender(form({ item: ITEM, definition: declaresHours }));
+    fireEvent.click(publishButton());
+
+    await waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+    expect(sentTags()).toEqual(ITEM.tags);
   });
 
   it("hands the signed event on once the list relay has it", async () => {

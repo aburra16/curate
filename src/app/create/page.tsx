@@ -25,6 +25,7 @@ import { listCoordinate, previewDefinition, slugOf } from "@/lib/listDraft";
 import { cn } from "@/lib/utils";
 import { listHref } from "@/app/list/list-model";
 import { loadAllHeaders } from "@/services/dictionary";
+import type { PublishResult } from "@/services/publish";
 
 /** A field row on the form: the field, and an id that stays with it as rows come and go. */
 type Row = QuickField & { id: number };
@@ -53,7 +54,9 @@ const blockingProblem = (message: string, field: string | null): Problem => ({
  * short name. Brainstorm's checks run as the person types, and Publish waits
  * until none would stop the list. When a shared concept already goes by the
  * same name, publishing offers a choice first: make a version of that one, or
- * offer a new one anyway.
+ * offer a new one anyway. A list the list relay took opens at once, unless one
+ * of the person's own relays missed it: then the page says which, and the
+ * person opens the list when ready.
  */
 export default function CreateListPage() {
   const router = useRouter();
@@ -116,7 +119,9 @@ export default function CreateListPage() {
   const mustChoose = sharedConcept !== null && offeredAnywayFor !== namesKey;
   const choosing = mustChoose && offered;
 
-  const canPublish = pubkey !== null && headers !== null && !hasBlocking(problems) && !busy;
+  /** The list relay has the list, and one of the person's own relays doesn't: the page says which and waits. */
+  const savedWithMisses = state.phase === "done" && state.result.onHub && state.result.failed.length > 0;
+  const canPublish = pubkey !== null && headers !== null && !hasBlocking(problems) && !busy && !savedWithMisses;
 
   const rename = (set: (name: string) => void, name: string) => {
     set(name);
@@ -137,17 +142,20 @@ export default function CreateListPage() {
     setRows((prev) => prev.filter((row) => row.id !== id));
   };
 
-  /** Sign and send the list, and open it once the list relay has it. */
+  /** Open the list once the list relay has it, unless an own relay missed it: then the person is told first. */
+  const openWhenSaved = (result: PublishResult | null) => {
+    if (result?.onHub && result.failed.length === 0 && sent.current) router.push(listHref(sent.current));
+  };
+
+  /** Sign and send the list. */
   const publish = async () => {
     if (!pubkey || !canPublish) return;
     sent.current = listCoordinate(pubkey, d);
-    const result = await write(template);
-    if (result?.onHub) router.push(listHref(sent.current));
+    openWhenSaved(await write(template));
   };
 
   const retryWrite = async () => {
-    const result = await retry();
-    if (result?.onHub && sent.current) router.push(listHref(sent.current));
+    openWhenSaved(await retry());
   };
 
   const onSubmit = (event: React.FormEvent) => {
@@ -391,14 +399,25 @@ export default function CreateListPage() {
             {pubkey && headers === null ? (
               <p className="mr-auto text-[12px] text-mute">Looking for lists that already exist…</p>
             ) : null}
-            <button
-              type="submit"
-              disabled={!canPublish}
-              className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={inputStyle}
-            >
-              {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
-            </button>
+            {savedWithMisses ? (
+              <button
+                type="button"
+                onClick={() => sent.current && router.push(listHref(sent.current))}
+                className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all"
+                style={inputStyle}
+              >
+                Open the list
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!canPublish}
+                className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={inputStyle}
+              >
+                {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
+              </button>
+            )}
           </div>
         </div>
       </form>

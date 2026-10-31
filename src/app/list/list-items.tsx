@@ -105,6 +105,9 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
   const names = definition ? namesOf(definition.event) : null;
   const plural = names?.plural || "items";
   const singular = names?.singular || "item";
+  // A list that declares no fields gives the form nothing to fill in.
+  const noFields = definition !== null && definition.fields.length === 0;
+  const canAdd = definition !== null && !noFields;
   const loaded = useMemo(() => shownItems(items.held).length, [items.held]);
   const total = count ?? (items.firstLoaded ? loaded : null);
   const searching = searched.trim() !== "";
@@ -150,7 +153,11 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
             ) : null}
           </p>
 
-          {definition && !showAddForm ? (
+          {noFields ? (
+            <p className="max-w-[28rem] text-[12px] leading-[1.5] text-mute">
+              This list declares no fields, so there is nothing for Curate&apos;s form to fill in.
+            </p>
+          ) : canAdd && !showAddForm ? (
             <button
               type="button"
               disabled={!reader.pubkey}
@@ -205,7 +212,7 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
         ) : null}
       </div>
 
-      {showAddForm && definition ? (
+      {showAddForm && canAdd ? (
         <div className="mb-6 border border-accent/20 bg-surface p-5" style={{ borderRadius: "var(--radius-card)" }}>
           <ItemForm
             definition={definition}
@@ -235,11 +242,7 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
             {searching ? "No items match your search." : "No items yet."}
           </p>
           <p className="mt-2 text-[13px] text-mute">
-            {searching
-              ? "Try a different search term."
-              : definition
-                ? "Be the first to add something to this list."
-                : null}
+            {searching ? "Try a different search term." : canAdd ? "Be the first to add something to this list." : null}
           </p>
         </div>
       ) : (
@@ -272,8 +275,9 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
 
 /**
  * A row, and its Edit while the reader is the author of an addressable item
- * (a kind 9999 can't be replaced). Edit keeps every tag the item has, so any
- * such item can be changed. Drawn again only when a prop changes.
+ * (a kind 9999 can't be replaced) under a list that declares fields to change.
+ * Edit keeps every tag the item has, so any such item can be changed. Drawn
+ * again only when a prop changes.
  */
 const EditableRow = memo(function EditableRow({
   row,
@@ -304,7 +308,12 @@ const EditableRow = memo(function EditableRow({
   );
   // Items come off a relay signed; ItemEvent only leaves out what the readers never use.
   const event = row.item as NostrEvent;
-  const editable = !!definition && !!reader && reader === event.pubkey && event.kind === DLIST_ITEM_KIND;
+  const editable =
+    !!definition &&
+    definition.fields.length > 0 &&
+    !!reader &&
+    reader === event.pubkey &&
+    event.kind === DLIST_ITEM_KIND;
   const links = useMemo(() => itemLinks(event, refs, templates), [event, refs, templates]);
 
   if (editing && editable && definition) {
