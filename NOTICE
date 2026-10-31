@@ -1,0 +1,21 @@
+Curate
+Licensed under the GNU Affero General Public License, version 3 (AGPL-3.0).
+The full text is in LICENSE.
+
+Third-party code
+----------------
+
+The files listed in vendor/brainstorm-ui.json are copied unchanged from
+NosFabrica/Brainstorm-UI (https://github.com/NosFabrica/Brainstorm-UI), which is
+licensed under the GNU Affero General Public License, version 3 (AGPL-3.0).
+They come from client/src/lib/ at the commit pinned in that manifest, and sit
+in src/lib/.
+
+The manifest records the upstream path, local path and SHA-256 of each file.
+`npm run vendor:check` fails if any of them has been edited, and
+`npm run vendor:fetch` restores them.
+
+One of them is not from client/src/lib/: src/lib/built-on-brainstorm.js is the
+shared <built-on-brainstorm> footer element, copied unchanged from
+client/public/built-on/ in the same repository, at the commit recorded for it in
+the manifest. Its contract is docs/built-on-brainstorm.md there.

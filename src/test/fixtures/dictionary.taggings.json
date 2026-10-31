@@ -1,0 +1,192 @@
+[
+  {
+    "content": "{\"nostrUserTag\":{\"taggedPubkey\":\"2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331\",\"tagEventId\":\"7bdb9c784975b1169ffe166c18ad4c439724b124b1717d6facf66d9011032f2e\",\"tagAddress\":\"39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator\"}}",
+    "created_at": 1791676000,
+    "id": "713e6685f8f58c0a40d2b02197c9a3db609fc2923ba30a09c9af3b3c5a393b61",
+    "kind": 39999,
+    "pubkey": "e5272de914bd301755c439b88e6959a43c9d2664831f093c51e9c799a16a102f",
+    "sig": "eb860d59b117ce0755c04621d93e756c101558c89096dc446288b6f326f384d03d3d2eba1d006ca2c2f6264d8a896eff8c3ffc6fe39a05f374dc14e5f87a172c",
+    "tags": [
+      [
+        "d",
+        "profile-tag-dictionary-concept-curator-2efaa715-e5272de9"
+      ],
+      [
+        "p",
+        "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331"
+      ],
+      [
+        "a",
+        "39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator"
+      ],
+      [
+        "e",
+        "7bdb9c784975b1169ffe166c18ad4c439724b124b1717d6facf66d9011032f2e"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-user-tag"
+      ],
+      [
+        "z",
+        "39998:8e901369d45081cf05fe17ba802441dd731f73e000149c333daf4880a58e5fb1:nostr-user-tag"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ]
+  },
+  {
+    "content": "{\"nostrUserTag\":{\"taggedPubkey\":\"77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3\",\"tagEventId\":null,\"tagAddress\":\"39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator\"}}",
+    "created_at": 1792786347,
+    "id": "84f73e418a7bdf4abd025a4a61fd90c3c16f0656249fd1a91a32fa611942ffc8",
+    "kind": 39999,
+    "pubkey": "be7bf5de068c1d842ed34a7c270507ec940f5ea51671cfd062a95e9d09420d0a",
+    "sig": "49400201235db7174deac4010444f4d4fe0c2d571085c9d7a47a4edb64a69464e93ea6ed8d12a98fc98f391902d18083de0305a8023563c328f5b6b99c9a4915",
+    "tags": [
+      [
+        "d",
+        "profile-tag-dictionary-concept-curator-77599c5c-be7bf5de"
+      ],
+      [
+        "p",
+        "77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3"
+      ],
+      [
+        "a",
+        "39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-user-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-user-tag"
+      ],
+      [
+        "polarity",
+        "1"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "{\"nostrUserTag\":{\"taggedPubkey\":\"2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331\",\"tagEventId\":null,\"tagAddress\":\"39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator\"}}",
+    "created_at": 1792162118,
+    "id": "9a8558fb193f5d4b802b0273ee7089f8f402b079424394577a517bab084b940e",
+    "kind": 39999,
+    "pubkey": "be7bf5de068c1d842ed34a7c270507ec940f5ea51671cfd062a95e9d09420d0a",
+    "sig": "61d809189d9b7ad089e8f0b9cc6271c998f7c1839b2398a5412cffe524810860fe6d40f46838e77c9211c75bb011a6d8b27949253ebcc714872d7f473c837efd",
+    "tags": [
+      [
+        "d",
+        "profile-tag-dictionary-concept-curator-2efaa715-be7bf5de"
+      ],
+      [
+        "p",
+        "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331"
+      ],
+      [
+        "a",
+        "39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-user-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-user-tag"
+      ],
+      [
+        "polarity",
+        "1"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "{\"nostrUserTag\":{\"taggedPubkey\":\"b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450\",\"tagEventId\":null,\"tagAddress\":\"39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator\"}}",
+    "created_at": 1792162103,
+    "id": "d83cd75d507a4a44e9c788c5d803210d08ae3effd858ee7bd549e75df5afb874",
+    "kind": 39999,
+    "pubkey": "be7bf5de068c1d842ed34a7c270507ec940f5ea51671cfd062a95e9d09420d0a",
+    "sig": "d5d8216b0af39bc81243640716bbe6aa6b889c4ce31e0a68a0600d2f75bad53058268efe4670e79fe69bef4e199d19ae4975beb5d2fd9b18386ef33e4fc32cf0",
+    "tags": [
+      [
+        "d",
+        "profile-tag-dictionary-concept-curator-b83a28b7-be7bf5de"
+      ],
+      [
+        "p",
+        "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450"
+      ],
+      [
+        "a",
+        "39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-user-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-user-tag"
+      ],
+      [
+        "polarity",
+        "1"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "{\"nostrUserTag\":{\"taggedPubkey\":\"6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b\",\"tagEventId\":null,\"tagAddress\":\"39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator\"}}",
+    "created_at": 1792786303,
+    "id": "f641618d894d03e5935c56c971596cdf650147fccfd3c3b78eb6a50e81bf0872",
+    "kind": 39999,
+    "pubkey": "be7bf5de068c1d842ed34a7c270507ec940f5ea51671cfd062a95e9d09420d0a",
+    "sig": "69867799ccfdd91361dab0aa56f97aa48cf155129477ed90e795f950807f85699f6677f5130b3b5fa989cade705de04ca30c6385ac5c59a8171bd7cf4bd9ba97",
+    "tags": [
+      [
+        "d",
+        "profile-tag-dictionary-concept-curator-6aca05b8-be7bf5de"
+      ],
+      [
+        "p",
+        "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b"
+      ],
+      [
+        "a",
+        "39999:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:dictionary-concept-curator"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-user-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-user-tag"
+      ],
+      [
+        "polarity",
+        "1"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  }
+]

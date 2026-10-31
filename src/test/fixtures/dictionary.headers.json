@@ -1,0 +1,2113 @@
+[
+  {
+    "content": "",
+    "created_at": 1790959914,
+    "id": "0a4976fa2e83e67ac7a5df8e6549d499729f9a8a628e406fc34f0e7da23892b1",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "12318ac22f575d1eb7b10dda027f73110ca0ac3a0b68751a39bc58cc3d183a3aa49e51057377aa2db7931e61f28ee52a189f3aa62c2df91ee3d8f9c36acdc1b3",
+    "tags": [
+      [
+        "d",
+        "books"
+      ],
+      [
+        "names",
+        "book",
+        "books"
+      ],
+      [
+        "optional",
+        "title"
+      ],
+      [
+        "optional",
+        "author"
+      ],
+      [
+        "optional",
+        "cover"
+      ],
+      [
+        "field-type",
+        "cover",
+        "url"
+      ],
+      [
+        "optional",
+        "isbn"
+      ],
+      [
+        "display",
+        "title",
+        "title"
+      ],
+      [
+        "display",
+        "summary",
+        "author"
+      ],
+      [
+        "display",
+        "image",
+        "cover"
+      ],
+      [
+        "link",
+        "8382b369db6f7d3dc96be27513609a61491f33c2afcc6f7c005c8bd7cc190c83",
+        "wss://dcosl.brainstorm.world",
+        "isbn10",
+        "isbn"
+      ],
+      [
+        "b",
+        "39998:6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b:books",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792496452,
+    "id": "0b95c22fe9b4231b620f6642c14c543a05b80b40bfee45c9d99c6a5eeef95df9",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "10707ccd76551c4d96cb4b92c0629a204cf70dca814a6dba57ed1fb4704d5670a1e94242309bb0da2f8b9c41811689e18570a6e41a23dbb8c59dfce97b898dc7",
+    "tags": [
+      [
+        "d",
+        "books"
+      ],
+      [
+        "names",
+        "Book",
+        "Books"
+      ],
+      [
+        "description",
+        "Books by title and author, from Open Library, kept by the Unbnd librarian. Readers rate, shelve and tag them on Unbnd."
+      ],
+      [
+        "required",
+        "title",
+        "Title"
+      ],
+      [
+        "recommended",
+        "author",
+        "Author, as Open Library writes it"
+      ],
+      [
+        "recommended",
+        "cover",
+        "Cover image"
+      ],
+      [
+        "recommended",
+        "isbn",
+        "ISBN-13"
+      ],
+      [
+        "optional",
+        "isbn10",
+        "ISBN-10"
+      ],
+      [
+        "optional",
+        "open-library-id",
+        "Open Library work id, e.g. OL19722168W"
+      ],
+      [
+        "optional",
+        "year",
+        "Year first published"
+      ],
+      [
+        "optional",
+        "pages",
+        "Page count"
+      ],
+      [
+        "optional",
+        "lang",
+        "Language, as an ISO 639-2 code"
+      ],
+      [
+        "optional",
+        "subject",
+        "A subject; repeats"
+      ],
+      [
+        "optional",
+        "format",
+        "Record format"
+      ],
+      [
+        "optional",
+        "source",
+        "Where this record came from"
+      ],
+      [
+        "field-type",
+        "cover",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "title"
+      ],
+      [
+        "display",
+        "summary",
+        "author"
+      ],
+      [
+        "display",
+        "image",
+        "cover"
+      ],
+      [
+        "display",
+        "fact",
+        "year",
+        "Published"
+      ],
+      [
+        "display",
+        "fact",
+        "pages",
+        "Pages"
+      ],
+      [
+        "image",
+        "https://raw.githubusercontent.com/aburra16/unbnd/0b4535752a90883cc81881cace2cda9abb440e81/assets/logos/android-chrome-512x512.png"
+      ],
+      [
+        "r",
+        "https://github.com/aburra16/unbnd"
+      ],
+      [
+        "r",
+        "https://openlibrary.org/developers/licensing"
+      ],
+      [
+        "link",
+        "e722c94c9ee31ed28b79687b17daa313c0d02a9936a1c07dc73fbab4288fbc10",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "open-library-id"
+      ],
+      [
+        "link",
+        "a3037637a77a5b0338639f570b6cf24aa292a1bea322e18d2f4e69144df0cb57",
+        "wss://dcosl.brainstorm.world",
+        "isbn10",
+        "isbn10"
+      ],
+      [
+        "b",
+        "39998:6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b:books",
+        "pointer"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"books\",\"name\":\"books\",\"title\":\"Books\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"books\",\"name\":\"books\",\"title\":\"Books\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074148,
+    "id": "102eeea218760d956f0339afb1c77b3bc8869c42a88e65d8a604933c164810a9",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "388e48fe15d959f5844e2644c9c29f14d498580e3a8af35bdf3faa20b0f27b81d5ffdc054ca06e2afc45414b728fd9c2b3009dffa4d49ba5d6201275b61dd813",
+    "tags": [
+      [
+        "d",
+        "biography"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"biography\",\"name\":\"biography\",\"title\":\"Biography\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"biography\",\"name\":\"biography\",\"title\":\"Biography\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1790962735,
+    "id": "25878efb9d8a7cb5636e071b48f5b9a35b46f54dfa1dd83310388bdb80d0d979",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "278ce3e488d07292cf82b086e107c93527224e47241200be92f6ce711d735de7d550ab0223d34ed3d3dc121b1505cfebbd166da4400fa760b4053e61fb3149f4",
+    "tags": [
+      [
+        "d",
+        "da216f8f-6a99-460a-801c-62e7217f7acd"
+      ],
+      [
+        "b",
+        "b-tag-deferred"
+      ],
+      [
+        "alt",
+        "A withdrawn concept copy: considered, and affiliated with no community concept."
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1766430945,
+    "id": "2f81950f60acd88abc3b7f9a8cc705312f87a6f1162bc5d1f11aa1b319c45297",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "2453e261213422e8194569168e979adf8566fcfa323b48924cad510d07669aa3d1a09e1876b47438c102b840e83e4d78abf36de74caecfdbfcffe6739b3f6b34",
+    "tags": [
+      [
+        "d",
+        "first one no uuid"
+      ],
+      [
+        "names",
+        "dont use - broken :)",
+        "dont use - broken :)"
+      ],
+      [
+        "description",
+        "Testing 39998 lists - now i've changed the tag spec... hm..."
+      ],
+      [
+        "required",
+        "title"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792854289,
+    "id": "32964474dd34829e294f394b27ab940c27ac723b86dfefcff26029e45ae4cd0b",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "731fe8e5033b9f6c71d483801ec998a6f33cb0f2528c2998e926da040e65277430d474c38aec429e619815bd2a2acf9016d3dccb4df3dfb6f4354d92e4ff8e43",
+    "tags": [
+      [
+        "d",
+        "food-and-drink-places"
+      ],
+      [
+        "names",
+        "Food and Drink Place",
+        "Food and Drink Places"
+      ],
+      [
+        "description",
+        "Restaurants, cafes, bars, bakeries and food shops, anywhere in the world. Seeded from BTC Map. Data © OpenStreetMap contributors, available under the Open Database License (ODbL 1.0)."
+      ],
+      [
+        "required",
+        "name",
+        "Name of the business"
+      ],
+      [
+        "required",
+        "category",
+        "Kind of place, as an OpenStreetMap amenity or shop value: restaurant, cafe, bakery, …"
+      ],
+      [
+        "recommended",
+        "address",
+        "Street address, one line"
+      ],
+      [
+        "recommended",
+        "locality",
+        "City or town"
+      ],
+      [
+        "recommended",
+        "cuisine",
+        "Cuisine, as an OpenStreetMap value (pizza, coffee_shop, …); repeats, primary first"
+      ],
+      [
+        "recommended",
+        "osm-id",
+        "OpenStreetMap id, e.g. node:10011069455"
+      ],
+      [
+        "recommended",
+        "g",
+        "Geohash of the location"
+      ],
+      [
+        "optional",
+        "description",
+        "What it is, in a sentence or two"
+      ],
+      [
+        "optional",
+        "country",
+        "ISO 3166-1 two-letter code"
+      ],
+      [
+        "optional",
+        "region",
+        "State or province"
+      ],
+      [
+        "optional",
+        "postal-code",
+        "Postcode"
+      ],
+      [
+        "optional",
+        "lat",
+        "Latitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "lon",
+        "Longitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "website",
+        "Website"
+      ],
+      [
+        "field-type",
+        "website",
+        "url"
+      ],
+      [
+        "optional",
+        "image",
+        "A photo"
+      ],
+      [
+        "field-type",
+        "image",
+        "url"
+      ],
+      [
+        "optional",
+        "phone",
+        "Phone number, international format"
+      ],
+      [
+        "optional",
+        "opening-hours",
+        "Opening hours, in OpenStreetMap syntax"
+      ],
+      [
+        "optional",
+        "accepts-bitcoin",
+        "lightning, onchain, both, or yes when the method is unknown"
+      ],
+      [
+        "optional",
+        "btcmap-id",
+        "BTC Map place id"
+      ],
+      [
+        "optional",
+        "source",
+        "Where this record came from"
+      ],
+      [
+        "optional",
+        "license",
+        "Licence of the record's data, as an SPDX identifier"
+      ],
+      [
+        "optional",
+        "price-range",
+        "1 (cheap) to 4 (expensive)"
+      ],
+      [
+        "optional",
+        "menu",
+        "Link to the menu"
+      ],
+      [
+        "field-type",
+        "menu",
+        "url"
+      ],
+      [
+        "optional",
+        "reservations",
+        "Link for reservations"
+      ],
+      [
+        "field-type",
+        "reservations",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "name"
+      ],
+      [
+        "display",
+        "summary",
+        "address"
+      ],
+      [
+        "display",
+        "image",
+        "image"
+      ],
+      [
+        "display",
+        "link",
+        "website"
+      ],
+      [
+        "display",
+        "location",
+        "g"
+      ],
+      [
+        "license",
+        "ODbL-1.0"
+      ],
+      [
+        "r",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      [
+        "r",
+        "https://opendatacommons.org/licenses/odbl/1-0/"
+      ],
+      [
+        "r",
+        "https://btcmap.org"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1766431047,
+    "id": "37f2c7c4bceed56c6ab845a6b39913a809a3dad8cbcd79c6e09a3f0be5eda96b",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "616d7df81faf960994a784b4d95ea8eaacb3b01902b9aec08d736a2d7bcf0e9e4e53761dd4d9eee5398813d1cb9b04a928ac76f5b0e02f700b7dec6c3e83104d",
+    "tags": [
+      [
+        "d",
+        "08ef7717-5811-4240-a1c0-9dc2f516a4f0"
+      ],
+      [
+        "names",
+        "replaceable item",
+        "Replaceable Items on DCoSL (updated)"
+      ],
+      [
+        "description",
+        "testing 39998 on DCoSL relay"
+      ],
+      [
+        "required",
+        "t"
+      ],
+      [
+        "recommended",
+        "description"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791233140,
+    "id": "3f6b6c83f8c82e14660300f5b68e537318c334bfe636ed17a0c74cb120911236",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "784dceda6c64ebb82b2e8a4a513aa495c8622a407a1d8743e9935e76afe6f55206953f142c058173b47a5b0bfccbf096150d9a08318a4c85462a954fb639a64e",
+    "tags": [
+      [
+        "d",
+        "github-accounts"
+      ],
+      [
+        "b",
+        "b-tag-deferred"
+      ],
+      [
+        "alt",
+        "A withdrawn concept copy: considered, and affiliated with no community concept."
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792417785,
+    "id": "447b4101339ab52ea12d56e116928d74ca74e975b3b39c2c2d2daf925098ae22",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "0d09c98cd6b39f771dfa77708f5c7da94a0c3e3fe795a27a46107dcc5f87464cc035a99a7562e54f0553b0cda93224dc0d7fcaea605effe77e5a72fe5696052d",
+    "tags": [
+      [
+        "d",
+        "events"
+      ],
+      [
+        "names",
+        "Event",
+        "Events"
+      ],
+      [
+        "description",
+        "Upcoming public events from the calendars on Event Calendars, read by Event Index (eventindex.space) from each calendar's iCalendar feed, on Luma, Meetup or elsewhere. Event Index lists each event; it doesn't publish as the organizer, who is named on the item. Events their organizers publish on nostr themselves are read as they are, not copied here. The events belong to their organizers."
+      ],
+      [
+        "required",
+        "title",
+        "The event's title, as its organizer wrote it"
+      ],
+      [
+        "required",
+        "start",
+        "When it starts: unix seconds, or YYYY-MM-DD for an all-day event, as in NIP-52"
+      ],
+      [
+        "recommended",
+        "end",
+        "When it ends, in the same form as start; for an all-day event, the day after the last day"
+      ],
+      [
+        "recommended",
+        "when",
+        "When it happens, written out in the event's local time, e.g. Wed 28 Oct 2026, 5:30 PM-8:00 PM EDT"
+      ],
+      [
+        "recommended",
+        "start_tzid",
+        "The time zone the event happens in, as an IANA name, e.g. America/New_York"
+      ],
+      [
+        "recommended",
+        "organizer",
+        "Who hosts it: the name of the calendar it comes from"
+      ],
+      [
+        "recommended",
+        "calendar",
+        "The calendar it comes from, on Event Calendars"
+      ],
+      [
+        "field-type",
+        "calendar",
+        "address"
+      ],
+      [
+        "recommended",
+        "source",
+        "The platform its calendar lives on: luma, meetup, google, mobilizon or gancio; for any other calendar, its feed's host name"
+      ],
+      [
+        "recommended",
+        "location",
+        "Where it happens, as the organizer wrote it: an address, a room or a link"
+      ],
+      [
+        "optional",
+        "end_tzid",
+        "The end's time zone, when it differs from the start's"
+      ],
+      [
+        "optional",
+        "g",
+        "Geohash of where it happens"
+      ],
+      [
+        "optional",
+        "summary",
+        "The start of the event's description, up to 280 characters"
+      ],
+      [
+        "optional",
+        "status",
+        "cancelled, when the organizer has cancelled it"
+      ],
+      [
+        "optional",
+        "p",
+        "The organizer's own nostr key (hex), once they've verified it with Event Index"
+      ],
+      [
+        "optional",
+        "luma-slug",
+        "The event's address on Luma, e.g. click-cafe-all-in-2026"
+      ],
+      [
+        "optional",
+        "meetup-group",
+        "The group's name in its Meetup address, e.g. atlantabitdevs"
+      ],
+      [
+        "optional",
+        "meetup-event",
+        "The event's number in its Meetup address"
+      ],
+      [
+        "optional",
+        "index-id",
+        "The event's id on Event Index"
+      ],
+      [
+        "optional",
+        "url",
+        "The event's own page, for sources without a link of their own"
+      ],
+      [
+        "field-type",
+        "url",
+        "url"
+      ],
+      [
+        "optional",
+        "image",
+        "The event's image, where its source allows one"
+      ],
+      [
+        "field-type",
+        "image",
+        "url"
+      ],
+      [
+        "optional",
+        "t",
+        "A topic or search term, such as the city and the source; repeats"
+      ],
+      [
+        "display",
+        "title",
+        "title"
+      ],
+      [
+        "display",
+        "summary",
+        "when"
+      ],
+      [
+        "display",
+        "image",
+        "image"
+      ],
+      [
+        "display",
+        "link",
+        "url"
+      ],
+      [
+        "display",
+        "location",
+        "g"
+      ],
+      [
+        "display",
+        "fact",
+        "organizer",
+        "Hosted by"
+      ],
+      [
+        "display",
+        "fact",
+        "source",
+        "Source"
+      ],
+      [
+        "display",
+        "fact",
+        "location",
+        "Where"
+      ],
+      [
+        "display",
+        "fact",
+        "status",
+        "Status"
+      ],
+      [
+        "image",
+        "https://cdn.jsdelivr.net/gh/Event-Index/index@v0.1.2/brand/mark/mark-tile-512.png"
+      ],
+      [
+        "link",
+        "d9bbfa389406b8f24e479aeb898b35dca9164fec501f10ee65c17cceeb440aa8",
+        "wss://dcosl.brainstorm.world",
+        "slug",
+        "luma-slug"
+      ],
+      [
+        "link",
+        "de8985f82d8a1db379ca58e4de8ce1030e3dea0d4076e65d192f80f619801356",
+        "wss://dcosl.brainstorm.world",
+        "group",
+        "meetup-group",
+        "id",
+        "meetup-event"
+      ],
+      [
+        "link",
+        "25a3cee4637a79f6cd0d21c11c1405ded88fc149354e54d1365659cb3ef04607",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "index-id"
+      ],
+      [
+        "r",
+        "https://eventindex.space"
+      ],
+      [
+        "r",
+        "https://github.com/Event-Index/index/blob/main/brand/LICENSE"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:events",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791987114,
+    "id": "556f0d6df86a8cb4b3ea62a8d9c7b7984e752fd83e2a9eb3c943ae216d7ca36a",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "1b67d79afee164cce928f58912a92a3c4d7eac9ec67a967077475c16938fc2cc7e1fca459f1cfe9ea8238b0e31277b19dc833438661d96efdec3f478785cee4d",
+    "tags": [
+      [
+        "d",
+        "b504f5a8-949f-4d31-ad14-8afcebde2b34"
+      ],
+      [
+        "names",
+        "V4V Song",
+        "V4V Songs"
+      ],
+      [
+        "description",
+        "Value-for-value enabled music tracks from Podcast Index"
+      ],
+      [
+        "required",
+        "t"
+      ],
+      [
+        "required",
+        "title"
+      ],
+      [
+        "required",
+        "artist"
+      ],
+      [
+        "required",
+        "url"
+      ],
+      [
+        "required",
+        "duration"
+      ],
+      [
+        "required",
+        "feedId"
+      ],
+      [
+        "required",
+        "feedGuid"
+      ],
+      [
+        "required",
+        "artwork"
+      ],
+      [
+        "required",
+        "alt"
+      ],
+      [
+        "b",
+        "39998:77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3:b504f5a8-949f-4d31-ad14-8afcebde2b34",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791585409,
+    "id": "59d847a44d53017b3d5734702b94b45712ac000cc83f1ef9d7a0f33a7aa52ee8",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "fc5d1c2b8450b4aea209289058639ac5baa69b7a0e334546dfd352116883bb48b0a1be5bffdc64715a52f2f01a994a45de2b9180ad66661c34724c0afca98f58",
+    "tags": [
+      [
+        "d",
+        "divine-videos"
+      ],
+      [
+        "names",
+        "Divine Video",
+        "Divine Videos"
+      ],
+      [
+        "description",
+        "Short looping videos posted on Divine (divine.video), including classic Vines restored from the Vine archive. Each item links to the video file on Divine's media server. The videos belong to their creators."
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:divine-videos"
+      ],
+      [
+        "image",
+        "https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f3ac.svg"
+      ],
+      [
+        "required",
+        "title",
+        "Title as the creator posted it"
+      ],
+      [
+        "required",
+        "video",
+        "Playable MP4 of the video, e.g. https://media.divine.video/<sha256>.mp4"
+      ],
+      [
+        "recommended",
+        "thumbnail",
+        "Still image shown before the video plays"
+      ],
+      [
+        "recommended",
+        "creator",
+        "Creator's display name. For classic Vines, the name on the original Vine account"
+      ],
+      [
+        "recommended",
+        "creator-npub",
+        "Nostr account that posted the video, npub form. Divine creates it behind an email sign-in, so the creator may never have seen it. For classic Vines it is the archive account Divine holds until the original creator claims it"
+      ],
+      [
+        "recommended",
+        "creator-nip05",
+        "Creator's verified address, e.g. alice@divine.video. Included only when it resolves to creator-npub at the time of listing"
+      ],
+      [
+        "recommended",
+        "divine-id",
+        "The video's id on Divine, the d tag of its kind 34236 event: the file hash for native videos, the original Vine id for classic Vines"
+      ],
+      [
+        "recommended",
+        "sha256",
+        "SHA-256 hash of the video file, its address on Blossom media servers"
+      ],
+      [
+        "recommended",
+        "published",
+        "Date first posted, YYYY-MM-DD. For classic Vines, the original Vine upload date"
+      ],
+      [
+        "optional",
+        "description",
+        "Caption posted with the video"
+      ],
+      [
+        "optional",
+        "duration",
+        "Length in seconds"
+      ],
+      [
+        "optional",
+        "dimensions",
+        "Width x height in pixels, e.g. 1080x1920"
+      ],
+      [
+        "optional",
+        "platform",
+        "divine for videos posted on Divine, vine for classic Vines restored from the archive"
+      ],
+      [
+        "optional",
+        "vine-creator-id",
+        "Original Vine user id, classic Vines only"
+      ],
+      [
+        "optional",
+        "vine-loops",
+        "Loop count on Vine when the archive was taken, classic Vines only"
+      ],
+      [
+        "optional",
+        "vine-likes",
+        "Like count on Vine when the archive was taken, classic Vines only"
+      ],
+      [
+        "optional",
+        "language",
+        "Spoken or written language, ISO 639-1 code"
+      ],
+      [
+        "optional",
+        "verification",
+        "Divine's capture check result, e.g. verified_mobile or verified_web"
+      ],
+      [
+        "field-type",
+        "video",
+        "url"
+      ],
+      [
+        "field-type",
+        "thumbnail",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "title"
+      ],
+      [
+        "display",
+        "summary",
+        "creator"
+      ],
+      [
+        "display",
+        "image",
+        "thumbnail"
+      ],
+      [
+        "display",
+        "media",
+        "video"
+      ],
+      [
+        "display",
+        "fact",
+        "creator-nip05",
+        "Handle"
+      ],
+      [
+        "display",
+        "fact",
+        "published",
+        "Posted"
+      ],
+      [
+        "display",
+        "fact",
+        "duration",
+        "Seconds"
+      ],
+      [
+        "display",
+        "fact",
+        "platform",
+        "Platform"
+      ],
+      [
+        "display",
+        "fact",
+        "vine-loops",
+        "Vine loops"
+      ],
+      [
+        "display",
+        "fact",
+        "vine-likes",
+        "Vine likes"
+      ],
+      [
+        "link",
+        "97d7f683f8cfea346e389042430e1795fc6ddae25ee9dff298c95867d707b7ee",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "divine-id"
+      ],
+      [
+        "link",
+        "f07980288c1036e748bf80070b07cc2780a295b3ee15dd8b306dfea87abafd20",
+        "wss://dcosl.brainstorm.world",
+        "npub",
+        "creator-npub"
+      ],
+      [
+        "r",
+        "https://divine.video"
+      ],
+      [
+        "r",
+        "https://github.com/jdecked/twemoji#license"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074148,
+    "id": "5ca09f6565c1280f5af5977f4e1e91a830bc98b7d5ab943dc1d95e737aeccaa7",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "87ec9c22f8d195683d3dcd37e59f545f9dd04711f3181997bd19e8290c15d6ed942e79f7b8d38bc2e096d2014aa2344f28414c2b467b45c0ba890a1929eb4a6c",
+    "tags": [
+      [
+        "d",
+        "thriller"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"thriller\",\"name\":\"thriller\",\"title\":\"Thriller\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"thriller\",\"name\":\"thriller\",\"title\":\"Thriller\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792418121,
+    "id": "681f3cebb87eb3a085694e90a4fe29a18e6056bd9e2df8058ca46db31de37c99",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "7feb83585a0850f80462c0ce2948bcc9ff0e3bb9939c7bdbd49fe9817d9bc4e769aebdc356381423798733019ab68306872af394fb31663d0fc2279078f7f779",
+    "tags": [
+      [
+        "d",
+        "event-calendars"
+      ],
+      [
+        "names",
+        "Event Calendar",
+        "Event Calendars"
+      ],
+      [
+        "description",
+        "Public event calendars from Luma, Meetup and other iCalendar feeds, and organizers who publish their events on nostr, gathered by Event Index (eventindex.space). Their upcoming events are listed on Events. Event Index never publishes as an organizer: an entry's p is the organizer's own key. The directory is in the public domain (CC0); the events belong to their organizers."
+      ],
+      [
+        "required",
+        "name",
+        "The calendar's name, as its organizer gives it"
+      ],
+      [
+        "required",
+        "role",
+        "calendar for an organizer's own calendar; aggregator for a feed that only leads to other calendars"
+      ],
+      [
+        "recommended",
+        "p",
+        "The organizer's own nostr key (hex): the publisher of a calendar on nostr, or the key a feed's organizer verified with Event Index"
+      ],
+      [
+        "recommended",
+        "index-name",
+        "The calendar's name on Event Index: its page is eventindex.space/calendar/<name>"
+      ],
+      [
+        "recommended",
+        "feed",
+        "The iCalendar feed the calendar is read from"
+      ],
+      [
+        "field-type",
+        "feed",
+        "url"
+      ],
+      [
+        "recommended",
+        "source",
+        "Where the calendar lives: luma, meetup, google, mobilizon, gancio or nostr; for any other feed, its host name"
+      ],
+      [
+        "recommended",
+        "location",
+        "City or region the calendar is about, e.g. San Diego, US"
+      ],
+      [
+        "recommended",
+        "g",
+        "Geohash of the calendar's usual area"
+      ],
+      [
+        "optional",
+        "luma-id",
+        "The calendar's id on Luma, e.g. cal-BvuRd9eaZnDGBwy"
+      ],
+      [
+        "optional",
+        "meetup-group",
+        "The group's name in its Meetup address, e.g. sdbitcoiners"
+      ],
+      [
+        "optional",
+        "calendar",
+        "A native kind-31924 calendar this entry stands for"
+      ],
+      [
+        "field-type",
+        "calendar",
+        "address"
+      ],
+      [
+        "optional",
+        "t",
+        "A topic or search term, such as the city and the source; repeats"
+      ],
+      [
+        "optional",
+        "description",
+        "The calendar's own description, from its feed"
+      ],
+      [
+        "optional",
+        "image",
+        "The calendar's own image, from its feed"
+      ],
+      [
+        "field-type",
+        "image",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "name"
+      ],
+      [
+        "display",
+        "summary",
+        "location"
+      ],
+      [
+        "display",
+        "image",
+        "image"
+      ],
+      [
+        "display",
+        "location",
+        "g"
+      ],
+      [
+        "display",
+        "fact",
+        "source",
+        "Source"
+      ],
+      [
+        "image",
+        "https://cdn.jsdelivr.net/gh/Event-Index/index@v0.1.2/brand/mark/mark-tile-512.png"
+      ],
+      [
+        "link",
+        "a58cfc52bdcb33367b09306a8223008b89410396ce41f5acfe446aaadf62aec6",
+        "wss://dcosl.brainstorm.world",
+        "name",
+        "index-name"
+      ],
+      [
+        "link",
+        "d9de0891d283076ed09f3e00cea9a3912d0172feeea0c367a7045f604f319cc8",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "luma-id"
+      ],
+      [
+        "link",
+        "58930f30ae11384ddc1a52dd348e538e384d74a44bbc8908dca46bd5bc43fc12",
+        "wss://dcosl.brainstorm.world",
+        "group",
+        "meetup-group"
+      ],
+      [
+        "r",
+        "https://eventindex.space"
+      ],
+      [
+        "r",
+        "https://github.com/Event-Index/index/blob/main/seeds/LICENSE"
+      ],
+      [
+        "r",
+        "https://github.com/Event-Index/index/blob/main/brand/LICENSE"
+      ],
+      [
+        "license",
+        "CC0-1.0"
+      ],
+      [
+        "r",
+        "https://eventindex.space"
+      ],
+      [
+        "r",
+        "https://github.com/Event-Index/index/blob/main/brand/LICENSE"
+      ],
+      [
+        "r",
+        "https://eventindex.space"
+      ],
+      [
+        "r",
+        "https://github.com/Event-Index/index/blob/main/seeds/LICENSE"
+      ],
+      [
+        "r",
+        "https://github.com/Event-Index/index/blob/main/brand/LICENSE"
+      ],
+      [
+        "license",
+        "CC0-1.0"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:event-calendars",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1790953484,
+    "id": "8de5bea921acc6bd73252c460a56b6188c5c6908f161b44323d48a26b80ab30b",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "18594d5c02a17f3eb365049963e3dc4c39fb1970a5e50739115b5d8726bc3d12a4127a5491759c475eeb6f58a261b5128696656e707d3d97f0abfc21ab7a5a62",
+    "tags": [
+      [
+        "d",
+        "github-accounts"
+      ],
+      [
+        "names",
+        "GitHub Account",
+        "GitHub Accounts"
+      ],
+      [
+        "description",
+        "A list of github handles/accounts"
+      ],
+      [
+        "required",
+        "github-username"
+      ],
+      [
+        "field-type",
+        "github-username",
+        "text"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:github-accounts",
+        "pointer"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074147,
+    "id": "942280895b3ad8ae5b4bde43516c5429c531468bc3b0c4c26c9e7a96b07495b3",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "6914331132e50f962d647de7f95a58c1d88bdd049f65b2b4bfcbd5e55572d98d99923531fb7c983c8e5e419ddde51261053e795908d213354b594a425d4d3795",
+    "tags": [
+      [
+        "d",
+        "science-fiction"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"science-fiction\",\"name\":\"science-fiction\",\"title\":\"Science fiction\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"science-fiction\",\"name\":\"science-fiction\",\"title\":\"Science fiction\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780779154,
+    "id": "9b3c7b20391af74323bd424d44520e0390d78a200e88d7cfe7a5190d34fbf974",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "f21d6daeb4f573f45334f1cadd847ea7d2862b739d6fa609b277a560150b8e34023d36a829ab731c99442bf94070dacf20e7d635505960d7bf83a08f21a3f219",
+    "tags": [
+      [
+        "d",
+        "friends-of-plebchain-radio"
+      ],
+      [
+        "t",
+        "brainstorm-community"
+      ],
+      [
+        "founder",
+        "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450"
+      ],
+      [
+        "name",
+        "Friends of Plebchain Radio"
+      ],
+      [
+        "description",
+        "A group for Plebchain Radio guests and supporters"
+      ],
+      [
+        "belonging",
+        "People who've been guests on Plebchain Radio or have supported the show in the past"
+      ],
+      [
+        "claims",
+        "39999:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:friends-of-plebchain-radio"
+      ],
+      [
+        "membership_threshold",
+        "1"
+      ],
+      [
+        "influence_cutoff",
+        "0.5"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1769111562,
+    "id": "9f43b0fa135c4b98f1f5e14692d39e945e8e0fbde15afdde9bf05f2084a9ac1c",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "67cc46a58417ead5a38ddcb145da08e92673ca54798468f3c4208f29d23d02a21469ee42a90d83795de4988379c8305baa1d7c1c20a86b8788f5765031f034d3",
+    "tags": [
+      [
+        "d",
+        "17c49d8b-c0d9-49bf-875f-6c7568f45f38"
+      ],
+      [
+        "names",
+        "Song From PodcastIndex",
+        "Songs From PodcastIndex – 1-22"
+      ],
+      [
+        "description",
+        "This list is created by going through podcastindex.org and adding every item where podcast:medium is 'music'"
+      ],
+      [
+        "required",
+        "SongFileLinkURL"
+      ],
+      [
+        "required",
+        "PodcastIndexSongURL"
+      ],
+      [
+        "required",
+        "RSSFeedURL"
+      ],
+      [
+        "required",
+        "ArtistGUID"
+      ],
+      [
+        "optional",
+        "ArtistName"
+      ],
+      [
+        "optional",
+        "SongName"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074148,
+    "id": "a102802e6d8f1c01dc9027e722dae49836d356504278adaab3e0059c82534849",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "1dd992ff5192f2b64b7c9c3ac7b736292efc73f5b7132eefb81f69c4d8134d809b92cf6eafa27b0366fe1b1adab4a9d46942d5514393cd2001f584d220fcbc95",
+    "tags": [
+      [
+        "d",
+        "fantasy"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"fantasy\",\"name\":\"fantasy\",\"title\":\"Fantasy\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"fantasy\",\"name\":\"fantasy\",\"title\":\"Fantasy\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1790900557,
+    "id": "a95c365550b0ed8de4356f449fb3e2a4fed66d11dcbf5ddb95ced7660c727294",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "669e8943adf65cba2aeed5dde9568a5e43b40249abd5225ed61d16402d0c3db4fc2d6d228c2d004a9d303c4c715c78be33039c7a198709b02734f0cfafe64764",
+    "tags": [
+      [
+        "names",
+        "URL Template",
+        "URL Templates"
+      ],
+      [
+        "description",
+        "Link patterns that turn a list item's fields into a URL. RFC 6570 level-1 templates: {placeholder} after the host, https only."
+      ],
+      [
+        "required",
+        "url-template",
+        "An RFC 6570 level-1 template, e.g. https://github.com/{username}"
+      ],
+      [
+        "required",
+        "name",
+        "What the link is, e.g. GitHub profile"
+      ],
+      [
+        "optional",
+        "description"
+      ],
+      [
+        "b",
+        "39998:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:url-templates",
+        "pointer"
+      ],
+      [
+        "d",
+        "url-templates"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792496452,
+    "id": "b63ed9a704a3ffe1175af70d65fdff0a21d59786b5d9c05ed4f63e538d3245c4",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "6dd937ea147332856b0a51ef5807c53947979c0c424bcd860a317060adfdf8f2cf3a8daa9e2c2bdba5bb8855d2a739d670ad50c992c8bd564e0b7e7a9a121479",
+    "tags": [
+      [
+        "d",
+        "book-submissions"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"book-submissions\",\"name\":\"book-submissions\",\"title\":\"Book submissions\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"book-submissions\",\"name\":\"book-submissions\",\"title\":\"Book submissions\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074147,
+    "id": "b86674086079857008ded85a320c744f803d92eb5010ee7a16d4d042cf0fdc0b",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "3675ec75c240ef7e092e5362c02bc2cbc0ad086a8b3f0ab5e7d7b2639a8d248a834927801783114cce3b8998ae134272f22f10c70f3b8006e1077668da46addb",
+    "tags": [
+      [
+        "d",
+        "literary-fiction"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"literary-fiction\",\"name\":\"literary-fiction\",\"title\":\"Literary fiction\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"literary-fiction\",\"name\":\"literary-fiction\",\"title\":\"Literary fiction\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074147,
+    "id": "bb37574a30b3d1db5dccd8795a8df872a9b47e23b89d1d6168a2c84113146278",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "7b406d92468f06ac6cb638909108d1d3d4aa9ef20d57d8f19a7b8f58e3112ac110dbd289031a04b2b3073c9f169898fc97f20b4dcc2c688a03edf92b62276d64",
+    "tags": [
+      [
+        "d",
+        "mystery"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"mystery\",\"name\":\"mystery\",\"title\":\"Mystery\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"mystery\",\"name\":\"mystery\",\"title\":\"Mystery\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1766433489,
+    "id": "be9da1c29191329266d2226a3e28f772a61e61f84c1a273032145ea9ca313808",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "60bc825d1a2ad5e7f06375f75915fa36889e82c9037ca0cc85cbe381b98d476730689da17bf04d8d63494e5d8edb476d0707b2ceda7119118814067fdd9c74a2",
+    "tags": [
+      [
+        "d",
+        "e2f88a6a-1802-4c7b-9be6-848a22803135"
+      ],
+      [
+        "names",
+        "event",
+        "Events"
+      ],
+      [
+        "description",
+        ""
+      ],
+      [
+        "required",
+        "e"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1790952658,
+    "id": "c52a79de547605aceb8ee7093d8d22a52e6a2e3bc93e288b5c094d567b0cfec4",
+    "kind": 39998,
+    "pubkey": "77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3",
+    "sig": "ff3dce0feac921471e147290c5ab0b55e39f2348448c1c63a44d18df70c3f2c7ba04b99cf3d164309e00a0527aac94dae898f67380b076b3a1eb0f91de2f79d4",
+    "tags": [
+      [
+        "d",
+        "c7e2e5f1-2258-4d9d-92ed-d29b9837a82a"
+      ],
+      [
+        "names",
+        "V4V Musician",
+        "V4V Musicians"
+      ],
+      [
+        "description",
+        "Value-for-value enabled musicians from Podcast Index"
+      ],
+      [
+        "required",
+        "t"
+      ],
+      [
+        "required",
+        "name"
+      ],
+      [
+        "required",
+        "feedUrl"
+      ],
+      [
+        "required",
+        "feedId"
+      ],
+      [
+        "required",
+        "feedGuid"
+      ],
+      [
+        "required",
+        "artwork"
+      ],
+      [
+        "required",
+        "alt"
+      ],
+      [
+        "b",
+        "39998:77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3:c7e2e5f1-2258-4d9d-92ed-d29b9837a82a",
+        "pointer"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791670512,
+    "id": "cee99884b1ebe830f0db90e85483b228ccbf60164b94f6fa665291d3dd2d0ba1",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "8792ae820b366d93f75c29b83133488462181641fc3441dbbf98d516da2d8c112e79d5c871a264d0f42fc559e80d1ae2a3fa14f932168bdd6d1f1a5fb5d16791",
+    "tags": [
+      [
+        "d",
+        "demo-dictionary-concepts"
+      ],
+      [
+        "names",
+        "Demo Dictionary Concept",
+        "Demo Dictionary Concepts"
+      ],
+      [
+        "description",
+        "Lists that make good candidates for Dictionary Concepts"
+      ],
+      [
+        "required",
+        "a",
+        "The concept list header, by coordinate (kind 39998)"
+      ],
+      [
+        "recommended",
+        "name",
+        "The concept name, as its list calls itself"
+      ],
+      [
+        "optional",
+        "removed",
+        "Any value takes the concept out of the Dictionary"
+      ],
+      [
+        "field-type",
+        "a",
+        "address"
+      ],
+      [
+        "display",
+        "title",
+        "name"
+      ],
+      [
+        "b",
+        "39998:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:demo-dictionary-concepts",
+        "pointer"
+      ],
+      [
+        "alt",
+        "A list of the concepts the Brainstorm Dictionary shows"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792496452,
+    "id": "d8a7a9116f041881315d4d88b60afb39bcc02e8cf6584854fc3ba57878599126",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "3d1ff72b111280b642e98c5e4ac1e9c1acb8e8e5e41b05a878691f51303f793851f84a6f0d197cb2ddd5df9db67590d3cd065d3e6a07a010d174888242898ff7",
+    "tags": [
+      [
+        "d",
+        "book-tags"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"book-tags\",\"name\":\"book-tags\",\"title\":\"Book tags\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"book-tags\",\"name\":\"book-tags\",\"title\":\"Book tags\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074149,
+    "id": "d8d173dccf4e3eb69e2c01480c3cf62322814bf8ca2f88de190506ba02681bb5",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "ee264d027a7865b44106286934b2c2aef79222cd1abe21320225b41fb2c10ea4b6ccdb568e60e8cfcaf930e89f44e54d8df7084027f00c264b78a8328ecd1d38",
+    "tags": [
+      [
+        "d",
+        "history"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"history\",\"name\":\"history\",\"title\":\"History\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"history\",\"name\":\"history\",\"title\":\"History\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1770211562,
+    "id": "dc330a8416d575211e177da910b810ec7bb5404dedec287106a0fbf47a60a1f7",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "7a5a49a2161f2bed83b02558bc03af9295958430ec8a44321fd63c8511a4a6ba5dc7962fef3cf387cd3b70edf38faa32c097661b735002299c38f1cd0e7de850",
+    "tags": [
+      [
+        "d",
+        "f4e834b6-d4b2-404c-a823-182db65b2fe7"
+      ],
+      [
+        "names",
+        "real paid gig",
+        "Real Paid Gigs"
+      ],
+      [
+        "description",
+        "There are many 33401 (gig proposals) that have been created and ostensibly \"worked\" with a zap sent by the end. Given that the protocol has no way to determine which of these may have been test or spam scenarios, this list will track **real** gigs where a worker was paid by a different person for work the latter earnestly requested."
+      ],
+      [
+        "required",
+        "a"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1778872714,
+    "id": "dd253f4a292f14b94464612f726bdc787c854f41ec43e81c86865bdf1df8ca6e",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "c0ea4746fbecd5f31632c59d62b8b794cb3cd3d1de3151341a5614f0a756b361f07f406e5bac34d11225edeeeae5eff172dea173964ed3122b5f4ab36aede363",
+    "tags": [
+      [
+        "d",
+        "podcasters"
+      ],
+      [
+        "names",
+        "Podcaster",
+        "Podcasters"
+      ],
+      [
+        "description",
+        "A list of all podcasters on nostr"
+      ],
+      [
+        "required",
+        "name"
+      ],
+      [
+        "field-type",
+        "name",
+        "text"
+      ],
+      [
+        "allowed",
+        "podcast-name"
+      ],
+      [
+        "field-type",
+        "podcast-name",
+        "text"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792496452,
+    "id": "dfa2abd7f80b2fb241c76eab852ead162098f9bbe0ac051da919f722d0b879ef",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "d0cdf0d9964781a9dddd0971f2b05045c1676e2bbdc5f64a88617f39de5c833b8fa639f7af7159fbcd16e80e0c17da62b8c05cd2efe648c6e0cef81f601bc263",
+    "tags": [
+      [
+        "d",
+        "book-tag-assertions"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"book-tag-assertions\",\"name\":\"book-tag-assertions\",\"title\":\"Book tag assertions\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"book-tag-assertions\",\"name\":\"book-tag-assertions\",\"title\":\"Book tag assertions\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1772467021,
+    "id": "e1197f5f7de3ce3b7afcbc25e9aa599fad711f2423a50b4a0643dbf50b922108",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "4708ee73a971c952a1347bf5eab46a3eef75f46ae756b9a5cea20ac11f372a152ef05d29842b11b0037f81d67d2de1a07f86ab45c862a47a5d22280d6b42cc7e",
+    "tags": [
+      [
+        "d",
+        "08d1dc21-15a2-4424-ac4b-4de157b86906"
+      ],
+      [
+        "names",
+        "Genre",
+        "Genres [for Trustwave]"
+      ],
+      [
+        "description",
+        ""
+      ],
+      [
+        "required",
+        "Name"
+      ],
+      [
+        "required",
+        "Description"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1772467069,
+    "id": "e6c5528d9d1fc2595d064f19dbeca644052c59d2f5ebf0bd4acc2fae18d1a195",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "d828a1bd97686c68e969d21036077c34984f7a7d67a98c678c62888601341d6f1c3519b11e73814c83a56a8a1b90eb6690154197020b8a29e48c61fbf58a0257",
+    "tags": [
+      [
+        "d",
+        "93b315f7-cd9c-4918-8ef9-855eeaae9bd3"
+      ],
+      [
+        "names",
+        "Mood",
+        "Moods [For Trustwave]"
+      ],
+      [
+        "description",
+        ""
+      ],
+      [
+        "required",
+        "Name"
+      ],
+      [
+        "optional",
+        "Description"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1790952666,
+    "id": "e71afd26ad3fa44e21e64f5ca6554809071978bd9b845245db5335f5ef1e263c",
+    "kind": 39998,
+    "pubkey": "77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3",
+    "sig": "0444bcf07f42a60cc3ce337ebab1cfa08a3e8ba14f273e72e2e8f530d3c54718131d1f622c1e4d9c5c6ff7fdcf800f093a4d9c7e68e0c6b566dac9dfacecafca",
+    "tags": [
+      [
+        "d",
+        "b504f5a8-949f-4d31-ad14-8afcebde2b34"
+      ],
+      [
+        "names",
+        "V4V Song",
+        "V4V Songs"
+      ],
+      [
+        "description",
+        "Value-for-value enabled music tracks from Podcast Index"
+      ],
+      [
+        "required",
+        "t"
+      ],
+      [
+        "required",
+        "title"
+      ],
+      [
+        "required",
+        "artist"
+      ],
+      [
+        "required",
+        "url"
+      ],
+      [
+        "required",
+        "duration"
+      ],
+      [
+        "required",
+        "feedId"
+      ],
+      [
+        "required",
+        "feedGuid"
+      ],
+      [
+        "required",
+        "artwork"
+      ],
+      [
+        "required",
+        "alt"
+      ],
+      [
+        "b",
+        "39998:77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3:b504f5a8-949f-4d31-ad14-8afcebde2b34",
+        "pointer"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1780074148,
+    "id": "e7e96474655b1b87d95a8f9530810c0c50c571c8911f5616fc97763cf257c35d",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "c83269ed55c53622fee4364d079cef3073b447a59572f253b429ea6e3df1e9c12591b9bb92a4e159528a1eb51dc0dae8daaed25b73513502700a34a6508e5639",
+    "tags": [
+      [
+        "d",
+        "romance"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"romance\",\"name\":\"romance\",\"title\":\"Romance\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"romance\",\"name\":\"romance\",\"title\":\"Romance\"}}"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1769111648,
+    "id": "f0ed08944360696341f888b83e23182fd8dcd16cabfd49481992fad4b88f6d60",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "1193f1c9a544a1d20a9f8553e446e7cf953097b010d23e9d617d1693c200c052b3a0482645a9c90c1f0c0445718293fa05f07f9d2fb0f2d862e31fbe57e3392e",
+    "tags": [
+      [
+        "d",
+        "8623051e-1736-437d-92b1-9049b86def30"
+      ],
+      [
+        "names",
+        "Musician on PodcastIndex",
+        "Musicians on PodcastIndex – 1-22"
+      ],
+      [
+        "description",
+        "This list is created by going through podcastindex.org and adding the musician name from every item where podcast:medium is 'music'"
+      ],
+      [
+        "required",
+        "ArtistGUID"
+      ],
+      [
+        "optional",
+        "ArtistName"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1773609062,
+    "id": "f3828e45c359999532c7e8ec93efd812b8e6dd5e16552a08a351b2861d91f116",
+    "kind": 39998,
+    "pubkey": "77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3",
+    "sig": "912c23fe19cccd8a02cf02338d8b9fb276312dc1a24ac7472c27b1ef242857a1507e906c4c2cd64888bf0840fc70d6d6303d615760181708e0e58288da8f5f5f",
+    "tags": [
+      [
+        "d",
+        "da216f8f-6a99-460a-801c-62e7217f7acd"
+      ],
+      [
+        "name",
+        "V4V Songs"
+      ],
+      [
+        "description",
+        "Value-for-value enabled music tracks from Podcast Index"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791480578,
+    "id": "fd5d5bce5be7b34135cbdeb662874512100b1d1a31ecfc5ad8a83da0ed5b1435",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "4a95cff2a8cf2e57edea1c2c7bb1f2595a353aba2da8564f4cc0971ffee11e596ce149dbc353f4a10acaced20ae477dd7f59d953e1fe9de63ab2141dd9c70bde",
+    "tags": [
+      [
+        "d",
+        "food-and-drink-places"
+      ],
+      [
+        "b",
+        "b-tag-deferred"
+      ],
+      [
+        "alt",
+        "A withdrawn concept copy: considered, and affiliated with no community concept."
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1773609062,
+    "id": "fea45f99c4298573dca02aa56a2d6d4b79cb75e02994767321194f9097993d5c",
+    "kind": 39998,
+    "pubkey": "77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3",
+    "sig": "c4b68f042cc9943e7fe7e98803f70c2326f0589be224a4e964a0c4f5285a0689591bb8fcbe366519b0afbf7d6e388cb32883acf6c8a7e3a56ac0f5f5f99c63fb",
+    "tags": [
+      [
+        "d",
+        "af24440d-f0dd-4a3e-a8ac-c16f6fdef10e"
+      ],
+      [
+        "name",
+        "V4V Musicians"
+      ],
+      [
+        "description",
+        "Value-for-value enabled musicians from Podcast Index"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1778872530,
+    "id": "ffb3e4b04839ff3a28f312cae67380ef3718f887d6da2319f1ce299c308be33a",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "6f38a521799cde5d911c20e8ac1fa41da9590562112edca6c096c57bac9d5784ce4c9f2438816f5061ef1566c9264c707b04babc87eb58c5c63bc6dbeb46c28e",
+    "tags": [
+      [
+        "d",
+        "curate-test-list"
+      ],
+      [
+        "names",
+        "Curate Test List",
+        "Curate Test List"
+      ],
+      [
+        "description",
+        "Testing list creation from the curate app"
+      ],
+      [
+        "allowed",
+        "topic"
+      ],
+      [
+        "field-type",
+        "topic",
+        "text"
+      ],
+      [
+        "allowed",
+        "test-tag"
+      ],
+      [
+        "field-type",
+        "test-tag",
+        "text"
+      ]
+    ]
+  }
+]

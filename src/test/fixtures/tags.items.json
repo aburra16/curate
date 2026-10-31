@@ -1,0 +1,92 @@
+[
+  {
+    "content": "{\"tag\":{\"slug\":\"espresso\",\"name\":\"espresso\",\"description\":\"\"}}",
+    "created_at": 1793296150,
+    "id": "21a4ddd44e8b6058a7042462dfe45bbaa74791e5b47af6d14a4ad33b46c975bc",
+    "kind": 39999,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "064ab98e7849cc5c4c5adb3b3e071d01548a429a0d0a66330be6cf5f682bb139a36c549df65a5804d0ebc5d543642dca518d1374678182b6be65e575b7032a7f",
+    "tags": [
+      [
+        "d",
+        "espresso"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag"
+      ],
+      [
+        "z",
+        "tag-for-nostr-event"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "{\"tag\":{\"slug\":\"classics\",\"name\":\"Classics\",\"description\":\"\"}}",
+    "created_at": 1793295253,
+    "id": "4d4ada496a2b3710d44d9390adbe3e9612a941e271ff3638b13c338faab569a3",
+    "kind": 39999,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "9b6c626bb9e020a2a91152d8edd8fbfa7a620ce87b2de5eb143b25749ce33dfa5e882b9993786db3f70271a97424eca94ab62497b31c6099b792c6989732c8f3",
+    "tags": [
+      [
+        "d",
+        "classics"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag"
+      ],
+      [
+        "z",
+        "tag-for-nostr-event"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "{\"tag\":{\"slug\":\"my-grok-bot\",\"name\":\"My Grok Bot\",\"description\":\"This nostr account is actively managed by one of the agents in my Grok or Grok Bot account. I also have direct access to the nostr account if I need to step in and take the reins.\"}}",
+    "created_at": 1793390631,
+    "id": "f2d21097c9416dbe40756592380762a1396e0adbc64bea65a341856bfea1934a",
+    "kind": 39999,
+    "pubkey": "e5272de914bd301755c439b88e6959a43c9d2664831f093c51e9c799a16a102f",
+    "sig": "52142522361acf87093913da4bfa783c6d04673e487d0906ba8ec086162a99a5f5a8e0cc5248f2a1c531e3ccd6982bd8983ab67ad0e7b1119985c5d507b42c6f",
+    "tags": [
+      [
+        "d",
+        "my-grok-bot"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag"
+      ],
+      [
+        "z",
+        "tag-for-nostr-pubkey"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  }
+]

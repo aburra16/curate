@@ -1,0 +1,132 @@
+{
+  "repo": "NosFabrica/Brainstorm-UI",
+  "commit": "b3a24e9a541d5bbdf8489b6ddaf480b6827ae77e",
+  "files": [
+    {
+      "upstream": "client/src/lib/dlistFields.ts",
+      "local": "src/lib/dlistFields.ts",
+      "sha256": "1eeb2d736d169d8759b9e6f0c1ac15358706e32c9efb78fe4fdbc6a954c64439"
+    },
+    {
+      "upstream": "client/src/lib/displayHints.ts",
+      "local": "src/lib/displayHints.ts",
+      "sha256": "f85408d9aa90054a60fc458470a598f927e278974ceeb327d359a7a31fd47402"
+    },
+    {
+      "upstream": "client/src/lib/itemPresentation.ts",
+      "local": "src/lib/itemPresentation.ts",
+      "sha256": "9dfae0f0375930b0cdf4eb76e83dcf70ffabc0a412fd41e55af3c8a0298e207b"
+    },
+    {
+      "upstream": "client/src/lib/linkTemplates.ts",
+      "local": "src/lib/linkTemplates.ts",
+      "sha256": "d6f017859cf9cf89209779d928633207d4a60c2d71c8e7ca82ca604693062968"
+    },
+    {
+      "upstream": "client/src/lib/geohash.ts",
+      "local": "src/lib/geohash.ts",
+      "sha256": "83b785973b6b64138828b672ec8189ecc5f12273923ab73bcc2ffa71f4980ded"
+    },
+    {
+      "upstream": "client/src/lib/mediaKind.ts",
+      "local": "src/lib/mediaKind.ts",
+      "sha256": "3cb297dd8be71ebb02a194b40329335fcbf48a3814a93f8ee922333aa24b8ee9"
+    },
+    {
+      "upstream": "client/src/lib/noteContent.ts",
+      "local": "src/lib/noteContent.ts",
+      "sha256": "9f671b2873c461e3d97d9b1a7708acf36891fb5e34eac0aaf587cb595b0cbd3a"
+    },
+    {
+      "upstream": "client/src/lib/newestPerAddress.ts",
+      "local": "src/lib/newestPerAddress.ts",
+      "sha256": "3c8a30ee1e146b5eba8a470e2a76a24121d3b7ca0c575db94d293da79f070532"
+    },
+    {
+      "upstream": "client/src/lib/blankEvent.ts",
+      "local": "src/lib/blankEvent.ts",
+      "sha256": "ae655d20bffaaa646586e8b8e3a965d9e1cdf63d7d191dc33e3e454ffdbf6f55"
+    },
+    {
+      "upstream": "client/src/lib/conceptResolution.ts",
+      "local": "src/lib/conceptResolution.ts",
+      "sha256": "0281a8f53071efb4802b1efca0b045ab48e03c2103918026a41e25f147a8c4b4"
+    },
+    {
+      "upstream": "client/src/lib/dictionaryConcepts.ts",
+      "local": "src/lib/dictionaryConcepts.ts",
+      "sha256": "f6a7471acf80aca5b8c198cb37d5d1d02e6136e7c104c1cc11b76d326a6caedd"
+    },
+    {
+      "upstream": "client/src/lib/dictionaryItems.ts",
+      "local": "src/lib/dictionaryItems.ts",
+      "sha256": "be0036019678d99e91a5e4fc373b320784c802c6f51ae4b171f5260f9a22c596"
+    },
+    {
+      "upstream": "client/src/lib/listRef.ts",
+      "local": "src/lib/listRef.ts",
+      "sha256": "8451da757a0a83bc01a5769c0581a312dc417d71d3d3c8de0c5da4f26c45dac4"
+    },
+    {
+      "upstream": "client/src/lib/blankEvent.test.ts",
+      "local": "src/lib/blankEvent.test.ts",
+      "sha256": "7a48e92bdddca5b42752b31d603f28133a84c23a79eecf7850a7ba85359ea63b"
+    },
+    {
+      "upstream": "client/src/lib/conceptResolution.test.ts",
+      "local": "src/lib/conceptResolution.test.ts",
+      "sha256": "c45ec4efa024027daf9fdd58e0f7a617642b87a19b26351b07f7c3f8a37130c6"
+    },
+    {
+      "upstream": "client/src/lib/dictionaryConcepts.test.ts",
+      "local": "src/lib/dictionaryConcepts.test.ts",
+      "sha256": "dc0f797dd93d93e438cd28cd3c1b4d30b74ae574576dd0f9e53d6dc844dd9813"
+    },
+    {
+      "upstream": "client/src/lib/dictionaryItems.test.ts",
+      "local": "src/lib/dictionaryItems.test.ts",
+      "sha256": "3e80680c74e8765f7dca74da9b22d8f5b9db87c29644666a3fee36e519a99d81"
+    },
+    {
+      "upstream": "client/src/lib/displayHints.test.ts",
+      "local": "src/lib/displayHints.test.ts",
+      "sha256": "df832cef16499b45e72c7bb8c98123f0a6c0dd892447d3cd0d37cc7a1cd69fae"
+    },
+    {
+      "upstream": "client/src/lib/dlistFields.test.ts",
+      "local": "src/lib/dlistFields.test.ts",
+      "sha256": "650a703ca01965c786327e893b947767fdb23e94454727a06d1ba5d4c5cadb22"
+    },
+    {
+      "upstream": "client/src/lib/geohash.test.ts",
+      "local": "src/lib/geohash.test.ts",
+      "sha256": "ec130243892dbe7c46d648391fb49116e673926bf889ab3d854232f6c7ad9321"
+    },
+    {
+      "upstream": "client/src/lib/linkTemplates.test.ts",
+      "local": "src/lib/linkTemplates.test.ts",
+      "sha256": "088b4428e2c68268a6779b6b1d71f745d8be833207ce9603e0b30085b1eb8d7c"
+    },
+    {
+      "upstream": "client/src/lib/listRef.test.ts",
+      "local": "src/lib/listRef.test.ts",
+      "sha256": "e66f055895a0e96b97146f37fb0f6ea2d7077f5f8cac26065a28282f7407d1a8"
+    },
+    {
+      "upstream": "client/src/lib/mediaKind.test.ts",
+      "local": "src/lib/mediaKind.test.ts",
+      "sha256": "0147136def98627b260b337455f7fc752168c00b6769111f2a38cbe40899d37f"
+    },
+    {
+      "upstream": "client/src/lib/noteContent.test.ts",
+      "local": "src/lib/noteContent.test.ts",
+      "sha256": "8004f8ba6dc54c90a33ffeeb6d2f73b757d29e0e29cbc5cf170822d88a6c6089"
+    },
+    {
+      "upstream": "client/public/built-on/built-on-brainstorm.js",
+      "local": "src/lib/built-on-brainstorm.js",
+      "commit": "9cedf9c0d1a9f7654cddc081c3eac80d9327d709",
+      "sha256": "c769ec4498b2beb0a1c942d58a2cdf22607fe68a84f2b0a4e38127edc0952f97"
+    }
+  ]
+}

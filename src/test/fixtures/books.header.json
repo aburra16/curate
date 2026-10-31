@@ -1,0 +1,152 @@
+[
+  {
+    "content": "",
+    "created_at": 1792496452,
+    "id": "0b95c22fe9b4231b620f6642c14c543a05b80b40bfee45c9d99c6a5eeef95df9",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "10707ccd76551c4d96cb4b92c0629a204cf70dca814a6dba57ed1fb4704d5670a1e94242309bb0da2f8b9c41811689e18570a6e41a23dbb8c59dfce97b898dc7",
+    "tags": [
+      [
+        "d",
+        "books"
+      ],
+      [
+        "names",
+        "Book",
+        "Books"
+      ],
+      [
+        "description",
+        "Books by title and author, from Open Library, kept by the Unbnd librarian. Readers rate, shelve and tag them on Unbnd."
+      ],
+      [
+        "required",
+        "title",
+        "Title"
+      ],
+      [
+        "recommended",
+        "author",
+        "Author, as Open Library writes it"
+      ],
+      [
+        "recommended",
+        "cover",
+        "Cover image"
+      ],
+      [
+        "recommended",
+        "isbn",
+        "ISBN-13"
+      ],
+      [
+        "optional",
+        "isbn10",
+        "ISBN-10"
+      ],
+      [
+        "optional",
+        "open-library-id",
+        "Open Library work id, e.g. OL19722168W"
+      ],
+      [
+        "optional",
+        "year",
+        "Year first published"
+      ],
+      [
+        "optional",
+        "pages",
+        "Page count"
+      ],
+      [
+        "optional",
+        "lang",
+        "Language, as an ISO 639-2 code"
+      ],
+      [
+        "optional",
+        "subject",
+        "A subject; repeats"
+      ],
+      [
+        "optional",
+        "format",
+        "Record format"
+      ],
+      [
+        "optional",
+        "source",
+        "Where this record came from"
+      ],
+      [
+        "field-type",
+        "cover",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "title"
+      ],
+      [
+        "display",
+        "summary",
+        "author"
+      ],
+      [
+        "display",
+        "image",
+        "cover"
+      ],
+      [
+        "display",
+        "fact",
+        "year",
+        "Published"
+      ],
+      [
+        "display",
+        "fact",
+        "pages",
+        "Pages"
+      ],
+      [
+        "image",
+        "https://raw.githubusercontent.com/aburra16/unbnd/0b4535752a90883cc81881cace2cda9abb440e81/assets/logos/android-chrome-512x512.png"
+      ],
+      [
+        "r",
+        "https://github.com/aburra16/unbnd"
+      ],
+      [
+        "r",
+        "https://openlibrary.org/developers/licensing"
+      ],
+      [
+        "link",
+        "e722c94c9ee31ed28b79687b17daa313c0d02a9936a1c07dc73fbab4288fbc10",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "open-library-id"
+      ],
+      [
+        "link",
+        "a3037637a77a5b0338639f570b6cf24aa292a1bea322e18d2f4e69144df0cb57",
+        "wss://dcosl.brainstorm.world",
+        "isbn10",
+        "isbn10"
+      ],
+      [
+        "b",
+        "39998:6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b:books",
+        "pointer"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"books\",\"name\":\"books\",\"title\":\"Books\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"books\",\"name\":\"books\",\"title\":\"Books\"}}"
+      ]
+    ]
+  }
+]

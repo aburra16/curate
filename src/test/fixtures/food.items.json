@@ -1,0 +1,396 @@
+[
+  {
+    "content": "",
+    "created_at": 1792709236,
+    "id": "2bbf8676f4a9ee411e339f9f33dd4861f9b93a9df948525bb397f267484f75ce",
+    "kind": 39999,
+    "pubkey": "4bded2172075221ead393a0baec9c530238ec192c2a9cdbbc7754ba8c3357b64",
+    "sig": "9670ee405eccf49999d14b0abe38779cc73ee0fa7be4bbdf121aa7e71d7b023fc031cdb17e626b89bb6252d117381f7ff1bc1f0986a968f98270fbcdceb5aee1",
+    "tags": [
+      [
+        "d",
+        "osm-way-91202967"
+      ],
+      [
+        "z",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places"
+      ],
+      [
+        "name",
+        "Steak 'n Shake"
+      ],
+      [
+        "category",
+        "fast_food"
+      ],
+      [
+        "address",
+        "7515 North Grand Prairie Drive Peoria 61615"
+      ],
+      [
+        "locality",
+        "Peoria"
+      ],
+      [
+        "region",
+        "IL"
+      ],
+      [
+        "postal-code",
+        "61615"
+      ],
+      [
+        "country",
+        "US"
+      ],
+      [
+        "cuisine",
+        "burger"
+      ],
+      [
+        "osm-id",
+        "way:91202967"
+      ],
+      [
+        "lat",
+        "40.77973975"
+      ],
+      [
+        "lon",
+        "-89.6763536"
+      ],
+      [
+        "website",
+        "https://www.steaknshake.com/locations/il-peoria-n-grand-prairie-drive/"
+      ],
+      [
+        "phone",
+        "+1 309 693 7529"
+      ],
+      [
+        "opening-hours",
+        "Mo-Su 10:00-22:00"
+      ],
+      [
+        "accepts-bitcoin",
+        "lightning"
+      ],
+      [
+        "btcmap-id",
+        "25646"
+      ],
+      [
+        "source",
+        "btcmap"
+      ],
+      [
+        "license",
+        "ODbL-1.0"
+      ],
+      [
+        "g",
+        "dp0pzrexj"
+      ],
+      [
+        "g",
+        "dp0pzr"
+      ],
+      [
+        "g",
+        "dp0pz"
+      ],
+      [
+        "g",
+        "dp0p"
+      ],
+      [
+        "t",
+        "fast food"
+      ],
+      [
+        "t",
+        "burger"
+      ],
+      [
+        "t",
+        "peoria"
+      ],
+      [
+        "alt",
+        "Food and drink place: Steak 'n Shake, Peoria"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792709236,
+    "id": "36611369c9d58ff2c1f43d4dd31196ad8ff6000e83f03270d7fa650d9571c3a1",
+    "kind": 39999,
+    "pubkey": "4bded2172075221ead393a0baec9c530238ec192c2a9cdbbc7754ba8c3357b64",
+    "sig": "2ddfbbd12ad42d86096c166312cdecbfcacee7a89cfbfbd82e97a0e49846815dcf882c6bc7c815aec6a8507f62830accc50c430e80e7c241df94d07702e3a93f",
+    "tags": [
+      [
+        "d",
+        "osm-way-878042120"
+      ],
+      [
+        "z",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places"
+      ],
+      [
+        "name",
+        "Mi-Sant Banh Mi Co."
+      ],
+      [
+        "category",
+        "restaurant"
+      ],
+      [
+        "address",
+        "8540 Edinburgh Centre Drive North Brooklyn Park 55443"
+      ],
+      [
+        "locality",
+        "Brooklyn Park"
+      ],
+      [
+        "region",
+        "MN"
+      ],
+      [
+        "postal-code",
+        "55443"
+      ],
+      [
+        "country",
+        "US"
+      ],
+      [
+        "cuisine",
+        "vietnamese"
+      ],
+      [
+        "osm-id",
+        "way:878042120"
+      ],
+      [
+        "lat",
+        "45.110598550000006"
+      ],
+      [
+        "lon",
+        "-93.3023906"
+      ],
+      [
+        "website",
+        "https://mi-sant.com"
+      ],
+      [
+        "phone",
+        "+1-763-355-5947"
+      ],
+      [
+        "opening-hours",
+        "Mo-Sa 09:00-20:00"
+      ],
+      [
+        "accepts-bitcoin",
+        "yes"
+      ],
+      [
+        "btcmap-id",
+        "38983"
+      ],
+      [
+        "source",
+        "btcmap"
+      ],
+      [
+        "license",
+        "ODbL-1.0"
+      ],
+      [
+        "cuisine",
+        "sandwich"
+      ],
+      [
+        "g",
+        "cbj8su5k2"
+      ],
+      [
+        "g",
+        "cbj8su"
+      ],
+      [
+        "g",
+        "cbj8s"
+      ],
+      [
+        "g",
+        "cbj8"
+      ],
+      [
+        "t",
+        "restaurant"
+      ],
+      [
+        "t",
+        "vietnamese"
+      ],
+      [
+        "t",
+        "sandwich"
+      ],
+      [
+        "t",
+        "brooklyn park"
+      ],
+      [
+        "alt",
+        "Food and drink place: Mi-Sant Banh Mi Co., Brooklyn Park"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792709236,
+    "id": "5c3f4cd5822cf977233d5b7761e72200c971c5e1d0c080d9372d19d5cbc2d89b",
+    "kind": 39999,
+    "pubkey": "4bded2172075221ead393a0baec9c530238ec192c2a9cdbbc7754ba8c3357b64",
+    "sig": "b45c171d4de418a89d5faf85a9270690153ba995167e65c96f4fe8b77578621c287567fc2b96c6af3999f2d92348ab405d675492a0003b1030795401a9fd278c",
+    "tags": [
+      [
+        "d",
+        "osm-way-867841194"
+      ],
+      [
+        "z",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places"
+      ],
+      [
+        "name",
+        "The Rare Smokey Mare"
+      ],
+      [
+        "category",
+        "restaurant"
+      ],
+      [
+        "address",
+        "Tennis Street Windhoek 10021"
+      ],
+      [
+        "locality",
+        "Windhoek"
+      ],
+      [
+        "postal-code",
+        "10021"
+      ],
+      [
+        "country",
+        "NA"
+      ],
+      [
+        "cuisine",
+        "german"
+      ],
+      [
+        "osm-id",
+        "way:867841194"
+      ],
+      [
+        "lat",
+        "-22.6087499"
+      ],
+      [
+        "lon",
+        "17.0933214"
+      ],
+      [
+        "website",
+        "https://smokeymare.com/"
+      ],
+      [
+        "phone",
+        "+264 81 679 7037"
+      ],
+      [
+        "opening-hours",
+        "Mo-Su 11:00-22:00"
+      ],
+      [
+        "accepts-bitcoin",
+        "both"
+      ],
+      [
+        "btcmap-id",
+        "16102"
+      ],
+      [
+        "source",
+        "btcmap"
+      ],
+      [
+        "license",
+        "ODbL-1.0"
+      ],
+      [
+        "cuisine",
+        "pizza"
+      ],
+      [
+        "cuisine",
+        "burger"
+      ],
+      [
+        "cuisine",
+        "steak_house"
+      ],
+      [
+        "g",
+        "k7upkunyr"
+      ],
+      [
+        "g",
+        "k7upku"
+      ],
+      [
+        "g",
+        "k7upk"
+      ],
+      [
+        "g",
+        "k7up"
+      ],
+      [
+        "t",
+        "restaurant"
+      ],
+      [
+        "t",
+        "german"
+      ],
+      [
+        "t",
+        "pizza"
+      ],
+      [
+        "t",
+        "burger"
+      ],
+      [
+        "t",
+        "steak_house"
+      ],
+      [
+        "t",
+        "windhoek"
+      ],
+      [
+        "alt",
+        "Food and drink place: The Rare Smokey Mare, Windhoek"
+      ]
+    ]
+  }
+]

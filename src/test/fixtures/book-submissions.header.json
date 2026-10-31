@@ -1,0 +1,20 @@
+[
+  {
+    "content": "",
+    "created_at": 1792496452,
+    "id": "b63ed9a704a3ffe1175af70d65fdff0a21d59786b5d9c05ed4f63e538d3245c4",
+    "kind": 39998,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "6dd937ea147332856b0a51ef5807c53947979c0c424bcd860a317060adfdf8f2cf3a8daa9e2c2bdba5bb8855d2a739d670ad50c992c8bd564e0b7e7a9a121479",
+    "tags": [
+      [
+        "d",
+        "book-submissions"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"book-submissions\",\"name\":\"book-submissions\",\"title\":\"Book submissions\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"slug\":\"book-submissions\",\"name\":\"book-submissions\",\"title\":\"Book submissions\"}}"
+      ]
+    ]
+  }
+]

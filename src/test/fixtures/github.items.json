@@ -1,0 +1,50 @@
+[
+  {
+    "content": "",
+    "created_at": 1788968748,
+    "id": "1774ff60cdcff7fe008fe0a3b89231c02a7329908bbf6f566b0b427a38fb412f",
+    "kind": 39999,
+    "pubkey": "fef090b213f873c2e419f2d8a5e35068aee37a2b4bb42721d5022601ccdc6a9c",
+    "sig": "b044c4fc8acd6436d4c140827deaa1b78aef51ba4322bb72fc84d97814b0d6af035b9a1f69593b49ebfb54aff598c76fe8a1fc0be3504e3b4283f728ee7e6bb2",
+    "tags": [
+      [
+        "d",
+        "beep-boop-mktcr5"
+      ],
+      [
+        "z",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:github-accounts"
+      ],
+      [
+        "github-username",
+        "beep-boop"
+      ],
+      [
+        "description",
+        "Some evil bot"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1788546564,
+    "id": "8eab6ac9edd51a9310194017bff39cde5fb2839a1b2a2999ddc6b1b52cbf5c46",
+    "kind": 39999,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "782b58a7b204ec4a4dbaccb7c99896d6ebbc1dbdb7f6f2a4d6e4f6f5ae4a2cd7d6fe56582bca7fb13b13f398acf58854c5ef26017f836c3644e5784678438d90",
+    "tags": [
+      [
+        "d",
+        "vitorpamplona-ni5x31"
+      ],
+      [
+        "z",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:github-accounts"
+      ],
+      [
+        "github-username",
+        "vitorpamplona"
+      ]
+    ]
+  }
+]

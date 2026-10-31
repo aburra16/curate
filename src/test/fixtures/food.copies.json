@@ -1,0 +1,680 @@
+[
+  {
+    "content": "",
+    "created_at": 1791470862,
+    "id": "34099ab05574518fbbb40b0c788e0d5978bc4f9880f7ecb26c65cc6e4123640b",
+    "kind": 39998,
+    "pubkey": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+    "sig": "068e7f9251ffe06348b0dbc8653de277d5e1cf181fa06b89c29965c53d41ce72e30196ea6f67f3e4adac84c1fc9a146fd9082c4417de4443ca56ee0e08ffb3fc",
+    "tags": [
+      [
+        "d",
+        "food-and-drink-places"
+      ],
+      [
+        "names",
+        "Food and Drink Place",
+        "Food and Drink Places"
+      ],
+      [
+        "description",
+        "Restaurants, cafes, bars, bakeries and food shops, anywhere in the world. Seeded from BTC Map. Data © OpenStreetMap contributors, available under the Open Database License (ODbL 1.0)."
+      ],
+      [
+        "required",
+        "name",
+        "Name of the business"
+      ],
+      [
+        "required",
+        "category",
+        "Kind of place, as an OpenStreetMap amenity or shop value: restaurant, cafe, bakery, …"
+      ],
+      [
+        "optional",
+        "address",
+        "Street address, one line"
+      ],
+      [
+        "optional",
+        "locality",
+        "City or town"
+      ],
+      [
+        "optional",
+        "cuisine",
+        "Primary cuisine"
+      ],
+      [
+        "optional",
+        "osm-id",
+        "OpenStreetMap id, e.g. node:10011069455"
+      ],
+      [
+        "optional",
+        "g",
+        "Geohash of the location"
+      ],
+      [
+        "optional",
+        "description",
+        "What it is, in a sentence or two"
+      ],
+      [
+        "optional",
+        "country",
+        "ISO 3166-1 two-letter code"
+      ],
+      [
+        "optional",
+        "region",
+        "State or province"
+      ],
+      [
+        "optional",
+        "postal-code",
+        "Postcode"
+      ],
+      [
+        "optional",
+        "lat",
+        "Latitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "lon",
+        "Longitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "website",
+        "Website"
+      ],
+      [
+        "field-type",
+        "website",
+        "url"
+      ],
+      [
+        "optional",
+        "image",
+        "A photo"
+      ],
+      [
+        "field-type",
+        "image",
+        "url"
+      ],
+      [
+        "optional",
+        "phone",
+        "Phone number, international format"
+      ],
+      [
+        "optional",
+        "opening-hours",
+        "Opening hours, in OpenStreetMap syntax"
+      ],
+      [
+        "optional",
+        "accepts-bitcoin",
+        "lightning, onchain, both, or yes when the method is unknown"
+      ],
+      [
+        "optional",
+        "btcmap-id",
+        "BTC Map place id"
+      ],
+      [
+        "optional",
+        "source",
+        "Where this record came from"
+      ],
+      [
+        "optional",
+        "license",
+        "Licence of the record's data, as an SPDX identifier"
+      ],
+      [
+        "optional",
+        "price-range",
+        "1 (cheap) to 4 (expensive)"
+      ],
+      [
+        "optional",
+        "menu",
+        "Link to the menu"
+      ],
+      [
+        "field-type",
+        "menu",
+        "url"
+      ],
+      [
+        "optional",
+        "reservations",
+        "Link for reservations"
+      ],
+      [
+        "field-type",
+        "reservations",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "name"
+      ],
+      [
+        "display",
+        "summary",
+        "address"
+      ],
+      [
+        "display",
+        "image",
+        "image"
+      ],
+      [
+        "display",
+        "link",
+        "website"
+      ],
+      [
+        "display",
+        "location",
+        "g"
+      ],
+      [
+        "display",
+        "fact",
+        "cuisine"
+      ],
+      [
+        "display",
+        "fact",
+        "phone"
+      ],
+      [
+        "display",
+        "fact",
+        "opening-hours",
+        "Hours"
+      ],
+      [
+        "display",
+        "fact",
+        "accepts-bitcoin",
+        "Bitcoin?"
+      ],
+      [
+        "image",
+        "https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f37d.svg"
+      ],
+      [
+        "link",
+        "8846baa4be1d8bc17529a4079525b8ecb019f52a0655bd20ae547903b72bd5ed",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "btcmap-id"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791471013,
+    "id": "828a037df3eae40b239c2f7634238483fdf203de258ace536b003e47de90d9f9",
+    "kind": 39998,
+    "pubkey": "be7bf5de068c1d842ed34a7c270507ec940f5ea51671cfd062a95e9d09420d0a",
+    "sig": "85037ca06b1af02ffb7430d9c0aa5db039944852c75ba9b65ec038b2ec06019f288c4ad19bf3835299be8635e5c2a4219e7f20449b42b27f2af74eeb806661ff",
+    "tags": [
+      [
+        "d",
+        "food-and-drink-places"
+      ],
+      [
+        "names",
+        "Food and Drink Place",
+        "Food and Drink Places"
+      ],
+      [
+        "description",
+        "Restaurants, cafes, bars, bakeries and food shops, anywhere in the world. Seeded from BTC Map. Data © OpenStreetMap contributors, available under the Open Database License (ODbL 1.0)."
+      ],
+      [
+        "required",
+        "name",
+        "Name of the business"
+      ],
+      [
+        "required",
+        "category",
+        "Kind of place, as an OpenStreetMap amenity or shop value: restaurant, cafe, bakery, …"
+      ],
+      [
+        "optional",
+        "address",
+        "Street address, one line"
+      ],
+      [
+        "optional",
+        "locality",
+        "City or town"
+      ],
+      [
+        "optional",
+        "cuisine",
+        "Primary cuisine"
+      ],
+      [
+        "optional",
+        "osm-id",
+        "OpenStreetMap id, e.g. node:10011069455"
+      ],
+      [
+        "optional",
+        "g",
+        "Geohash of the location"
+      ],
+      [
+        "optional",
+        "description",
+        "What it is, in a sentence or two"
+      ],
+      [
+        "optional",
+        "country",
+        "ISO 3166-1 two-letter code"
+      ],
+      [
+        "optional",
+        "region",
+        "State or province"
+      ],
+      [
+        "optional",
+        "postal-code",
+        "Postcode"
+      ],
+      [
+        "optional",
+        "lat",
+        "Latitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "lon",
+        "Longitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "website",
+        "Website"
+      ],
+      [
+        "field-type",
+        "website",
+        "url"
+      ],
+      [
+        "optional",
+        "image",
+        "A photo"
+      ],
+      [
+        "field-type",
+        "image",
+        "url"
+      ],
+      [
+        "optional",
+        "phone",
+        "Phone number, international format"
+      ],
+      [
+        "optional",
+        "opening-hours",
+        "Opening hours, in OpenStreetMap syntax"
+      ],
+      [
+        "optional",
+        "accepts-bitcoin",
+        "lightning, onchain, both, or yes when the method is unknown"
+      ],
+      [
+        "optional",
+        "btcmap-id",
+        "BTC Map place id"
+      ],
+      [
+        "optional",
+        "source",
+        "Where this record came from"
+      ],
+      [
+        "optional",
+        "license",
+        "Licence of the record's data, as an SPDX identifier"
+      ],
+      [
+        "optional",
+        "price-range",
+        "1 (cheap) to 4 (expensive)"
+      ],
+      [
+        "optional",
+        "menu",
+        "Link to the menu"
+      ],
+      [
+        "field-type",
+        "menu",
+        "url"
+      ],
+      [
+        "optional",
+        "reservations",
+        "Link for reservations"
+      ],
+      [
+        "field-type",
+        "reservations",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "name"
+      ],
+      [
+        "display",
+        "summary",
+        "address"
+      ],
+      [
+        "display",
+        "image",
+        "image"
+      ],
+      [
+        "display",
+        "link",
+        "website"
+      ],
+      [
+        "display",
+        "location",
+        "g"
+      ],
+      [
+        "display",
+        "fact",
+        "cuisine"
+      ],
+      [
+        "display",
+        "fact",
+        "phone"
+      ],
+      [
+        "display",
+        "fact",
+        "opening-hours",
+        "Hours"
+      ],
+      [
+        "display",
+        "fact",
+        "accepts-bitcoin",
+        "Bitcoin?"
+      ],
+      [
+        "image",
+        "https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f37d.svg"
+      ],
+      [
+        "link",
+        "8846baa4be1d8bc17529a4079525b8ecb019f52a0655bd20ae547903b72bd5ed",
+        "wss://dcosl.brainstorm.world",
+        "id",
+        "btcmap-id"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792215372,
+    "id": "d87bfb6b86553195c531ddf54ba49d2716995d849f0baa0514809792cb943921",
+    "kind": 39998,
+    "pubkey": "e5272de914bd301755c439b88e6959a43c9d2664831f093c51e9c799a16a102f",
+    "sig": "63570a67a8eca8e6aebe0a3877af4ad8b85e9aacd8abe57f7c2f00c039482186522a618ca678aa3ec9cf4bb3dc32625af5f2cd5787ea517f5e08b82230fb8218",
+    "tags": [
+      [
+        "d",
+        "food-and-drink-places"
+      ],
+      [
+        "names",
+        "Food and Drink Place",
+        "Food and Drink Places"
+      ],
+      [
+        "description",
+        "Restaurants, cafes, bars, bakeries and food shops, anywhere in the world. Seeded from BTC Map. Data © OpenStreetMap contributors, available under the Open Database License (ODbL 1.0)."
+      ],
+      [
+        "required",
+        "name",
+        "Name of the business"
+      ],
+      [
+        "required",
+        "category",
+        "Kind of place, as an OpenStreetMap amenity or shop value: restaurant, cafe, bakery, …"
+      ],
+      [
+        "recommended",
+        "address",
+        "Street address, one line"
+      ],
+      [
+        "recommended",
+        "locality",
+        "City or town"
+      ],
+      [
+        "recommended",
+        "cuisine",
+        "Primary cuisine"
+      ],
+      [
+        "recommended",
+        "osm-id",
+        "OpenStreetMap id, e.g. node:10011069455"
+      ],
+      [
+        "recommended",
+        "g",
+        "Geohash of the location"
+      ],
+      [
+        "optional",
+        "description",
+        "What it is, in a sentence or two"
+      ],
+      [
+        "optional",
+        "country",
+        "ISO 3166-1 two-letter code"
+      ],
+      [
+        "optional",
+        "region",
+        "State or province"
+      ],
+      [
+        "optional",
+        "postal-code",
+        "Postcode"
+      ],
+      [
+        "optional",
+        "lat",
+        "Latitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "lon",
+        "Longitude, decimal degrees"
+      ],
+      [
+        "optional",
+        "website",
+        "Website"
+      ],
+      [
+        "field-type",
+        "website",
+        "url"
+      ],
+      [
+        "optional",
+        "image",
+        "A photo"
+      ],
+      [
+        "field-type",
+        "image",
+        "url"
+      ],
+      [
+        "optional",
+        "phone",
+        "Phone number, international format"
+      ],
+      [
+        "optional",
+        "opening-hours",
+        "Opening hours, in OpenStreetMap syntax"
+      ],
+      [
+        "optional",
+        "accepts-bitcoin",
+        "lightning, onchain, both, or yes when the method is unknown"
+      ],
+      [
+        "optional",
+        "btcmap-id",
+        "BTC Map place id"
+      ],
+      [
+        "optional",
+        "source",
+        "Where this record came from"
+      ],
+      [
+        "optional",
+        "license",
+        "Licence of the record's data, as an SPDX identifier"
+      ],
+      [
+        "optional",
+        "price-range",
+        "1 (cheap) to 4 (expensive)"
+      ],
+      [
+        "optional",
+        "menu",
+        "Link to the menu"
+      ],
+      [
+        "field-type",
+        "menu",
+        "url"
+      ],
+      [
+        "optional",
+        "reservations",
+        "Link for reservations"
+      ],
+      [
+        "field-type",
+        "reservations",
+        "url"
+      ],
+      [
+        "display",
+        "title",
+        "name"
+      ],
+      [
+        "display",
+        "summary",
+        "address"
+      ],
+      [
+        "display",
+        "image",
+        "image"
+      ],
+      [
+        "display",
+        "link",
+        "website"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:food-and-drink-places",
+        "pointer"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1791480578,
+    "id": "fd5d5bce5be7b34135cbdeb662874512100b1d1a31ecfc5ad8a83da0ed5b1435",
+    "kind": 39998,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "4a95cff2a8cf2e57edea1c2c7bb1f2595a353aba2da8564f4cc0971ffee11e596ce149dbc353f4a10acaced20ae477dd7f59d953e1fe9de63ab2141dd9c70bde",
+    "tags": [
+      [
+        "d",
+        "food-and-drink-places"
+      ],
+      [
+        "b",
+        "b-tag-deferred"
+      ],
+      [
+        "alt",
+        "A withdrawn concept copy: considered, and affiliated with no community concept."
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ]
+  }
+]

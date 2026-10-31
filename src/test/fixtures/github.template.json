@@ -1,0 +1,28 @@
+[
+  {
+    "content": "",
+    "created_at": 1790900605,
+    "id": "f19f39daf75388ff0f19cc37dde5ae1b90124b0d60e35659160c48dc690deca4",
+    "kind": 9999,
+    "pubkey": "2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331",
+    "sig": "1e9157f2c6e3f030f0d67dec62fe6ec23ac22cad2b30cd9c6c967d4cd4579b70b2588d555a0c820a06560d1ff85b1c3311b6465f16a8b3c15be39f5f2b62db42",
+    "tags": [
+      [
+        "z",
+        "39998:2efaa715bbb46dd5be6b7da8d7700266d11674b913b8178addb5c2e63d987331:url-templates"
+      ],
+      [
+        "name",
+        "GitHub profile"
+      ],
+      [
+        "url-template",
+        "https://github.com/{username}"
+      ],
+      [
+        "alt",
+        "URL template: GitHub profile"
+      ]
+    ]
+  }
+]

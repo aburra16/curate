@@ -1,0 +1,157 @@
+[
+  {
+    "content": "",
+    "created_at": 1784218916,
+    "id": "3cae12a6d09094eb82ff5de64a72684aa96662db4ed347d33f02f938fbedb157",
+    "kind": 39998,
+    "pubkey": "919ba08af7786892093b8264332d817379662a0ba0ba1f5c791ed7b62a7ee2ff",
+    "sig": "1e2bc1289edd38699ec535a9021a0c04bd280c0bbfccfc33f8356e5784dad6148d2f454be78996f0e1e330c5d5951892b2391485753ec0940191f8d8a22a2457",
+    "tags": [
+      [
+        "d",
+        "tag"
+      ],
+      [
+        "names",
+        "tag",
+        "tags"
+      ],
+      [
+        "slug",
+        "tag"
+      ],
+      [
+        "concept-graph",
+        "39999:919ba08af7786892093b8264332d817379662a0ba0ba1f5c791ed7b62a7ee2ff:tag-concept-graph"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"concept-header-for-the-concept-of-tags\",\"name\":\"concept header for the concept of tags\",\"title\":\"Concept Header for the Concept of Tags\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"description\":\"A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category.\",\"oNames\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oSlugs\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oKeys\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oTitles\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"oLabels\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"x-tapestry\":{\"neo4j\":{\"nodeLabelRequired\":true}}}}"
+      ],
+      [
+        "description",
+        "A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category."
+      ],
+      [
+        "b",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag",
+        "pointer"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1790089116,
+    "id": "610ea221773d20d2706186ba084b23c0eab6e849fdc19b3d0bb93faf2e296a2c",
+    "kind": 39998,
+    "pubkey": "a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599",
+    "sig": "99f74bc6e257a478e63e6a31d83e21a3f347f5001682005f9715f6a5d3ba9a90039f4012e296c0246dfe7c7231c47bb73cce3ef5eca06dd4e2f1fabed56ee92c",
+    "tags": [
+      [
+        "d",
+        "tag"
+      ],
+      [
+        "names",
+        "tag",
+        "tags"
+      ],
+      [
+        "slug",
+        "tag"
+      ],
+      [
+        "concept-graph",
+        "39999:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag-concept-graph"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"concept-header-for-the-concept-of-tags\",\"name\":\"concept header for the concept of tags\",\"title\":\"Concept Header for the Concept of Tags\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"description\":\"A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category.\",\"oNames\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oSlugs\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oKeys\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oTitles\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"oLabels\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"x-tapestry\":{\"neo4j\":{\"nodeLabelRequired\":true}}}}"
+      ],
+      [
+        "description",
+        "A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category."
+      ],
+      [
+        "b",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag",
+        "pointer"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1781318352,
+    "id": "6f38f7b7748cbece9f75d131f0c79392cc01fc24cac8a7bdd11a9fc9f24e6fd0",
+    "kind": 39998,
+    "pubkey": "82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833",
+    "sig": "0d1b1fbe59b71cc5cb93d637f1df6a4e5883eff60fc7de13a13d88f22a7e06cfdb1a9137800fba815822f488048a07ecd1b72753329b94370b3ae3e2e50c8d8b",
+    "tags": [
+      [
+        "d",
+        "tag"
+      ],
+      [
+        "names",
+        "tag",
+        "tags"
+      ],
+      [
+        "slug",
+        "tag"
+      ],
+      [
+        "concept-graph",
+        "39999:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag-concept-graph"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"concept-header-for-the-concept-of-tags\",\"name\":\"concept header for the concept of tags\",\"title\":\"Concept Header for the Concept of Tags\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"description\":\"A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category.\",\"oNames\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oSlugs\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oKeys\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oTitles\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"oLabels\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"x-tapestry\":{\"neo4j\":{\"nodeLabelRequired\":true}}}}"
+      ],
+      [
+        "description",
+        "A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category."
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1784218439,
+    "id": "e2f1e3e71d95e04a8b224242847c1200fd38cca482d57c5eaac34393aa572a3d",
+    "kind": 39998,
+    "pubkey": "8e901369d45081cf05fe17ba802441dd731f73e000149c333daf4880a58e5fb1",
+    "sig": "d948b3dbf92b466617b6d8c2fb9a10694c026b8d69f77f2ec5cb8443a6a8fb0ec956e56fc98134321fdf2d4638230da606166c699179a5b187116cd8d2893a2b",
+    "tags": [
+      [
+        "d",
+        "tag"
+      ],
+      [
+        "names",
+        "tag",
+        "tags"
+      ],
+      [
+        "slug",
+        "tag"
+      ],
+      [
+        "concept-graph",
+        "39999:8e901369d45081cf05fe17ba802441dd731f73e000149c333daf4880a58e5fb1:tag-concept-graph"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"concept-header-for-the-concept-of-tags\",\"name\":\"concept header for the concept of tags\",\"title\":\"Concept Header for the Concept of Tags\",\"wordTypes\":[\"word\",\"conceptHeader\"]},\"conceptHeader\":{\"description\":\"A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category.\",\"oNames\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oSlugs\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oKeys\":{\"singular\":\"tag\",\"plural\":\"tags\"},\"oTitles\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"oLabels\":{\"singular\":\"Tag\",\"plural\":\"Tags\"},\"x-tapestry\":{\"neo4j\":{\"nodeLabelRequired\":true}}}}"
+      ],
+      [
+        "description",
+        "A tag is a first-class concept representing a category assertion. Tags categorize things — initially nostr relays, but eventually also profiles, notes, and other concepts. A tag is a 0–5 star rating without the stars field: an assertion that something belongs to a category."
+      ],
+      [
+        "b",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag",
+        "pointer"
+      ]
+    ]
+  }
+]

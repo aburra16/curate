@@ -1,0 +1,39 @@
+[
+  {
+    "content": "",
+    "created_at": 1790953484,
+    "id": "8de5bea921acc6bd73252c460a56b6188c5c6908f161b44323d48a26b80ab30b",
+    "kind": 39998,
+    "pubkey": "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450",
+    "sig": "18594d5c02a17f3eb365049963e3dc4c39fb1970a5e50739115b5d8726bc3d12a4127a5491759c475eeb6f58a261b5128696656e707d3d97f0abfc21ab7a5a62",
+    "tags": [
+      [
+        "d",
+        "github-accounts"
+      ],
+      [
+        "names",
+        "GitHub Account",
+        "GitHub Accounts"
+      ],
+      [
+        "description",
+        "A list of github handles/accounts"
+      ],
+      [
+        "required",
+        "github-username"
+      ],
+      [
+        "field-type",
+        "github-username",
+        "text"
+      ],
+      [
+        "b",
+        "39998:b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450:github-accounts",
+        "pointer"
+      ]
+    ]
+  }
+]

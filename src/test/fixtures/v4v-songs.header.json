@@ -1,0 +1,66 @@
+[
+  {
+    "content": "",
+    "created_at": 1790952666,
+    "id": "e71afd26ad3fa44e21e64f5ca6554809071978bd9b845245db5335f5ef1e263c",
+    "kind": 39998,
+    "pubkey": "77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3",
+    "sig": "0444bcf07f42a60cc3ce337ebab1cfa08a3e8ba14f273e72e2e8f530d3c54718131d1f622c1e4d9c5c6ff7fdcf800f093a4d9c7e68e0c6b566dac9dfacecafca",
+    "tags": [
+      [
+        "d",
+        "b504f5a8-949f-4d31-ad14-8afcebde2b34"
+      ],
+      [
+        "names",
+        "V4V Song",
+        "V4V Songs"
+      ],
+      [
+        "description",
+        "Value-for-value enabled music tracks from Podcast Index"
+      ],
+      [
+        "required",
+        "t"
+      ],
+      [
+        "required",
+        "title"
+      ],
+      [
+        "required",
+        "artist"
+      ],
+      [
+        "required",
+        "url"
+      ],
+      [
+        "required",
+        "duration"
+      ],
+      [
+        "required",
+        "feedId"
+      ],
+      [
+        "required",
+        "feedGuid"
+      ],
+      [
+        "required",
+        "artwork"
+      ],
+      [
+        "required",
+        "alt"
+      ],
+      [
+        "b",
+        "39998:77599c5c4a7ba08456679d812a414037f4b01c975fb4f577187df11d189f80d3:b504f5a8-949f-4d31-ad14-8afcebde2b34",
+        "pointer"
+      ]
+    ]
+  }
+]

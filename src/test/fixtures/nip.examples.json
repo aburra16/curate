@@ -1,0 +1,88 @@
+[
+  {
+    "id": "a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3",
+    "pubkey": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+    "created_at": 1790000000,
+    "kind": 9998,
+    "tags": [
+      [
+        "names",
+        "dog name",
+        "dog names"
+      ],
+      [
+        "description",
+        "This is a list of commonly used dog names."
+      ],
+      [
+        "required",
+        "t"
+      ]
+    ],
+    "content": "",
+    "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  },
+  {
+    "id": "a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4",
+    "pubkey": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+    "created_at": 1790000001,
+    "kind": 9999,
+    "tags": [
+      [
+        "z",
+        "a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3"
+      ],
+      [
+        "t",
+        "Fido"
+      ]
+    ],
+    "content": "",
+    "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  },
+  {
+    "id": "a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7",
+    "pubkey": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+    "created_at": 1790000002,
+    "kind": 39998,
+    "tags": [
+      [
+        "d",
+        "dogs"
+      ],
+      [
+        "names",
+        "dog",
+        "dogs"
+      ],
+      [
+        "required",
+        "t"
+      ]
+    ],
+    "content": "",
+    "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  },
+  {
+    "id": "a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8",
+    "pubkey": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+    "created_at": 1790000003,
+    "kind": 39999,
+    "tags": [
+      [
+        "z",
+        "39998:0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d:dogs"
+      ],
+      [
+        "d",
+        "fido"
+      ],
+      [
+        "t",
+        "Fido"
+      ]
+    ],
+    "content": "",
+    "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  }
+]

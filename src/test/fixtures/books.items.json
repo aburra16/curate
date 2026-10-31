@@ -1,0 +1,454 @@
+[
+  {
+    "content": "\"An annual survey of Shakespearian study and production.\"",
+    "created_at": 1792631623,
+    "id": "089fe04d6fd02d7236febe394a4f010aabff1e6c412779427d275a44caaccb17",
+    "kind": 39999,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "3bac259ea494d2d0807dbb859c57aca7047bf7cab619cff58b873dd6948482537b0af375675bd313972473560f260731cd5e837acbe4855fc65d18ae07bd6e8f",
+    "tags": [
+      [
+        "d",
+        "ol-ol8307868w"
+      ],
+      [
+        "z",
+        "39998:6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b:books"
+      ],
+      [
+        "t",
+        "ol-ol8307868w"
+      ],
+      [
+        "title",
+        "Shakespeare Survey"
+      ],
+      [
+        "author",
+        "Allardyce Nicoll"
+      ],
+      [
+        "isbn",
+        "9780521064170"
+      ],
+      [
+        "isbn10",
+        "052106418X"
+      ],
+      [
+        "open-library-id",
+        "OL8307868W"
+      ],
+      [
+        "lang",
+        "eng"
+      ],
+      [
+        "year",
+        "1933"
+      ],
+      [
+        "pages",
+        "188"
+      ],
+      [
+        "cover",
+        "https://covers.openlibrary.org/b/id/330614-L.jpg"
+      ],
+      [
+        "subject",
+        "Drama"
+      ],
+      [
+        "subject",
+        "Civilization"
+      ],
+      [
+        "subject",
+        "Shakespeare, william, 1564-1616, study and teaching"
+      ],
+      [
+        "subject",
+        "Criticism and interpretation"
+      ],
+      [
+        "subject",
+        "Poetry"
+      ],
+      [
+        "subject",
+        "Knowledge"
+      ],
+      [
+        "subject",
+        "Music"
+      ],
+      [
+        "subject",
+        "Stage history"
+      ],
+      [
+        "subject",
+        "Insects, aquatic"
+      ],
+      [
+        "subject",
+        "Périodiques"
+      ],
+      [
+        "subject",
+        "Histoire scénique"
+      ],
+      [
+        "subject",
+        "Periodicals"
+      ],
+      [
+        "subject",
+        "Critique et interprétation"
+      ],
+      [
+        "subject",
+        "Shakespeare, William, 1564-1616 -- Criticism and interpretation -- Periodicals"
+      ],
+      [
+        "subject",
+        "Societies"
+      ],
+      [
+        "subject",
+        "Shakespeare, William, 1564-1616 -- Periodicals"
+      ],
+      [
+        "subject",
+        "Shakespeare, William, 1564-1616 -- Stage history -- Periodicals"
+      ],
+      [
+        "subject",
+        "Shakespeare, William, 1564-1616 -- Critique et interprétation"
+      ],
+      [
+        "subject",
+        "Shakespeare, William, 1564-1616 -- Périodiques"
+      ],
+      [
+        "subject",
+        "Shakespeare, William, 1564-1616 -- Histoire scénique"
+      ],
+      [
+        "subject",
+        "Shakespeare, william, 1564-1616, comedies"
+      ],
+      [
+        "subject",
+        "British and irish drama (dramatic works by one author)"
+      ],
+      [
+        "subject",
+        "English drama"
+      ],
+      [
+        "subject",
+        "History and criticism"
+      ],
+      [
+        "subject",
+        "Early modern and Elizabethan"
+      ],
+      [
+        "subject",
+        "Theater"
+      ],
+      [
+        "subject",
+        "History"
+      ],
+      [
+        "subject",
+        "Shakespeare, william, 1564-1616, criticism and interpretation"
+      ],
+      [
+        "format",
+        "reference"
+      ],
+      [
+        "source",
+        "openlibrary"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"ol-ol8307868w\",\"name\":\"Shakespeare Survey\",\"title\":\"Shakespeare Survey\",\"wordTypes\":[\"word\",\"bookSubmission\"]},\"bookSubmission\":{\"slug\":\"ol-ol8307868w\",\"title\":\"Shakespeare Survey\",\"authorName\":\"Allardyce Nicoll\",\"authorPubkey\":null,\"isbn13\":\"9780521064170\",\"isbn10\":\"052106418X\",\"openLibraryId\":\"OL8307868W\",\"coverUrl\":\"https://covers.openlibrary.org/b/id/330614-L.jpg\",\"pageCount\":188,\"publishYear\":1933,\"language\":\"eng\",\"subjects\":[\"Drama\",\"Civilization\",\"Shakespeare, william, 1564-1616, study and teaching\",\"Criticism and interpretation\",\"Poetry\",\"Knowledge\",\"Music\",\"Stage history\",\"Insects, aquatic\",\"Périodiques\",\"Histoire scénique\",\"Periodicals\",\"Critique et interprétation\",\"Shakespeare, William, 1564-1616 -- Criticism and interpretation -- Periodicals\",\"Societies\",\"Shakespeare, William, 1564-1616 -- Periodicals\",\"Shakespeare, William, 1564-1616 -- Stage history -- Periodicals\",\"Shakespeare, William, 1564-1616 -- Critique et interprétation\",\"Shakespeare, William, 1564-1616 -- Périodiques\",\"Shakespeare, William, 1564-1616 -- Histoire scénique\",\"Shakespeare, william, 1564-1616, comedies\",\"British and irish drama (dramatic works by one author)\",\"English drama\",\"History and criticism\",\"Early modern and Elizabethan\",\"Theater\",\"History\",\"Shakespeare, william, 1564-1616, criticism and interpretation\"],\"blurb\":\"\\\"An annual survey of Shakespearian study and production.\\\"\",\"format\":\"reference\",\"fileUrl\":null,\"source\":\"openlibrary\",\"submittedBy\":null}}"
+      ],
+      [
+        "added",
+        "1792631104"
+      ],
+      [
+        "L",
+        "ink.unbnd.genre"
+      ],
+      [
+        "l",
+        "history",
+        "ink.unbnd.genre"
+      ],
+      [
+        "l",
+        "poetry",
+        "ink.unbnd.genre"
+      ],
+      [
+        "L",
+        "ink.unbnd.format"
+      ],
+      [
+        "l",
+        "reference",
+        "ink.unbnd.format"
+      ],
+      [
+        "L",
+        "ISO-639-2"
+      ],
+      [
+        "l",
+        "eng",
+        "ISO-639-2"
+      ],
+      [
+        "i",
+        "isbn:9780521064170"
+      ]
+    ]
+  },
+  {
+    "content": "From New York Times bestselling author Suzanne Brockmann comes a thrilling tale of romance and suspense, filled with all the surprise, passion, and mystery of a new love.When Kayla Grey travels from Boston to Montana, the last place she expects to end up is huddled beneath a blanket of dirt in the middle of a fierce snowstorm. And the last person she expects to rescue her is the very man she'd come to find. Cal Bartlett was a true-blue cowboy, complete with a horse, and the most amazing eyes Kayla had ever seen. He was also the brother of the man who'd wanted to marry her. But she didn't discover that until it was too late--after they'd kissed by a roaring fire and Kayla felt a desire she'd never known. Cal could handle Mother Nature, but could he handle the news Kayla brought with her? That his dead brother might not be dead after all? Cal couldn't imagine why he was being tested in this way--irresistibly drawn to the woman his brother had loved. Now she was insisting he might be alive, asking Cal to join her on a dangerous search based on a rumor from a stranger.... And torn between guilt and longing, Cal would do just that, hoping against hope that wanting this woman wouldn't mean losing his brother once again.From the Paperback edition.",
+    "created_at": 1792631623,
+    "id": "7dd0460e3152a3414b1f38b8f9446955c5a4824b85a5d86289fd14563b3aae1b",
+    "kind": 39999,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "11386cad2228e98d3af3cf69cfb0e49f35ee46f729e5e408028bf21d5d7f671179c192ee9ad83885dd3d8582be083324c610ebf30cb0444a519df9bc53cc27b1",
+    "tags": [
+      [
+        "d",
+        "ol-ol84157w"
+      ],
+      [
+        "z",
+        "39998:6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b:books"
+      ],
+      [
+        "t",
+        "ol-ol84157w"
+      ],
+      [
+        "title",
+        "Forbidden"
+      ],
+      [
+        "author",
+        "Suzanne Brockmann"
+      ],
+      [
+        "isbn",
+        "9780553904833"
+      ],
+      [
+        "isbn10",
+        "0553590928"
+      ],
+      [
+        "open-library-id",
+        "OL84157W"
+      ],
+      [
+        "lang",
+        "eng"
+      ],
+      [
+        "year",
+        "2007"
+      ],
+      [
+        "pages",
+        "254"
+      ],
+      [
+        "cover",
+        "https://covers.openlibrary.org/b/id/1283758-L.jpg"
+      ],
+      [
+        "subject",
+        "Suspense"
+      ],
+      [
+        "subject",
+        "Fiction"
+      ],
+      [
+        "subject",
+        "Cowboys"
+      ],
+      [
+        "subject",
+        "Brothers"
+      ],
+      [
+        "format",
+        "reference"
+      ],
+      [
+        "source",
+        "openlibrary"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"ol-ol84157w\",\"name\":\"Forbidden\",\"title\":\"Forbidden\",\"wordTypes\":[\"word\",\"bookSubmission\"]},\"bookSubmission\":{\"slug\":\"ol-ol84157w\",\"title\":\"Forbidden\",\"authorName\":\"Suzanne Brockmann\",\"authorPubkey\":null,\"isbn13\":\"9780553904833\",\"isbn10\":\"0553590928\",\"openLibraryId\":\"OL84157W\",\"coverUrl\":\"https://covers.openlibrary.org/b/id/1283758-L.jpg\",\"pageCount\":254,\"publishYear\":2007,\"language\":\"eng\",\"subjects\":[\"Suspense\",\"Fiction\",\"Cowboys\",\"Brothers\"],\"blurb\":\"From New York Times bestselling author Suzanne Brockmann comes a thrilling tale of romance and suspense, filled with all the surprise, passion, and mystery of a new love.When Kayla Grey travels from Boston to Montana, the last place she expects to end up is huddled beneath a blanket of dirt in the middle of a fierce snowstorm. And the last person she expects to rescue her is the very man she'd come to find. Cal Bartlett was a true-blue cowboy, complete with a horse, and the most amazing eyes Kayla had ever seen. He was also the brother of the man who'd wanted to marry her. But she didn't discover that until it was too late--after they'd kissed by a roaring fire and Kayla felt a desire she'd never known. Cal could handle Mother Nature, but could he handle the news Kayla brought with her? That his dead brother might not be dead after all? Cal couldn't imagine why he was being tested in this way--irresistibly drawn to the woman his brother had loved. Now she was insisting he might be alive, asking Cal to join her on a dangerous search based on a rumor from a stranger.... And torn between guilt and longing, Cal would do just that, hoping against hope that wanting this woman wouldn't mean losing his brother once again.From the Paperback edition.\",\"format\":\"reference\",\"fileUrl\":null,\"source\":\"openlibrary\",\"submittedBy\":null}}"
+      ],
+      [
+        "added",
+        "1792631105"
+      ],
+      [
+        "L",
+        "ink.unbnd.genre"
+      ],
+      [
+        "l",
+        "thriller",
+        "ink.unbnd.genre"
+      ],
+      [
+        "L",
+        "ink.unbnd.format"
+      ],
+      [
+        "l",
+        "reference",
+        "ink.unbnd.format"
+      ],
+      [
+        "L",
+        "ISO-639-2"
+      ],
+      [
+        "l",
+        "eng",
+        "ISO-639-2"
+      ],
+      [
+        "i",
+        "isbn:9780553904833"
+      ]
+    ]
+  },
+  {
+    "content": "",
+    "created_at": 1792631623,
+    "id": "f1ba4ccec967a90af08b4c4736921e6860ef656a50fba544a4b138159f685d1f",
+    "kind": 39999,
+    "pubkey": "6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b",
+    "sig": "13fd0379e6037108cc87f9d21bd8db9d04fd1213575d9e10d683ca46cdf8445195df0a324561f38d1d32e23085d61ac8be5cfa5b8dfceb7ac30a8d33ce808a17",
+    "tags": [
+      [
+        "d",
+        "ol-ol8339657w"
+      ],
+      [
+        "z",
+        "39998:6aca05b812da97601151776d13de04ae71afc9d86da1408f0e72cffef72ece4b:books"
+      ],
+      [
+        "t",
+        "ol-ol8339657w"
+      ],
+      [
+        "title",
+        "Secret Love"
+      ],
+      [
+        "author",
+        "Nancy John"
+      ],
+      [
+        "isbn",
+        "9780708954027"
+      ],
+      [
+        "isbn10",
+        "0373504861"
+      ],
+      [
+        "open-library-id",
+        "OL8339657W"
+      ],
+      [
+        "lang",
+        "eng"
+      ],
+      [
+        "year",
+        "1986"
+      ],
+      [
+        "pages",
+        "192"
+      ],
+      [
+        "cover",
+        "https://covers.openlibrary.org/b/id/9945589-L.jpg"
+      ],
+      [
+        "subject",
+        "Fiction, romance, general"
+      ],
+      [
+        "format",
+        "reference"
+      ],
+      [
+        "source",
+        "openlibrary"
+      ],
+      [
+        "json",
+        "{\"word\":{\"slug\":\"ol-ol8339657w\",\"name\":\"Secret Love\",\"title\":\"Secret Love\",\"wordTypes\":[\"word\",\"bookSubmission\"]},\"bookSubmission\":{\"slug\":\"ol-ol8339657w\",\"title\":\"Secret Love\",\"authorName\":\"Nancy John\",\"authorPubkey\":null,\"isbn13\":\"9780708954027\",\"isbn10\":\"0373504861\",\"openLibraryId\":\"OL8339657W\",\"coverUrl\":\"https://covers.openlibrary.org/b/id/9945589-L.jpg\",\"pageCount\":192,\"publishYear\":1986,\"language\":\"eng\",\"subjects\":[\"Fiction, romance, general\"],\"format\":\"reference\",\"fileUrl\":null,\"source\":\"openlibrary\",\"submittedBy\":null}}"
+      ],
+      [
+        "added",
+        "1792631104"
+      ],
+      [
+        "L",
+        "ink.unbnd.genre"
+      ],
+      [
+        "l",
+        "romance",
+        "ink.unbnd.genre"
+      ],
+      [
+        "L",
+        "ink.unbnd.format"
+      ],
+      [
+        "l",
+        "reference",
+        "ink.unbnd.format"
+      ],
+      [
+        "L",
+        "ISO-639-2"
+      ],
+      [
+        "l",
+        "eng",
+        "ISO-639-2"
+      ],
+      [
+        "i",
+        "isbn:9780708954027"
+      ]
+    ]
+  }
+]
