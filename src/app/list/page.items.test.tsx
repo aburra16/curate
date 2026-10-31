@@ -7,14 +7,15 @@
  * once the first page is in (a blank one removing its row), the header's
  * item kinds going to every read, the index searched past what's loaded,
  * items added and changed through the list's own definition (Edit offered only
- * on the reader's own addressable items), and items folded only for authors the
- * scorer actually answered for. The headers are read from a pretend set of
+ * on the reader's own addressable items), votes cast and the reader's own
+ * shown, and items folded only for authors the scorer actually answered for. The headers are read from a pretend set of
  * relays, as on the real page.
  */
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { Filter, NostrEvent } from "nostr-tools";
 import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { voteTemplate } from "@/lib/curate/writeTemplates";
 import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
 import type { ItemEvent } from "@/services/concepts";
 import { NOT_STARTED, type ItemsPage } from "@/services/items";
@@ -1110,5 +1111,167 @@ describe("drawing a long list", () => {
 
     expect(rowTitles()).toEqual(["Alpha", "Beta", "Gamma"]);
     expect(drawn.rows).toBe(0);
+  });
+});
+
+describe("voting on an item", () => {
+  const readerKey = generateSecretKey();
+  const reader = getPublicKey(readerKey);
+  const friendKey = generateSecretKey();
+  const friend = getPublicKey(friendKey);
+
+  /** A vote as Curate signs it, by `key`. */
+  const voted = (key: Uint8Array, item: ItemEvent, vote: "+" | "-", created_at: number) =>
+    finalizeEvent({ ...voteTemplate(item, vote), created_at }, key) as NostrEvent;
+  const upvote = (title: string) => within(rowOf(title)).getByRole("button", { name: /Upvote/ }) as HTMLButtonElement;
+  const downvote = (title: string) => within(rowOf(title)).getByRole("button", { name: /Downvote/ }) as HTMLButtonElement;
+  /** The scorer ranks these people inside the line, and everyone else out. */
+  const ranksInside = (...inside: string[]) =>
+    ranking.fetchAuthorRanks.mockImplementation(async (pubkeys: string[]) =>
+      scorerSays(
+        pubkeys,
+        inside.map((pk): [string, number] => [pk, 50]),
+      ),
+    );
+  /** Let the ranks and the votes come in. */
+  const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+
+  beforeEach(() => {
+    vi.mocked(retryPublish).mockReset();
+    vi.mocked(signAndPublish).mockImplementation(async (template) => signedBy(reader, template));
+    signIn(reader);
+  });
+
+  it("shows the reader's own vote, though they are outside the web of trust and it isn't counted", async () => {
+    const alpha = place("Alpha", 1_792_000_100);
+    relays([
+      ...(foodHeader as NostrEvent[]),
+      voted(friendKey, alpha, "+", 1_792_000_200),
+      voted(readerKey, alpha, "-", 1_792_000_300),
+    ]);
+    reads.loadItemsPage.mockResolvedValueOnce(page([alpha], null));
+    ranksInside(LISTER, friend);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    await vi.waitFor(() => expect(downvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+    expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("false");
+    expect(upvote("Alpha").textContent).toContain("1");
+    expect(downvote("Alpha").textContent).not.toMatch(/\d/);
+  });
+
+  it("publishes the vote naming the item and not the list, counts it once the list relay has it, and sends nothing for it again", async () => {
+    const alpha = place("Alpha", 1_792_000_100, reader);
+    reads.loadItemsPage.mockResolvedValueOnce(page([alpha], null));
+    ranksInside(reader);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+    await settle();
+
+    fireEvent.click(upvote("Alpha"));
+
+    await vi.waitFor(() => expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+    expect(upvote("Alpha").textContent).toContain("1");
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(signAndPublish).mock.calls[0][0]).toEqual(voteTemplate(alpha, "+"));
+    expect(JSON.stringify(vi.mocked(signAndPublish).mock.calls[0][0].tags)).not.toContain("39998");
+
+    fireEvent.click(upvote("Alpha"));
+    await settle();
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(downvote("Alpha"));
+    await vi.waitFor(() => expect(downvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+    expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("false");
+    expect(upvote("Alpha").textContent).not.toMatch(/\d/);
+    expect(downvote("Alpha").textContent).toContain("1");
+  });
+
+  it("marks the reader's vote without counting it when they are outside the web of trust", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    ranksInside(LISTER);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+    await settle();
+
+    fireEvent.click(upvote("Alpha"));
+
+    await vi.waitFor(() => expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+    expect(upvote("Alpha").textContent).not.toMatch(/\d/);
+  });
+
+  it("changes nothing when the list relay refuses the vote, and counts it when Retry gets it there", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100, reader)], null));
+    ranksInside(reader);
+    vi.mocked(signAndPublish).mockImplementation(async (template) => ({
+      ...signedBy(reader, template),
+      onHub: false,
+      hubMessage: "blocked: not today",
+      accepted: [],
+      failed: [{ ok: false, from: DCOSL, message: "blocked: not today" }],
+    }));
+    vi.mocked(retryPublish).mockImplementation(async (result) => ({ ...result, onHub: true, hubMessage: null, accepted: [DCOSL], failed: [] }));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+    await settle();
+
+    fireEvent.click(upvote("Alpha"));
+
+    expect((await screen.findByRole("alert")).textContent).toContain("Not saved to the list relay: blocked: not today");
+    expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("false");
+    expect(upvote("Alpha").textContent).not.toMatch(/\d/);
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    await vi.waitFor(() => expect(upvote("Alpha").getAttribute("aria-pressed")).toBe("true"));
+    expect(upvote("Alpha").textContent).toContain("1");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+  });
+
+  it("on a curation copy, counts a vote for the original, and shows a vote already cast on it", async () => {
+    const original = `39999:${LISTER}:cafe-luna`;
+    const copy: ItemEvent = {
+      id: "c1".repeat(32),
+      pubkey: friend,
+      kind: 39999,
+      created_at: 1_792_000_200,
+      content: "",
+      tags: [["d", "copy-c1c1"], ["z", FOOD], ["name", "Cafe Luna"], ["q", original]],
+    };
+    const onOriginal = finalizeEvent(
+      { kind: 7, created_at: 1_792_000_300, content: "-", tags: [["a", original]] },
+      readerKey,
+    ) as NostrEvent;
+    relays([...(foodHeader as NostrEvent[]), onOriginal, voted(friendKey, copy, "+", 1_792_000_250)]);
+    // The reader has an item here too, so the scorer ranks them with the authors.
+    reads.loadItemsPage.mockResolvedValueOnce(page([copy, place("Alpha", 1_792_000_100, reader)], null));
+    ranksInside(friend, reader);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+
+    // The reader's earlier vote on the original is the one this row shows; the friend's on the copy is counted.
+    await vi.waitFor(() => expect(downvote("Cafe Luna").getAttribute("aria-pressed")).toBe("true"));
+    expect(upvote("Cafe Luna").textContent).toContain("1");
+    expect(downvote("Cafe Luna").textContent).toContain("1");
+
+    fireEvent.click(upvote("Cafe Luna"));
+
+    await vi.waitFor(() => expect(upvote("Cafe Luna").getAttribute("aria-pressed")).toBe("true"));
+    expect(vi.mocked(signAndPublish).mock.calls[0][0]).toEqual(voteTemplate(copy, "+"));
+    expect(upvote("Cafe Luna").textContent).toContain("2");
+    expect(downvote("Cafe Luna").textContent).not.toMatch(/\d/);
+  });
+
+  it("is disabled for a reader who isn't connected, and says to connect", async () => {
+    useSigner.setState({ pubkey: null, status: "disconnected", error: null });
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    for (const button of [upvote("Alpha"), downvote("Alpha")]) {
+      expect(button.disabled).toBe(true);
+      expect(button.title).toBe("Connect to vote");
+    }
   });
 });

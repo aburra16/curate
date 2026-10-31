@@ -1,24 +1,25 @@
 "use client";
 
-import { memo, useDeferredValue, useMemo, useState, type ReactNode } from "react";
+import { memo, useCallback, useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import type { NostrEvent } from "nostr-tools/pure";
 import { ConfirmWrite } from "@/components/confirm-write";
 import { ItemForm } from "@/components/item-form";
 import { ItemRow } from "@/components/item-row";
-import { ReactionButtons } from "@/components/reaction-buttons";
 import { TrustFold } from "@/components/trust-fold";
+import { VoteButtons } from "@/components/vote-buttons";
 import { useReader } from "@/hooks/use-reader";
 import { useTemplates } from "@/hooks/use-templates";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
 import { deletionTemplate } from "@/lib/curate/writeTemplates";
 import { ITEM_ORDERS, type ItemOrder } from "@/lib/dictionaryItems";
-import { coordinateOf, DLIST_ITEM_KIND, DLIST_ITEM_KINDS, headerReference } from "@/lib/dlistFields";
+import { DLIST_ITEM_KIND, DLIST_ITEM_KINDS } from "@/lib/dlistFields";
 import { itemLinks, type LinkRef, type UrlTemplate } from "@/lib/linkTemplates";
 import { cn } from "@/lib/utils";
 import { itemIdentity, type ItemEvent } from "@/services/concepts";
 import { mergePages, shownItems } from "@/services/items";
 import { namesOf } from "@/services/jsonData";
 import type { ReactionCount } from "@/services/reactions";
+import { inWebOfTrust } from "@/services/trust";
 import { useShowEverything } from "@/stores/view";
 import { itemsModel, singularOf, withoutRemoved, type RowModel } from "./items-model";
 import {
@@ -41,6 +42,8 @@ interface Props {
 }
 
 const NO_LINKS: LinkRef[] = [];
+/** What a row's votes are until they are read: none, and the reader's own not known. */
+const NO_VOTES: ReactionCount = { up: 0, down: 0, mine: null };
 /** The orders a list offers: newest, or A to Z by title. */
 const ORDERS = ITEM_ORDERS.filter((o) => o.key === "newest" || o.key === "name");
 /** How many rows are drawn at first, and how many more each "Show more" draws. */
@@ -93,7 +96,15 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
   // Authors the scorer didn't answer for are asked again as authors or pages come in.
   const { ranks, answered, rankMore } = useAuthorRanks(authors, observer, items.pages);
   // Votes are counted once the scorer has answered at all.
-  const reactions = useReactions(visible, answered.size ? ranks : null, observer, rankMore);
+  const { counts: reactions, setCount } = useReactions(
+    visible,
+    answered.size ? ranks : null,
+    observer,
+    rankMore,
+    reader.pubkey,
+  );
+  // A vote the reader casts moves the count only if they are one of the people it is made of.
+  const readerCounts = reader.pubkey !== null && inWebOfTrust(ranks, reader.pubkey);
   const refs = definition?.links ?? NO_LINKS;
   const templates = useTemplates(refs);
   const count = useItemCount(handles);
@@ -127,6 +138,8 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
       refs={refs}
       templates={templates}
       reactions={reactions.get(r.identity) ?? null}
+      readerCounts={readerCounts}
+      onVoted={setCount}
       definition={definition}
       reader={reader.pubkey}
       onSaved={items.add}
@@ -304,6 +317,8 @@ const EditableRow = memo(function EditableRow({
   refs,
   templates,
   reactions,
+  readerCounts,
+  onVoted,
   definition,
   reader,
   onSaved,
@@ -314,7 +329,12 @@ const EditableRow = memo(function EditableRow({
   row: RowModel;
   refs: LinkRef[];
   templates: Map<string, UrlTemplate>;
+  /** The votes read for the item; null until they are. */
   reactions: ReactionCount | null;
+  /** The reader is one of the people the votes are counted from. */
+  readerCounts: boolean;
+  /** Shows the count a vote the list relay took leaves. */
+  onVoted: (identity: string, count: ReactionCount) => void;
   /** The definition the page shows; null when no header was found, and nothing can be changed. */
   definition: ConceptDefinition | null;
   reader: string | null;
@@ -333,6 +353,7 @@ const EditableRow = memo(function EditableRow({
     () => (onOpenItem ? (opener: HTMLElement) => onOpenItem(identity, opener) : undefined),
     [onOpenItem, identity],
   );
+  const onCounted = useCallback((count: ReactionCount) => onVoted(identity, count), [onVoted, identity]);
   // Items come off a relay signed; ItemEvent only leaves out what the readers never use.
   const event = row.item as NostrEvent;
   const own = !!definition && definition.fields.length > 0 && !!reader && reader === event.pubkey;
@@ -382,14 +403,7 @@ const EditableRow = memo(function EditableRow({
               Delete
             </button>
           ) : null}
-          <ReactionButtons
-            itemEventId={event.id}
-            itemAddress={coordinateOf(event) ?? undefined}
-            itemAuthor={event.pubkey}
-            itemKind={event.kind}
-            parentListUuid={(definition && headerReference(definition.event)) || undefined}
-            counts={reactions}
-          />
+          <VoteButtons item={row.item} count={reactions ?? NO_VOTES} readerCounts={readerCounts} onVoted={onCounted} />
         </>
       }
       asking={

@@ -72,14 +72,15 @@ export function editedItemTemplate(item: Signed, changes: Record<string, string>
  * The count after the reader votes `next`. The same vote again changes
  * nothing. Otherwise `mine` is `next`, and when the reader is one of the
  * people the count is made of (`readerCounts`), their old vote leaves its side
- * and the new one joins the other.
+ * and the new one joins the other. A side never goes below zero, though the
+ * count it started from was stale.
  */
 export function applyVote(count: ReactionCount, next: Vote, readerCounts: boolean): ReactionCount {
   if (next === count.mine) return count;
   if (!readerCounts) return { ...count, mine: next };
   let { up, down } = count;
-  if (count.mine === "+") up -= 1;
-  if (count.mine === "-") down -= 1;
+  if (count.mine === "+") up = Math.max(0, up - 1);
+  if (count.mine === "-") down = Math.max(0, down - 1);
   if (next === "+") up += 1;
   else down += 1;
   return { up, down, mine: next };

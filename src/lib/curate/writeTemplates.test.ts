@@ -222,6 +222,11 @@ describe("applyVote", () => {
     expect(applyVote({ up: 4, down: 2, mine: null }, "+", false)).toEqual({ up: 4, down: 2, mine: "+" });
   });
 
+  it("never leaves a side below zero, though the count was stale", () => {
+    expect(applyVote({ up: 0, down: 2, mine: "+" }, "-", true)).toEqual({ up: 0, down: 3, mine: "-" });
+    expect(applyVote({ up: 3, down: 0, mine: "-" }, "+", true)).toEqual({ up: 4, down: 0, mine: "+" });
+  });
+
   it("does not change the count it is given", () => {
     const before = { ...count };
     applyVote(count, "-", true);

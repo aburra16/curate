@@ -10,6 +10,8 @@
  *   doesn't take one back.
  * - **Only people inside the verified line count** (`inWebOfTrust`). Ranks
  *   decide who counts here and are never shown.
+ * - **The reader's own vote is returned as `mine`,** whether or not they are
+ *   inside the line: it says what they did, not what is counted.
  *
  * Counts are kept by item identity (`itemIdentity`), so a reaction to a
  * curation copy counts for its original. Kind-5 deletions of reactions are
@@ -20,22 +22,18 @@
  * once for the ranks of the voters it doesn't hold.
  */
 import type { Filter, NostrEvent } from "nostr-tools";
+import type { ReactionCount, Vote } from "@/lib/curate/writeTemplates";
 import { coordinateOf, parseCoordinate } from "@/lib/dlistFields";
 import { itemIdentity, type ItemEvent } from "@/services/concepts";
 import { readRelays } from "@/services/nostr";
 import { listRelays } from "@/services/relays";
 import { inWebOfTrust } from "@/services/trust";
 
-export interface ReactionCount {
-  up: number;
-  down: number;
-}
+export type { ReactionCount };
 
 /** Values per `#e` or `#a` filter: a filter of thousands of values is one no relay takes. */
 const CHUNK = 100;
 const HEX64 = /^[0-9a-f]{64}$/i;
-
-type Vote = "+" | "-";
 
 /** A reaction's vote, or null for one that isn't (an emoji, a word). */
 function voteOf(ev: NostrEvent): Vote | null {
@@ -54,15 +52,17 @@ const chunked = (values: string[], tag: "#e" | "#a"): Filter[] =>
 
 /**
  * How many people in the reader's web of trust voted each item up and down,
- * keyed by item identity, with an entry for every item. `ranks` are the
- * reader's scorer's (services/trust `fetchAuthorRanks`); `rankMore`, when
- * given, ranks the voters `ranks` doesn't hold. If it fails, those voters
- * are unranked, so they don't count.
+ * and the reader's own latest vote on it, keyed by item identity, with an
+ * entry for every item. `ranks` are the reader's scorer's (services/trust
+ * `fetchAuthorRanks`); `rankMore`, when given, ranks the voters `ranks`
+ * doesn't hold. If it fails, those voters are unranked, so they don't count.
+ * `reader` is who is reading, null when no one is signed in.
  */
 export async function loadReactions(
   items: ItemEvent[],
   ranks: Map<string, number>,
   rankMore?: (pubkeys: string[]) => Promise<Map<string, number>>,
+  reader: string | null = null,
 ): Promise<Map<string, ReactionCount>> {
   const counts = new Map<string, ReactionCount>();
   /** What a reaction may name, to the identity it reaches: an id by `e`, an address by `a`. */
@@ -70,7 +70,7 @@ export async function loadReactions(
   const byAddress = new Map<string, string>();
   for (const item of items) {
     const identity = itemIdentity(item);
-    counts.set(identity, { up: 0, down: 0 });
+    counts.set(identity, { up: 0, down: 0, mine: null });
     byId.set(item.id, identity);
     const address = coordinateOf(item);
     if (address) byAddress.set(address, identity);
@@ -110,7 +110,6 @@ export async function loadReactions(
   /** Each person's latest vote on each item. */
   const latest = new Map<string, { identity: string; vote: Vote; at: NostrEvent }>();
   for (const { ev, vote, identity } of votes) {
-    if (!inWebOfTrust(known, ev.pubkey)) continue;
     const key = JSON.stringify([identity, ev.pubkey]);
     const held = latest.get(key)?.at;
     if (!held || ev.created_at > held.created_at || (ev.created_at === held.created_at && ev.id < held.id)) {
@@ -118,9 +117,11 @@ export async function loadReactions(
     }
   }
 
-  for (const { identity, vote } of latest.values()) {
+  for (const { identity, vote, at } of latest.values()) {
     const count = counts.get(identity);
-    if (count) count[vote === "+" ? "up" : "down"] += 1;
+    if (!count) continue;
+    if (inWebOfTrust(known, at.pubkey)) count[vote === "+" ? "up" : "down"] += 1;
+    if (reader && at.pubkey === reader) count.mine = vote;
   }
   return counts;
 }

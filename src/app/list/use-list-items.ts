@@ -24,8 +24,8 @@
  *   and which authors it answered for. An author whose read didn't end is
  *   asked again with the next request (new authors, or a new page).
  * - `useReactions`, `useItemCount`, `useSearchedItems`: the votes on
- *   what's loaded, the index's count, and the index's search past what's
- *   loaded.
+ *   what's loaded and the reader's own, the index's count, and the index's
+ *   search past what's loaded.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { filedItems, itemIdentity, type ItemEvent } from "@/services/concepts";
@@ -355,16 +355,20 @@ export function useAuthorRanks(authors: string[], observer: RankObserver, attemp
 
 /**
  * The votes on `items` (`loadReactions`): one per person, their latest,
- * from inside the web of trust. Read for each item once per reader, as
- * items come in, once the scorer has answered (`ranks` not null); until
- * then there are none.
+ * from inside the web of trust, and the reader's own vote on each (`reader`,
+ * null when signed out). Read for each item once per reader, as items come
+ * in, once the scorer has answered (`ranks` not null); until then there are
+ * none. `setCount` replaces one item's count, for the page to show a vote the
+ * list relay has taken without reading again; it changes the counts of the
+ * reader it was made for, and no other's.
  */
 export function useReactions(
   items: ItemEvent[],
   ranks: Map<string, number> | null,
   observer: RankObserver,
   rankMore: (pubkeys: string[]) => Promise<Map<string, number>>,
-): Map<string, ReactionCount> {
+  reader: string | null,
+): { counts: Map<string, ReactionCount>; setCount: (identity: string, count: ReactionCount) => void } {
   const [state, setState] = useState<{ observer: RankObserver; counts: Map<string, ReactionCount> }>(() => ({
     observer,
     counts: new Map(),
@@ -378,16 +382,23 @@ export function useReactions(
     if (!fresh.length) return;
     for (const item of fresh) asked.current.identities.add(itemIdentity(item));
     const askedFor = asked.current;
-    void loadReactions(fresh, ranks, rankMore).then((counts) => {
+    void loadReactions(fresh, ranks, rankMore, reader).then((counts) => {
       if (asked.current !== askedFor) return;
       setState((s) => {
         const base = s.observer === observer ? s.counts : new Map<string, ReactionCount>();
         return { observer, counts: new Map([...base, ...counts]) };
       });
     });
-  }, [items, ranks, observer, rankMore]);
+  }, [items, ranks, observer, rankMore, reader]);
 
-  return state.observer === observer ? state.counts : EMPTY_COUNTS;
+  const setCount = useCallback(
+    (identity: string, count: ReactionCount) =>
+      // A vote cast as another reader isn't added to this reader's counts.
+      setState((s) => (s.observer === observer ? { observer, counts: new Map(s.counts).set(identity, count) } : s)),
+    [observer],
+  );
+
+  return { counts: state.observer === observer ? state.counts : EMPTY_COUNTS, setCount };
 }
 
 const EMPTY_COUNTS = new Map<string, ReactionCount>();
