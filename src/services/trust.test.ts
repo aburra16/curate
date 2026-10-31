@@ -99,6 +99,7 @@ function relays(
     },
     count: async () => null,
     live: () => () => {},
+    publish: async (relay) => ({ ok: false, from: relay, message: "this transport only reads" }),
   };
   setTransport(t);
   return { calls, reads: (kind) => calls.filter((c) => c.filters.some((f) => f.kinds?.includes(kind))) };

@@ -305,7 +305,7 @@ describe("readListEvents", () => {
 
   it("asks nothing when there are no filters", async () => {
     const req = vi.fn();
-    setTransport({ req, count: vi.fn(), live: vi.fn() });
+    setTransport({ req, count: vi.fn(), live: vi.fn(), publish: vi.fn() });
 
     expect(await readListEvents([])).toEqual([]);
     expect(req).not.toHaveBeenCalled();

@@ -6,13 +6,15 @@
  * The default is applesauce's RelayPool. Every request ends in exactly one way:
  * EOSE, the relay's CLOSED (applesauce raises the refusals as errors), our own
  * timeout, or a failure. Reading never signs, so a relay that wants a sign-in
- * is reported as closed instead of waited on.
+ * is reported as closed instead of waited on. A publish ends as the relay's
+ * OK, its refusal, or a failure, and is never retried here.
  */
 
 import { RelayClosedError } from "applesauce-relay";
 import type { Filter, NostrEvent } from "nostr-tools";
 import type { Subscription } from "rxjs";
 import { getPool } from "@/lib/nostr/ndk";
+import type { PublishOutcome } from "@/lib/publishQuorum";
 
 export type ReqEnd =
   | { state: "eose" }
@@ -27,6 +29,11 @@ export interface RelayTransport {
   count(relay: string, filters: Filter[], timeoutMs: number): Promise<number | null>;
   /** Keep a subscription open for new events. Returns the function that closes it. */
   live(relay: string, filters: Filter[], onEvent: (ev: NostrEvent) => void): () => void;
+  /**
+   * Send one signed event to one relay and wait for its OK, a refusal, or `timeoutMs`.
+   * One attempt, no retries. Never rejects: a failure is `{ok:false}` with the reason.
+   */
+  publish(relay: string, event: NostrEvent, timeoutMs: number): Promise<PublishOutcome>;
 }
 
 let current: RelayTransport | null = null;
@@ -138,5 +145,14 @@ const poolTransport: RelayTransport = {
       // No pool (server render): nothing to subscribe to.
     }
     return () => sub?.unsubscribe();
+  },
+
+  async publish(relay, event, timeoutMs) {
+    try {
+      const res = await getPool().relay(relay).publish(event, { retries: false, timeout: timeoutMs });
+      return res.ok ? { ok: true, from: relay } : { ok: false, from: relay, message: res.message };
+    } catch (err) {
+      return { ok: false, from: relay, message: messageOf(err) };
+    }
   },
 };

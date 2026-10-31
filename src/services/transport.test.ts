@@ -3,6 +3,8 @@ import { RelayClosedError } from "applesauce-relay";
 import { Subject } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import foodHeader from "@/test/fixtures/food.header.json";
+import { fakeTransport } from "@/test/fakeTransport";
+import { DCOSL } from "@/services/relays";
 
 // The default transport runs for real; only the relay pool underneath it is
 // replaced, by relays whose messages the test pushes by hand.
@@ -22,6 +24,7 @@ interface MockRelay {
   req: ReturnType<typeof vi.fn>;
   count: ReturnType<typeof vi.fn>;
   subscription: ReturnType<typeof vi.fn>;
+  publish: ReturnType<typeof vi.fn>;
 }
 
 let relay: MockRelay;
@@ -37,6 +40,7 @@ beforeEach(() => {
     req: vi.fn(() => messages.asObservable()),
     count: vi.fn(() => count$.asObservable()),
     subscription: vi.fn(() => live$.asObservable()),
+    publish: vi.fn(),
   };
   relayOf.mockReset();
   relayOf.mockReturnValue(relay);
@@ -186,5 +190,96 @@ describe("transport().live", () => {
 
     expect(() => relay.live$.error(new RelayClosedError("error: refused"))).not.toThrow();
     stop();
+  });
+});
+
+describe("transport().publish", () => {
+  it("publish reports the relay's OK", async () => {
+    relay.publish.mockResolvedValue({ ok: true, message: "", from: URL });
+
+    expect(await transport().publish(URL, event, 8000)).toEqual({ ok: true, from: URL });
+    expect(relayOf).toHaveBeenCalledWith(URL);
+  });
+
+  it("sends once, with no retries and the caller's timeout", async () => {
+    relay.publish.mockResolvedValue({ ok: true, message: "", from: URL });
+
+    await transport().publish(URL, event, 8000);
+
+    expect(relay.publish).toHaveBeenCalledTimes(1);
+    expect(relay.publish).toHaveBeenCalledWith(event, { retries: false, timeout: 8000 });
+  });
+
+  it("publish reports a refusal with the relay's words", async () => {
+    relay.publish.mockResolvedValue({ ok: false, message: "blocked: no", from: URL });
+
+    expect(await transport().publish(URL, event, 8000)).toEqual({ ok: false, from: URL, message: "blocked: no" });
+  });
+
+  it("publish never rejects", async () => {
+    relay.publish.mockImplementation(() => {
+      throw new Error("socket closed");
+    });
+    expect(await transport().publish(URL, event, 8000)).toEqual({ ok: false, from: URL, message: "socket closed" });
+
+    relay.publish.mockRejectedValue(new Error("socket closed"));
+    expect(await transport().publish(URL, event, 8000)).toEqual({ ok: false, from: URL, message: "socket closed" });
+
+    relayOf.mockImplementation(() => {
+      throw new Error("getPool() can only be called in the browser");
+    });
+    expect(await transport().publish(URL, event, 8000)).toEqual({
+      ok: false,
+      from: URL,
+      message: "getPool() can only be called in the browser",
+    });
+  });
+});
+
+describe("fakeTransport().publish", () => {
+  it("fakeTransport records what was published", async () => {
+    const fake = fakeTransport({ [DCOSL]: { events: [], end: { state: "eose" }, accept: { ok: true } } });
+
+    expect(await fake.publish(DCOSL, event, 1000)).toEqual({ ok: true, from: DCOSL });
+    expect(fake.published[DCOSL]).toEqual([event]);
+  });
+
+  it("refuses when no answer is scripted, and still records the send", async () => {
+    const fake = fakeTransport({ [DCOSL]: { events: [], end: { state: "eose" } } });
+
+    expect(await fake.publish(DCOSL, event, 1000)).toEqual({
+      ok: false,
+      from: DCOSL,
+      message: "fakeTransport: no publish scripted",
+    });
+    expect(await fake.publish(URL, event, 1000)).toEqual({
+      ok: false,
+      from: URL,
+      message: "fakeTransport: no publish scripted",
+    });
+    expect(fake.published).toEqual({ [DCOSL]: [event], [URL]: [event] });
+  });
+
+  it("answers a refusal with the scripted words", async () => {
+    const fake = fakeTransport({
+      [DCOSL]: { events: [], end: { state: "eose" }, accept: { ok: false, message: "blocked: no" } },
+    });
+
+    expect(await fake.publish(DCOSL, event, 1000)).toEqual({ ok: false, from: DCOSL, message: "blocked: no" });
+  });
+
+  it("answers timed out at the timeout when the relay is slower", async () => {
+    vi.useFakeTimers();
+    const fake = fakeTransport({
+      [DCOSL]: { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: 5000 },
+    });
+    let answer: unknown;
+    void fake.publish(DCOSL, event, 1000).then((out) => (answer = out));
+
+    await vi.advanceTimersByTimeAsync(999);
+    expect(answer).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(answer).toEqual({ ok: false, from: DCOSL, message: "timed out" });
   });
 });

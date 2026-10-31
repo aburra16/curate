@@ -88,6 +88,9 @@ export function relayCorpus(
         open = false;
       };
     },
+    async publish(relay) {
+      return { ok: false, from: relay, message: "relayCorpus only reads" };
+    },
   };
   return { transport, calls };
 }
