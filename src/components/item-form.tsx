@@ -5,6 +5,7 @@ import { useId, useMemo, useState } from "react";
 import { CheckProblems, hasBlocking, problemsFor } from "@/components/check-problems";
 import { PublishOutcome } from "@/components/publish-outcome";
 import { useReader } from "@/hooks/use-reader";
+import { useSettled } from "@/hooks/use-settled";
 import { useWrite } from "@/hooks/use-write";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
 import { editedItemTemplate } from "@/lib/curate/writeTemplates";
@@ -13,7 +14,6 @@ import type { UrlTemplate } from "@/lib/linkTemplates";
 import { checkItemUnder, type Problem } from "@/lib/listCheck";
 import { itemProblems, itemTemplate, randomTail, type ItemValues } from "@/lib/listItem";
 import type { ItemEvent } from "@/services/concepts";
-import type { PublishResult } from "@/services/publish";
 import { namesOf } from "@/services/jsonData";
 
 interface Props {
@@ -56,6 +56,7 @@ const REQUIREMENT_WORDS = { required: "Required", recommended: "Recommended", op
 export function ItemForm({ definition, templates, item, onSaved, onCancel }: Props) {
   const { pubkey } = useReader();
   const { state, busy, write, retry } = useWrite();
+  const { waiting, settled } = useSettled(onSaved);
   const headingId = useId();
   const singular = namesOf(definition.event).singular || "item";
 
@@ -67,8 +68,6 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
   /** Problems stay quiet on a new item until the person has started. */
   const [touched, setTouched] = useState(item !== undefined);
   const [tail] = useState(randomTail);
-  /** The list relay took the item, and one of the author's own relays didn't: the event waits for Done. */
-  const [waiting, setWaiting] = useState<NostrEvent | null>(null);
 
   /**
    * The fields whose value the person changed, in the definition's order. A
@@ -101,12 +100,6 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
   const stopped = itemProblems(definition, values).length > 0 || hasBlocking(problems);
   const canPublish = pubkey !== null && !stopped && !busy && waiting === null;
 
-  /** After a write: a save that reached every relay closes the form, one that missed an own relay says so first. */
-  const settled = (result: PublishResult | null) => {
-    if (!result?.onHub) return;
-    if (result.failed.length === 0) onSaved(result.event);
-    else setWaiting(result.event);
-  };
   const publish = async () => {
     if (!canPublish) return;
     settled(await write(template));

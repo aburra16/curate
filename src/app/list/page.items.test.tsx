@@ -758,6 +758,98 @@ describe("deleting an item", () => {
     ]);
   });
 
+  describe("when copies of an item are held", () => {
+    const OTHER = "6".repeat(64);
+    const ORIGINAL_D = "cafe-luna";
+    /** A copy of the Cafe Luna `original` by `pubkey`: its own address, and a `q` naming the original's. */
+    const copyBy = (pubkey: string, id: string, created_at: number, original: string): ItemEvent => ({
+      id,
+      pubkey,
+      kind: 39999,
+      created_at,
+      content: "",
+      tags: [["d", `copy-${id.slice(0, 4)}`], ["z", FOOD], ["name", "Cafe Luna"], ["q", `39999:${original}:${ORIGINAL_D}`]],
+    });
+    /** Opens Food with `first` on the page, then brings `later` in live. */
+    async function openWith(first: ItemEvent, later: ItemEvent[]) {
+      let onItem: (ev: ItemEvent) => void = () => {};
+      reads.liveItems.mockImplementation((_handles: string[], handler: (ev: ItemEvent) => void) => {
+        onItem = handler;
+        return () => {};
+      });
+      reads.loadItemsPage.mockResolvedValueOnce(page([first], null));
+      open(FOOD);
+      await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+      await vi.waitFor(() => expect(reads.liveItems).toHaveBeenCalled());
+      act(() => later.forEach(onItem));
+      // The newest of them is the one shown, and its author the one who can delete it.
+      await vi.waitFor(() => expect(screen.getByRole("button", { name: "Delete" })).toBeTruthy());
+    }
+
+    it("deleting your copy names your events only, not the original's or anyone else's copy", async () => {
+      const original = place("Cafe Luna", 1_792_000_100);
+      const theirs = copyBy(OTHER, "c1".repeat(32), 1_792_000_150, LISTER);
+      const mine = copyBy(READER, "c2".repeat(32), 1_792_000_200, LISTER);
+      await openWith(original, [theirs, mine]);
+
+      pressDelete("Cafe Luna");
+      pressDelete("Cafe Luna");
+
+      await vi.waitFor(() => expect(rowTitles()).toEqual([]));
+      expect(sent().tags).toEqual([
+        ["e", mine.id],
+        ["a", `39999:${READER}:copy-c2c2`],
+        ["k", "39999"],
+      ]);
+    });
+
+    it("deleting an original that others copied names your events only", async () => {
+      const theirs = copyBy(OTHER, "c1".repeat(32), 1_792_000_150, READER);
+      const mine = own("Cafe Luna", 1_792_000_300);
+      const earlier = again(mine, "d".repeat(64), 1_792_000_100, "Cafe Luna, before");
+      await openWith(theirs, [mine, earlier]);
+
+      pressDelete("Cafe Luna");
+      pressDelete("Cafe Luna");
+
+      await vi.waitFor(() => expect(rowTitles()).toEqual([]));
+      expect(tagsNamed("e")).toEqual([
+        ["e", mine.id],
+        ["e", earlier.id],
+      ]);
+    });
+  });
+
+  it("names the item itself when the page holds it only as a search result", async () => {
+    const mine = own("Cafe Luna", 1_792_000_500);
+    reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], { hub: 5, index: 5 }));
+    reads.searchItems.mockResolvedValue([mine]);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Alpha" });
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "luna" } });
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" }, { timeout: 2000 });
+    askToDelete("Cafe Luna");
+    confirmDelete("Cafe Luna");
+
+    await vi.waitFor(() => expect(rowTitles()).toEqual([]));
+    expect(tagsNamed("e")).toEqual([["e", mine.id]]);
+  });
+
+  it("removes the row when the item is dated after the deletion was signed", async () => {
+    // The deletion is signed at 1_793_000_000; the item says it was made later.
+    reads.loadItemsPage.mockResolvedValueOnce(
+      page([own("Cafe Luna", 1_794_000_000), place("Alpha", 1_792_000_100)], null),
+    );
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+
+    askToDelete("Cafe Luna");
+    confirmDelete("Cafe Luna");
+
+    await vi.waitFor(() => expect(rowTitles()).toEqual(["Alpha"]));
+  });
+
   it("names a short item by its id alone", async () => {
     const short = { ...own("Mine, short", 1_792_000_300), kind: 9999 };
     reads.loadItemsPage.mockResolvedValueOnce(page([short], null));

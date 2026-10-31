@@ -1,15 +1,14 @@
 "use client";
 
-import { memo, useDeferredValue, useId, useMemo, useState, type ReactNode } from "react";
+import { memo, useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import type { NostrEvent } from "nostr-tools/pure";
+import { ConfirmWrite } from "@/components/confirm-write";
 import { ItemForm } from "@/components/item-form";
 import { ItemRow } from "@/components/item-row";
-import { PublishOutcome } from "@/components/publish-outcome";
 import { ReactionButtons } from "@/components/reaction-buttons";
 import { TrustFold } from "@/components/trust-fold";
 import { useReader } from "@/hooks/use-reader";
 import { useTemplates } from "@/hooks/use-templates";
-import { useWrite } from "@/hooks/use-write";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
 import { deletionTemplate } from "@/lib/curate/writeTemplates";
 import { ITEM_ORDERS, type ItemOrder } from "@/lib/dictionaryItems";
@@ -19,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { itemIdentity, type ItemEvent } from "@/services/concepts";
 import { mergePages, shownItems } from "@/services/items";
 import { namesOf } from "@/services/jsonData";
-import type { PublishResult } from "@/services/publish";
 import type { ReactionCount } from "@/services/reactions";
 import { useShowEverything } from "@/stores/view";
 import { itemsModel, singularOf, withoutRemoved, type RowModel } from "./items-model";
@@ -284,6 +282,17 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
 }
 
 /**
+ * The ids a deletion of `item` names: every version of it the page holds that
+ * its author made, and the item as shown (a search result is not held). Another
+ * author's copy of the item is not named: a deletion removes only its author's
+ * own events.
+ */
+function versionsToName(item: ItemEvent, versionsOf: (identity: string, author?: string) => string[]): string[] {
+  const held = versionsOf(itemIdentity(item), item.pubkey);
+  return held.includes(item.id) ? held : [item.id, ...held];
+}
+
+/**
  * A row, and its Edit while the reader is the author of an addressable item
  * (a kind 9999 can't be replaced) under a list that declares fields to change.
  * Edit keeps every tag the item has, so any such item can be changed. Delete
@@ -311,8 +320,8 @@ const EditableRow = memo(function EditableRow({
   reader: string | null;
   /** Merges what an edit published into the list. */
   onSaved: (events: ItemEvent[]) => void;
-  /** The ids of every version of an item the page holds, for a deletion to name. */
-  versionsOf: (identity: string) => string[];
+  /** The ids of an item's versions the page holds, an author's own only, for a deletion to name. */
+  versionsOf: (identity: string, author?: string) => string[];
   /** Takes the item out of the list from now on, once its deletion is saved. */
   onRemoved: (identity: string, at: number) => void;
   onOpenItem?: (identity: string, opener: HTMLElement) => void;
@@ -385,11 +394,13 @@ const EditableRow = memo(function EditableRow({
       }
       asking={
         deleting && deletable ? (
-          <DeleteConfirm
-            item={row.item}
-            singular={singularOf(definition)}
-            versionsOf={versionsOf}
-            onDeleted={(deletion) => onRemoved(identity, deletion.created_at)}
+          <ConfirmWrite
+            question={`Delete this ${singularOf(definition)}? Relays that honour deletions will drop it.`}
+            confirmLabel="Delete"
+            busyLabel="Deleting…"
+            template={() => deletionTemplate(event, versionsToName(event, versionsOf))}
+            // The row leaves even if the item is dated after the deletion was signed.
+            onDone={(deletion) => onRemoved(identity, Math.max(deletion.created_at, event.created_at))}
             onCancel={() => setDeleting(false)}
           />
         ) : undefined
@@ -397,82 +408,3 @@ const EditableRow = memo(function EditableRow({
     />
   );
 });
-
-/**
- * Asks before the reader's item is deleted, then publishes a deletion naming
- * every version of it the page holds, and the item as shown (a search result
- * is not held). Until the list relay has taken it the item stays as it was: a
- * refusal says so, and Retry sends the same event again. A deletion the list
- * relay took is handed on at once, unless one of the author's own relays
- * missed it: then the question stays with that note until the person presses
- * Done.
- */
-function DeleteConfirm({
-  item,
-  singular,
-  versionsOf,
-  onDeleted,
-  onCancel,
-}: {
-  item: ItemEvent;
-  singular: string;
-  versionsOf: (identity: string) => string[];
-  /** The list relay has the deletion; handed the signed event. */
-  onDeleted: (deletion: NostrEvent) => void;
-  onCancel: () => void;
-}) {
-  const { state, busy, write, retry } = useWrite();
-  const [waiting, setWaiting] = useState<NostrEvent | null>(null);
-  const askedId = useId();
-
-  const settled = (result: PublishResult | null) => {
-    if (!result?.onHub) return;
-    if (result.failed.length === 0) onDeleted(result.event);
-    else setWaiting(result.event);
-  };
-  const confirm = () => {
-    const held = versionsOf(itemIdentity(item));
-    void write(deletionTemplate(item, held.includes(item.id) ? held : [item.id, ...held])).then(settled);
-  };
-
-  return (
-    <div role="group" aria-labelledby={askedId} className="flex flex-col gap-3">
-      <p id={askedId} className="text-[13px] text-ink">
-        Delete this {singular}? Relays that honour deletions will drop it.
-      </p>
-      <PublishOutcome state={state} busy={busy} onRetry={() => void retry().then(settled)} />
-      <div className="flex items-center justify-end gap-3">
-        {waiting ? (
-          <button
-            type="button"
-            onClick={() => onDeleted(waiting)}
-            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
-            style={{ borderRadius: "var(--radius-input)" }}
-          >
-            Done
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={busy}
-              className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={confirm}
-              disabled={busy}
-              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderRadius: "var(--radius-input)" }}
-            >
-              {busy ? "Deleting…" : "Delete"}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}

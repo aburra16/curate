@@ -14,8 +14,9 @@
  *   blank that comes in removes its row. Every page's crowded seconds are
  *   kept, so a second one page cut short and no page read to the end stays
  *   `lost` however many pages come after (`lostSeconds`).
- *   The hook also remembers every id it has held for each item, the versions
- *   a merge left behind too (`versionsOf`: what a deletion names), and which
+ *   The hook also remembers every id it has held for each item and who made
+ *   it, the versions a merge left behind too (`versionsOf`: what a deletion
+ *   names, an author's own only), and which
  *   items the reader deleted this session (`remove`, `removed`): those stay
  *   hidden, though a later page or live event brings an older version in, and
  *   a version made after the deletion shows again.
@@ -61,10 +62,16 @@ interface ItemsState {
   /** Every page's crowded seconds a relay cut short, and those dcosl or the index read to the end. */
   truncated: CrowdedSecond[];
   filled: CrowdedSecond[];
-  /** Every id held for each item (`itemIdentity`), in the order they came in: the versions a merge dropped too. */
-  versions: Map<string, string[]>;
+  /** Every event held for each item (`itemIdentity`), in the order they came in: the versions a merge dropped too. */
+  versions: Map<string, Version[]>;
   /** The items the reader deleted: their identity, and the second of the deletion. */
   removed: Map<string, number>;
+}
+
+/** An event held for an item: its id, and whose it is. */
+interface Version {
+  id: string;
+  pubkey: string;
 }
 
 const freshItems = (key: string): ItemsState => ({
@@ -81,20 +88,20 @@ const freshItems = (key: string): ItemsState => ({
   removed: new Map(),
 });
 
-/** `versions` with the ids of `events` added under their items; the same map when there is nothing new. */
-function withVersions(versions: Map<string, string[]>, events: ItemEvent[]): Map<string, string[]> {
-  let next: Map<string, string[]> | null = null;
+/** `versions` with `events` added under their items; the same map when there is nothing new. */
+function withVersions(versions: Map<string, Version[]>, events: ItemEvent[]): Map<string, Version[]> {
+  let next: Map<string, Version[]> | null = null;
   for (const ev of events) {
     const identity = itemIdentity(ev);
     const seen = (next ?? versions).get(identity);
-    if (seen?.includes(ev.id)) continue;
+    if (seen?.some((v) => v.id === ev.id)) continue;
     next ??= new Map(versions);
-    next.set(identity, seen ? [...seen, ev.id] : [ev.id]);
+    next.set(identity, [...(seen ?? []), { id: ev.id, pubkey: ev.pubkey }]);
   }
   return next ?? versions;
 }
 
-/** The state after `events` come in: merged into what the list holds, and their ids remembered. */
+/** The state after `events` come in: merged into what the list holds, and their ids and authors remembered. */
 const taking = (s: ItemsState, events: ItemEvent[]): ItemsState => ({
   ...s,
   held: mergePages(s.held, events),
@@ -136,8 +143,13 @@ export interface ListItems {
   loadMore: () => void;
   /** Merge events this page wrote (a new item, an edit), as a page would be: only those filed under the list. */
   add: (events: ItemEvent[]) => void;
-  /** The ids of every event held for the item, blank versions and those a newer one replaced included. */
-  versionsOf: (identity: string) => string[];
+  /**
+   * The ids of every event held for the item, blank versions and those a newer
+   * one replaced included. With `author`, only that author's: an item's identity
+   * holds its curation copies by others too, and a deletion may name only its
+   * author's own events.
+   */
+  versionsOf: (identity: string, author?: string) => string[];
   /** The items deleted this session, by identity: the second of the deletion. */
   removed: ReadonlyMap<string, number>;
   /** Hide the item, and every version of it no newer than `at` (a Unix second), for the rest of the session. */
@@ -145,7 +157,6 @@ export interface ListItems {
 }
 
 const NO_ITEMS = "[[],[]]";
-const NO_VERSIONS: string[] = [];
 /** How long live items gather before they're merged in. */
 const LIVE_BATCH_MS = 100;
 
@@ -235,7 +246,11 @@ export function useListItems(handles: string[], itemKinds: number[]): ListItems 
   useEffect(() => {
     versions.current = current.versions;
   }, [current.versions]);
-  const versionsOf = useCallback((identity: string) => versions.current.get(identity) ?? NO_VERSIONS, []);
+  const versionsOf = useCallback(
+    (identity: string, author?: string) =>
+      (versions.current.get(identity) ?? []).filter((v) => author === undefined || v.pubkey === author).map((v) => v.id),
+    [],
+  );
 
   const remove = useCallback(
     (identity: string, at: number) =>
