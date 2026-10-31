@@ -2,7 +2,7 @@
 import { PrivateKeySigner, type ISigner } from "applesauce-signers";
 import type { EventTemplate } from "nostr-tools";
 import { generateSecretKey, verifyEvent } from "nostr-tools/pure";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   activate,
   activeSigner,
@@ -12,19 +12,6 @@ import {
   SignerError,
   signTemplate,
 } from "./signer";
-
-// The signing library keeps its own, older copy of the hashing code, which
-// checks `instanceof Uint8Array`. jsdom's `Uint8Array` is not the one
-// `TextEncoder` makes, so under jsdom it rejects what it hashes. A browser has
-// one `Uint8Array`, so only the test needs this.
-vi.hoisted(() => {
-  const Encoder = globalThis.TextEncoder;
-  globalThis.TextEncoder = class extends Encoder {
-    encode(input?: string) {
-      return new Uint8Array(super.encode(input));
-    }
-  };
-});
 
 const CURATOR = new PrivateKeySigner(generateSecretKey());
 const OTHER = new PrivateKeySigner(generateSecretKey());
