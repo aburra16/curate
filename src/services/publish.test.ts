@@ -147,6 +147,7 @@ describe("signAndPublish", () => {
 
     expect(result.onHub).toBe(false);
     expect(result.hubMessage).toBe("no reason given");
+    expect(result.failed[0].message).toBe("no reason given");
   });
 
   it("asks for the author's relays while the signer is open", async () => {

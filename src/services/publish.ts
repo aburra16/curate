@@ -82,18 +82,22 @@ function resultOf(event: NostrEvent, accepted: string[], failed: PublishOutcome[
   return { event, onHub, hubMessage: onHub ? null : refusal ? wordsOf(refusal) : NO_REASON, accepted, failed };
 }
 
-/** Send the event to each relay and wait until all have answered or `PUBLISH_TIMEOUT_MS` has passed. */
+/**
+ * Send the event to each relay and wait until all have answered or `PUBLISH_TIMEOUT_MS` has passed.
+ * Every refusal comes back with words, so the status line and the result read the same.
+ */
 async function sendTo(
   event: NostrEvent,
   relays: string[],
 ): Promise<{ accepted: string[]; failed: PublishOutcome[] }> {
-  const { accepted, failed } = await publishUntilEnough(
+  const answered = await publishUntilEnough(
     relays,
     async (relay) => transport().publish(relay, event, PUBLISH_TIMEOUT_MS),
     { need: relays.length, timeoutMs: PUBLISH_TIMEOUT_MS },
   );
-  reportAnswers(accepted, failed);
-  return { accepted, failed };
+  const failed = answered.failed.map((outcome) => ({ ...outcome, message: wordsOf(outcome) }));
+  reportAnswers(answered.accepted, failed);
+  return { accepted: answered.accepted, failed };
 }
 
 /**

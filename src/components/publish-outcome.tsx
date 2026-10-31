@@ -1,0 +1,67 @@
+import type { WriteState } from "@/hooks/use-write";
+
+/** A relay as the person knows it: its host, "relay.example.com". */
+const hostOf = (relay: string): string => {
+  try {
+    return new URL(relay).host;
+  } catch {
+    return relay;
+  }
+};
+
+/**
+ * What the list relay said about the last write. Saved says so, and names any
+ * of the author's own relays that didn't take it; not saved gives the list
+ * relay's words and a Retry that resends the same event, disabled while a
+ * write is in flight; a write that stopped before any relay was asked shows
+ * why. Nothing shows before a write or while one is in flight.
+ */
+export function PublishOutcome({
+  state,
+  busy,
+  onRetry,
+}: {
+  state: WriteState;
+  busy: boolean;
+  onRetry: () => void;
+}) {
+  if (state.phase === "error") {
+    return (
+      <p role="alert" className="text-[12px] leading-[1.5] text-red-400">
+        {state.message}
+      </p>
+    );
+  }
+  if (state.phase !== "done") return null;
+
+  const { result } = state;
+  if (!result.onHub) {
+    return (
+      <div role="alert" className="flex items-center gap-3 text-[12px] leading-[1.5] text-red-400">
+        <p>Not saved to the list relay: {result.hubMessage}</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={busy}
+          className="shrink-0 px-3 py-1 text-[12px] bg-surface-raised border border-rule text-ink-soft hover:text-ink transition-colors disabled:opacity-40"
+          style={{ borderRadius: "var(--radius-input)" }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const missed = result.failed.map((outcome) => hostOf(outcome.from));
+  return (
+    <p role="status" className="text-[12px] leading-[1.5] text-ink-soft">
+      Saved to the list relay.
+      {missed.length > 0 ? (
+        <span className="text-mute">
+          {" "}
+          Not saved to {missed.length} of your own relays: {missed.join(", ")}.
+        </span>
+      ) : null}
+    </p>
+  );
+}
