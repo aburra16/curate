@@ -304,7 +304,7 @@ describe("the map", () => {
   it("is offered, and asks no map server for anything until the reader asks", () => {
     const { container } = hero();
     const offer = screen.getByRole("button", { name: /show on map/i });
-    expect(offer.textContent).toContain("map-tiles-server.brainstorm.world");
+    expect(offer.textContent).toBe("Show on map");
     expect(container.querySelector("iframe, [data-map]")).toBeNull();
     expect(container.querySelector('[src*="map-tiles-server"], [href*="openstreetmap"]')).toBeNull();
   });

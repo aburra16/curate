@@ -3,7 +3,7 @@
  * styles, fonts and sprite, at the same paths, with no key). The style, and the tiles, fonts and
  * sprite it names, all come from this one host, which answers only the sites it knows.
  */
-export const TILES_HOST = "map-tiles-server.brainstorm.world";
+const TILES_HOST = "map-tiles-server.brainstorm.world";
 
 export type Theme = "light" | "dark";
 

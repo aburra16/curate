@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { isSpot, osmPageUrl, type GeohashCell } from "@/lib/geohash";
-import { MAP_STYLES, pageTheme, TILES_HOST } from "@/lib/curate/mapStyle";
+import { MAP_STYLES, pageTheme } from "@/lib/curate/mapStyle";
 
 /** A link out of Curate: a new tab, no referrer, no endorsement. */
 const OUT = { target: "_blank", rel: "noopener noreferrer nofollow" } as const;
@@ -144,7 +144,6 @@ export function ItemMap({ location, title }: { location: GeohashCell; title: str
         style={ROUNDED}
       >
         {isSpot(location) ? "Show on map" : "Show area on map"}
-        <span className="text-[11px] text-mute">{TILES_HOST}</span>
       </button>
     );
   }
