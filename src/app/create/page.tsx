@@ -1,532 +1,440 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { CheckProblems, hasBlocking, problemsFor } from "@/components/check-problems";
+import { FieldsPanel } from "@/components/fields-panel";
+import { PublishOutcome } from "@/components/publish-outcome";
+import { useReader } from "@/hooks/use-reader";
+import { useWrite } from "@/hooks/use-write";
+import { definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
+import {
+  QUICK_FIELD_TYPES,
+  createProblems,
+  freeShortName,
+  newListTemplate,
+  ownShortNames,
+  sameConcept,
+  shortNameProblems,
+  type QuickField,
+  type QuickFieldType,
+} from "@/lib/curate/newList";
+import { checkHeader, type Problem } from "@/lib/listCheck";
+import { listCoordinate, previewDefinition, slugOf } from "@/lib/listDraft";
 import { cn } from "@/lib/utils";
-import { singularize } from "@/lib/nostr/pluralize";
-import { buildListHeaderEvent, listHeaderUuid } from "@/lib/nostr/events";
-import { signAndPublish } from "@/lib/nostr/publish";
-import { useSigner } from "@/stores/signer";
-import { useToast } from "@/components/toast";
-import type { FieldSchema, FieldType } from "@/lib/nostr/types";
+import { listHref } from "@/app/list/list-model";
+import { loadAllHeaders } from "@/services/dictionary";
 
-const FIELD_TYPES: { value: FieldType; label: string }[] = [
-  { value: "text", label: "Text" },
-  { value: "long-text", label: "Long text" },
-  { value: "number", label: "Number" },
-  { value: "url", label: "URL" },
-  { value: "date", label: "Date" },
-  { value: "boolean", label: "Yes / No" },
+/** A field row on the form: the field, and an id that stays with it as rows come and go. */
+type Row = QuickField & { id: number };
+
+const FIRST_FIELD: QuickField = { name: "name", type: "text", requirement: "required", description: "" };
+
+const REQUIREMENTS: { value: QuickField["requirement"]; label: string }[] = [
+  { value: "required", label: "Required" },
+  { value: "recommended", label: "Recommended" },
+  { value: "optional", label: "Optional" },
 ];
 
-type Step = "basics" | "schema" | "topics" | "review";
-const STEPS: { key: Step; label: string }[] = [
-  { key: "basics", label: "Basics" },
-  { key: "schema", label: "Fields" },
-  { key: "topics", label: "Topics" },
-  { key: "review", label: "Review" },
-];
+/** Stands in for the author while nobody is signed in: the preview and the checks need an address to point at. */
+const NO_ONE = "0".repeat(64);
 
-interface DraftField {
-  id: string;
-  name: string;
-  type: FieldType;
-  presence: "required" | "allowed";
-  description: string;
-}
+/** A message from the checks as a problem that stops the list, about the short name (`d`) or about no one field. */
+const blockingProblem = (message: string, field: string | null): Problem => ({
+  code: "unpublishable",
+  field,
+  message,
+  blocking: true,
+});
 
+/**
+ * Make a list: its names, a description, the fields each item holds and a
+ * short name. Brainstorm's checks run as the person types, and Publish waits
+ * until none would stop the list. When a shared concept already goes by the
+ * same name, publishing offers a choice first: make a version of that one, or
+ * offer a new one anyway.
+ */
 export default function CreateListPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const pubkey = useSigner((s) => s.pubkey);
-  const signerStatus = useSigner((s) => s.status);
+  const { pubkey } = useReader();
+  const { state, busy, write, retry } = useWrite();
+  const fieldsId = useId();
+  const previewId = useId();
+  const choiceId = useId();
 
-  const [step, setStep] = useState<Step>("basics");
-  const [publishing, setPublishing] = useState(false);
-
-  // Basics
-  const [namePlural, setNamePlural] = useState("");
-  const [nameSingular, setNameSingular] = useState("");
-  const [singularEdited, setSingularEdited] = useState(false);
+  const [singular, setSingular] = useState("");
+  const [plural, setPlural] = useState("");
   const [description, setDescription] = useState("");
+  const nextRowId = useRef(1);
+  const [rows, setRows] = useState<Row[]>([{ id: 0, ...FIRST_FIELD }]);
+  /** The short name as the person typed it; null while it follows the plural. */
+  const [typedShortName, setTypedShortName] = useState<string | null>(null);
+  /** Every list header on the list relay; null until it has been read. */
+  const [headers, setHeaders] = useState<HeaderEvent[] | null>(null);
+  /** Problems stay quiet until the person has started. */
+  const [touched, setTouched] = useState(false);
+  /** The choice between a version and a new concept is on show; changing a name takes it away. */
+  const [offered, setOffered] = useState(false);
+  /** The names the person chose to offer anyway, so a second Publish doesn't ask again. */
+  const [offeredAnywayFor, setOfferedAnywayFor] = useState<string | null>(null);
+  /** The address of the list last sent, for opening it once the list relay has it. */
+  const sent = useRef<string | null>(null);
 
-  // Schema
-  const [fields, setFields] = useState<DraftField[]>([
-    { id: "f1", name: "name", type: "text", presence: "required", description: "" },
-  ]);
+  useEffect(() => {
+    let cancelled = false;
+    loadAllHeaders().then(
+      (found) => {
+        if (!cancelled) setHeaders(found);
+      },
+      () => {
+        if (!cancelled) setHeaders([]);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  // Topics
-  const [topicInput, setTopicInput] = useState("");
-  const [topics, setTopics] = useState<string[]>([]);
+  const taken = useMemo(() => ownShortNames(headers ?? [], pubkey), [headers, pubkey]);
+  const d = (typedShortName ?? freeShortName(slugOf(plural), taken)).trim();
+  const list = { singular, plural, description, fields: rows };
+  const template = newListTemplate(list, d, pubkey ?? NO_ONE);
 
-  // Auto-derive singular from plural
-  const handlePluralChange = (val: string) => {
-    setNamePlural(val);
-    if (!singularEdited) {
-      setNameSingular(singularize(val));
-    }
+  const shortNameWords = new Set(shortNameProblems(d, taken));
+  const mine = createProblems(list, d, taken);
+  const problems: Problem[] = [
+    ...mine.map((message) => blockingProblem(message, shortNameWords.has(message) ? "d" : null)),
+    ...checkHeader(template.tags).problems.filter((problem) => !mine.includes(problem.message)),
+  ];
+
+  const sharedConcept = useMemo(
+    () => sameConcept(headers ?? [], { singular, plural })[0] ?? null,
+    [headers, singular, plural],
+  );
+  const namesKey = JSON.stringify([singular, plural]);
+  const mustChoose = sharedConcept !== null && offeredAnywayFor !== namesKey;
+  const choosing = mustChoose && offered;
+
+  const canPublish = pubkey !== null && headers !== null && !hasBlocking(problems) && !busy;
+
+  const rename = (set: (name: string) => void, name: string) => {
+    set(name);
+    setOffered(false);
   };
 
-  // Schema field CRUD
-  const addField = () => {
-    setFields((prev) => [
+  const addRow = () => {
+    setTouched(true);
+    setRows((prev) => [
       ...prev,
-      {
-        id: `f${Date.now()}`,
-        name: "",
-        type: "text",
-        presence: "allowed",
-        description: "",
-      },
+      { id: nextRowId.current++, name: "", type: "text", requirement: "optional", description: "" },
     ]);
   };
-
-  const updateField = (id: string, patch: Partial<DraftField>) => {
-    setFields((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...patch } : f))
-    );
+  const changeRow = (id: number, patch: Partial<QuickField>) =>
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  const removeRow = (id: number) => {
+    setTouched(true);
+    setRows((prev) => prev.filter((row) => row.id !== id));
   };
 
-  const removeField = (id: string) => {
-    setFields((prev) => prev.filter((f) => f.id !== id));
+  /** Sign and send the list, and open it once the list relay has it. */
+  const publish = async () => {
+    if (!pubkey || !canPublish) return;
+    sent.current = listCoordinate(pubkey, d);
+    // A signer template carries a time, and signing stamps the real one over it.
+    const result = await write({ ...template, created_at: 0 });
+    if (result?.onHub) router.push(listHref(sent.current));
   };
 
-  // Topic add
-  const addTopic = () => {
-    const t = topicInput.trim().toLowerCase();
-    if (t && !topics.includes(t)) {
-      setTopics((prev) => [...prev, t]);
-    }
-    setTopicInput("");
+  const retryWrite = async () => {
+    const result = await retry();
+    if (result?.onHub && sent.current) router.push(listHref(sent.current));
   };
 
-  const removeTopic = (t: string) => {
-    setTopics((prev) => prev.filter((x) => x !== t));
+  const onSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canPublish) return;
+    if (mustChoose) setOffered(true);
+    else void publish();
   };
 
-  // Validation
-  const canProceed = (s: Step): boolean => {
-    switch (s) {
-      case "basics":
-        return namePlural.trim().length >= 2;
-      case "schema":
-        return fields.every((f) => f.name.trim().length > 0);
-      case "topics":
-        return true;
-      case "review":
-        return true;
-    }
+  const offerAnyway = () => {
+    setOfferedAnywayFor(namesKey);
+    void publish();
   };
 
-  const nextStep = () => {
-    const idx = STEPS.findIndex((s) => s.key === step);
-    if (idx < STEPS.length - 1) setStep(STEPS[idx + 1].key);
-  };
-
-  const prevStep = () => {
-    const idx = STEPS.findIndex((s) => s.key === step);
-    if (idx > 0) setStep(STEPS[idx - 1].key);
-  };
-
-  // Publish
-  const handlePublish = useCallback(async () => {
-    if (signerStatus !== "connected" || !pubkey) {
-      toast("Connect your nostr extension first.", "error");
-      return;
-    }
-
-    setPublishing(true);
-    try {
-      const schema: FieldSchema[] = fields
-        .filter((f) => f.name.trim())
-        .map((f) => ({
-          name: f.name.trim().toLowerCase().replace(/\s+/g, "-"),
-          type: f.type,
-          presence: f.presence,
-          description: f.description.trim() || undefined,
-        }));
-
-      const template = buildListHeaderEvent({
-        namePlural: namePlural.trim(),
-        nameSingular: (nameSingular.trim() || singularize(namePlural.trim())),
-        description: description.trim() || undefined,
-        topics: topics.length > 0 ? topics : undefined,
-        schema,
-      });
-
-      const result = await signAndPublish(template);
-      const dTag = template.tags.find((t) => t[0] === "d")?.[1] ?? "";
-      const uuid = listHeaderUuid(pubkey, dTag);
-
-      toast(`Published to ${result.accepted} relay${result.accepted === 1 ? "" : "s"}.`, "success");
-      router.push(`/list?c=${encodeURIComponent(uuid)}`);
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to publish.", "error");
-    } finally {
-      setPublishing(false);
-    }
-  }, [signerStatus, pubkey, namePlural, nameSingular, description, topics, fields, toast, router]);
+  const sharedPlural = sharedConcept?.rootHeader ? definitionOf(sharedConcept.rootHeader).plural : "";
+  const typedNames = { singular: singular.trim(), plural: plural.trim(), description: description.trim() };
+  const fieldProblems = touched ? problemsFor(problems, null) : [];
+  const shortNameShown = touched ? problemsFor(problems, "d") : [];
 
   return (
     <div className="mx-auto max-w-[700px] px-8 py-12">
-      <Link
-        href="/"
-        className="text-[13px] text-mute hover:text-ink-soft transition-colors"
-      >
-        &larr; Back
+      <Link href="/" className="text-[13px] text-mute hover:text-ink-soft transition-colors">
+        &larr; Back to Discover
       </Link>
 
       <h1 className="mt-8 font-serif text-[32px] leading-[1.1] tracking-[-0.015em] text-ink font-light">
-        Create a new{" "}
-        <span className="italic text-accent font-normal">list</span>
+        Create a new <span className="italic text-accent font-normal">list</span>
       </h1>
+      <p className="mt-3 font-serif text-[16px] leading-[1.5] text-ink-soft italic">
+        Name what you are collecting and say what each item holds. You add the items once the list is published.
+      </p>
 
-      {/* Step indicator */}
-      <div className="mt-8 flex items-center gap-1">
-        {STEPS.map((s, i) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => {
-              // Allow going back, but not forward past current step
-              const curIdx = STEPS.findIndex((x) => x.key === step);
-              if (i <= curIdx) setStep(s.key);
-            }}
-            className={cn(
-              "text-[11px] uppercase tracking-[0.1em] px-3 py-1.5 border transition-all duration-150",
-              step === s.key
-                ? "border-accent/40 text-accent bg-accent-glow"
-                : i < STEPS.findIndex((x) => x.key === step)
-                  ? "border-rule-strong text-ink-soft"
-                  : "border-rule text-mute"
-            )}
-            style={{ borderRadius: "var(--radius-input)" }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Step content */}
-      <div className="mt-8">
-        {step === "basics" ? (
-          <div className="flex flex-col gap-5">
-            <Field label="List name (plural)" required hint="e.g. Movies, Restaurants, Podcasts">
+      <form onSubmit={onSubmit} onChange={() => setTouched(true)} className="mt-8 flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
+          <Labelled label="Singular name" hint="What one item is called, as in “Café”.">
+            {(id, hint) => (
               <input
+                id={id}
+                aria-describedby={hint}
                 type="text"
-                value={namePlural}
-                onChange={(e) => handlePluralChange(e.target.value)}
-                placeholder="Movies"
+                value={singular}
+                onChange={(e) => rename(setSingular, e.target.value)}
                 className={inputClass}
                 style={inputStyle}
                 autoFocus
               />
-            </Field>
-            <Field label="Singular form" hint="Auto-derived. Override if needed.">
+            )}
+          </Labelled>
+          <Labelled label="Plural name" hint="What the whole list is called, as in “Cafés”.">
+            {(id, hint) => (
               <input
+                id={id}
+                aria-describedby={hint}
                 type="text"
-                value={nameSingular}
-                onChange={(e) => {
-                  setNameSingular(e.target.value);
-                  setSingularEdited(true);
-                }}
-                placeholder="Movie"
+                value={plural}
+                onChange={(e) => rename(setPlural, e.target.value)}
                 className={inputClass}
                 style={inputStyle}
               />
-            </Field>
-            <Field label="Description" hint="What is this list about?">
+            )}
+          </Labelled>
+          <Labelled label="Description" hint="Optional. What belongs on the list.">
+            {(id, hint) => (
               <textarea
+                id={id}
+                aria-describedby={hint}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="A curated collection of..."
                 rows={3}
                 className={cn(inputClass, "resize-none")}
                 style={inputStyle}
               />
-            </Field>
-          </div>
-        ) : step === "schema" ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-[13px] text-ink-soft">
-              Define what fields each item in your list will have.
-            </p>
-            {fields.map((f, i) => (
-              <div
-                key={f.id}
-                className="border border-rule bg-surface p-4 flex flex-col gap-3"
-                style={{ borderRadius: "var(--radius-card)" }}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-1">
+            )}
+          </Labelled>
+        </div>
+
+        <section aria-labelledby={fieldsId} className="flex flex-col gap-3">
+          <h2 id={fieldsId} className="font-serif text-[20px] text-ink">
+            Fields
+          </h2>
+          <p className="text-[13px] text-ink-soft">What each item on the list holds.</p>
+          <ul className="flex flex-col gap-3">
+            {rows.map((row, i) => {
+              const n = i + 1;
+              return (
+                <li
+                  key={row.id}
+                  className="border border-rule bg-surface p-3 flex flex-col gap-2"
+                  style={{ borderRadius: "var(--radius-card)" }}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="text"
-                      value={f.name}
-                      onChange={(e) =>
-                        updateField(f.id, { name: e.target.value })
-                      }
+                      aria-label={`Field ${n} name`}
+                      value={row.name}
+                      onChange={(e) => changeRow(row.id, { name: e.target.value })}
                       placeholder="Field name"
-                      className={cn(inputClass, "text-[14px]")}
+                      className={cn(inputClass, "min-w-[10rem] flex-1 text-[13px]")}
                       style={inputStyle}
                     />
-                  </div>
-                  <select
-                    value={f.type}
-                    onChange={(e) =>
-                      updateField(f.id, { type: e.target.value as FieldType })
-                    }
-                    className="bg-surface-raised border border-rule text-ink text-[13px] px-2 py-2 outline-none"
-                    style={{ borderRadius: "var(--radius-input)" }}
-                  >
-                    {FIELD_TYPES.map((ft) => (
-                      <option key={ft.value} value={ft.value}>
-                        {ft.label}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(f.id, {
-                        presence:
-                          f.presence === "required" ? "allowed" : "required",
-                      })
-                    }
-                    className={cn(
-                      "text-[11px] uppercase tracking-wider px-2 py-2 border transition-colors",
-                      f.presence === "required"
-                        ? "border-accent/30 text-accent"
-                        : "border-rule text-mute"
-                    )}
-                    style={{ borderRadius: "var(--radius-input)" }}
-                  >
-                    {f.presence === "required" ? "Required" : "Optional"}
-                  </button>
-                  {fields.length > 1 ? (
+                    <select
+                      aria-label={`Field ${n} type`}
+                      value={row.type}
+                      onChange={(e) => changeRow(row.id, { type: e.target.value as QuickFieldType })}
+                      className={selectClass}
+                      style={inputStyle}
+                    >
+                      {QUICK_FIELD_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label={`Field ${n} requirement`}
+                      value={row.requirement}
+                      onChange={(e) => changeRow(row.id, { requirement: e.target.value as QuickField["requirement"] })}
+                      className={selectClass}
+                      style={inputStyle}
+                    >
+                      {REQUIREMENTS.map((requirement) => (
+                        <option key={requirement.value} value={requirement.value}>
+                          {requirement.label}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       type="button"
-                      onClick={() => removeField(f.id)}
-                      className="text-mute hover:text-accent transition-colors text-[18px] leading-none px-1 py-2"
-                      title="Remove field"
+                      aria-label={`Remove field ${n}`}
+                      onClick={() => removeRow(row.id)}
+                      className="px-1 text-[18px] leading-none text-mute hover:text-accent transition-colors"
                     >
                       &times;
                     </button>
-                  ) : null}
-                </div>
-                <input
-                  type="text"
-                  value={f.description}
-                  onChange={(e) =>
-                    updateField(f.id, { description: e.target.value })
-                  }
-                  placeholder="Description (optional)"
-                  className={cn(inputClass, "text-[12px] text-mute")}
-                  style={inputStyle}
-                />
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addField}
-              className="text-[13px] text-accent hover:text-ink transition-colors self-start py-1"
-            >
-              + Add field
-            </button>
-          </div>
-        ) : step === "topics" ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-[13px] text-ink-soft">
-              Add category tags so people can find your list.
-            </p>
-            <div className="flex gap-2">
+                  </div>
+                  <input
+                    type="text"
+                    aria-label={`Field ${n} description`}
+                    value={row.description}
+                    onChange={(e) => changeRow(row.id, { description: e.target.value })}
+                    placeholder="Short description (optional)"
+                    className={cn(inputClass, "text-[12px]")}
+                    style={inputStyle}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+          <button
+            type="button"
+            onClick={addRow}
+            className="self-start py-1 text-[13px] text-accent hover:text-ink transition-colors"
+          >
+            Add a field
+          </button>
+          <CheckProblems problems={fieldProblems} />
+        </section>
+
+        <div>
+          <Labelled
+            label="Short name"
+            hint="Part of the list’s address. It cannot be changed once the list is published."
+          >
+            {(id, hint) => (
               <input
+                id={id}
+                aria-describedby={hint}
                 type="text"
-                value={topicInput}
-                onChange={(e) => setTopicInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTopic();
-                  }
-                }}
-                placeholder="e.g. music, film, tech"
-                className={cn(inputClass, "flex-1")}
+                value={typedShortName ?? d}
+                onChange={(e) => setTypedShortName(e.target.value)}
+                className={cn(inputClass, "font-mono text-[13px]")}
                 style={inputStyle}
+                spellCheck={false}
+                autoCapitalize="none"
               />
+            )}
+          </Labelled>
+          <CheckProblems problems={shortNameShown} />
+        </div>
+
+        <section
+          aria-labelledby={previewId}
+          className="border border-rule bg-surface p-5"
+          style={{ borderRadius: "var(--radius-card)" }}
+        >
+          <h2 id={previewId} className="text-[11px] uppercase tracking-[0.1em] text-mute">
+            Preview
+          </h2>
+          <p className="mt-3 font-serif text-[28px] leading-[1.1] tracking-[-0.015em] text-ink font-light break-words">
+            {typedNames.plural || <span className="text-mute/50">Your list</span>}
+          </p>
+          {typedNames.description ? (
+            <p className="mt-3 font-serif text-[16px] leading-[1.5] text-ink-soft italic">{typedNames.description}</p>
+          ) : null}
+          {typedNames.singular ? (
+            <p className="mt-3 text-[12px] text-mute">
+              Each item is one <span className="text-ink-soft">{typedNames.singular}</span>
+            </p>
+          ) : null}
+          <div className="mt-4">
+            <FieldsPanel fields={previewDefinition(template, pubkey).governing.fields} />
+          </div>
+        </section>
+
+        {choosing && sharedConcept ? (
+          <div
+            role="group"
+            aria-labelledby={choiceId}
+            className="border border-accent/30 bg-accent-glow p-4"
+            style={{ borderRadius: "var(--radius-card)" }}
+          >
+            <p id={choiceId} className="text-[14px] text-ink">
+              A shared concept called “{sharedPlural}” already exists.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={addTopic}
-                disabled={!topicInput.trim()}
-                className="text-[13px] px-4 py-2 bg-surface-raised border border-rule text-ink-soft hover:text-ink transition-colors disabled:opacity-40"
-                style={{ borderRadius: "var(--radius-input)" }}
+                disabled={busy}
+                onClick={() => router.push(`${listHref(sharedConcept.root)}&edit=mine`)}
+                className="text-[13px] font-medium px-4 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={inputStyle}
               >
-                Add
+                Make my own version of {sharedPlural}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={offerAnyway}
+                className="text-[13px] px-4 py-2 bg-surface-raised border border-rule text-ink-soft hover:text-ink transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                style={inputStyle}
+              >
+                Offer a new shared concept anyway
               </button>
             </div>
-            {topics.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {topics.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => removeTopic(t)}
-                    className="text-[10px] uppercase tracking-[0.1em] px-2.5 py-1 border border-accent/30 text-accent bg-accent-glow hover:bg-accent/10 transition-colors group"
-                    style={{ borderRadius: "var(--radius-input)" }}
-                    title="Click to remove"
-                  >
-                    {t} <span className="ml-1 opacity-50 group-hover:opacity-100">&times;</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[12px] text-mute italic">No topics yet. This is optional.</p>
-            )}
-          </div>
-        ) : step === "review" ? (
-          <div className="flex flex-col gap-6">
-            <div
-              className="border border-rule bg-surface p-6"
-              style={{ borderRadius: "var(--radius-card)" }}
-            >
-              <h2 className="font-serif text-[24px] leading-[1.15] text-ink">
-                {capitalize(namePlural.trim()) || "Untitled"}
-              </h2>
-              {nameSingular.trim() ? (
-                <p className="mt-1 text-[12px] text-mute">
-                  Singular form is {nameSingular.trim()}
-                </p>
-              ) : null}
-              {description.trim() ? (
-                <p className="mt-3 font-serif text-[14px] text-ink-soft italic">
-                  {description.trim()}
-                </p>
-              ) : null}
-              {topics.length > 0 ? (
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {topics.map((t) => (
-                    <span
-                      key={t}
-                      className="text-[10px] uppercase tracking-[0.1em] text-mute border border-rule px-2 py-0.5"
-                      style={{ borderRadius: "var(--radius-input)" }}
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              {fields.filter((f) => f.name.trim()).length > 0 ? (
-                <div className="mt-4 border-t border-rule pt-3">
-                  <p className="text-[11px] uppercase tracking-wider text-mute mb-2">
-                    Fields
-                  </p>
-                  {fields
-                    .filter((f) => f.name.trim())
-                    .map((f) => (
-                      <div
-                        key={f.id}
-                        className="flex items-center gap-3 text-[13px] py-1"
-                      >
-                        <span className="text-ink">{f.name}</span>
-                        <span className="text-mute/60">{f.type}</span>
-                        <span
-                          className={cn(
-                            "text-[10px] uppercase tracking-wider",
-                            f.presence === "required"
-                              ? "text-accent"
-                              : "text-mute/50"
-                          )}
-                        >
-                          {f.presence}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              ) : null}
-            </div>
-
-            {signerStatus !== "connected" ? (
-              <p className="text-[13px] text-accent">
-                Connect your nostr extension to publish.
-              </p>
-            ) : null}
           </div>
         ) : null}
-      </div>
 
-      {/* Navigation */}
-      <div className="mt-8 flex items-center justify-between">
-        {step !== "basics" ? (
-          <button
-            type="button"
-            onClick={prevStep}
-            className="text-[13px] text-mute hover:text-ink-soft transition-colors"
-          >
-            &larr; Back
-          </button>
-        ) : (
-          <div />
-        )}
-
-        {step !== "review" ? (
-          <button
-            type="button"
-            onClick={nextStep}
-            disabled={!canProceed(step)}
-            className="text-[13px] font-medium px-5 py-2 bg-surface-raised border border-rule text-ink hover:border-rule-strong transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ borderRadius: "var(--radius-input)" }}
-          >
-            Next &rarr;
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handlePublish}
-            disabled={publishing || signerStatus !== "connected"}
-            className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ borderRadius: "var(--radius-input)" }}
-          >
-            {publishing ? "Publishing..." : "Publish list"}
-          </button>
-        )}
-      </div>
+        <div className="flex flex-col gap-3">
+          <PublishOutcome state={state} busy={busy} onRetry={() => void retryWrite()} />
+          <div className="flex items-center justify-end gap-3">
+            {pubkey && headers === null ? (
+              <p className="mr-auto text-[12px] text-mute">Looking for lists that already exist…</p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={!canPublish}
+              className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={inputStyle}
+            >
+              {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
 
-// -- sub-components --------------------------------------------------------
-
-function Field({
+/** A labelled control with a hint beneath it. `children` is given the ids the input and its hint need. */
+function Labelled({
   label,
-  required,
   hint,
   children,
 }: {
   label: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
+  hint: string;
+  children: (id: string, hintId: string) => React.ReactNode;
 }) {
+  const id = useId();
+  const hintId = `${id}-hint`;
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-[12px] text-ink-soft">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-[12px] text-ink-soft">
         {label}
-        {required ? <span className="text-accent ml-1">*</span> : null}
-      </span>
-      {children}
-      {hint ? (
-        <span className="text-[11px] text-mute/60">{hint}</span>
-      ) : null}
-    </label>
+      </label>
+      {children(id, hintId)}
+      <p id={hintId} className="text-[11px] text-mute/80">
+        {hint}
+      </p>
+    </div>
   );
-}
-
-function capitalize(s: string): string {
-  if (!s) return s;
-  return s[0].toUpperCase() + s.slice(1);
 }
 
 const inputClass =
   "w-full bg-surface text-ink placeholder:text-mute/50 border border-rule px-3 py-2 text-[14px] outline-none focus:border-rule-strong focus:bg-surface-hover transition-all duration-200";
 
-const inputStyle = { borderRadius: "var(--radius-input)" };
+const selectClass = "bg-surface-raised border border-rule text-ink text-[13px] px-2 py-2 outline-none";
+
+const inputStyle = { borderRadius: "var(--radius-input)" as const };
