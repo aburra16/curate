@@ -11,9 +11,9 @@ import { UserIdentity } from "@/components/user-identity";
 import { VersionsMenu } from "@/components/versions-menu";
 import { useReader } from "@/hooks/use-reader";
 import type { HeaderEvent } from "@/lib/conceptResolution";
-import { isWithdrawnHeader, type ListEdit } from "@/lib/curate/listActions";
+import type { ListEdit } from "@/lib/curate/listActions";
 import { formatRelativeTime } from "@/lib/format";
-import { conceptRefOf, groupConcepts, handleOf } from "@/services/concepts";
+import { conceptRefOf, groupConcepts, handleOf, isWithdrawn } from "@/services/concepts";
 import { houseCopyAuthors, loadConceptHeaders } from "@/services/dictionary";
 import { shownItems } from "@/services/items";
 import { namesOf } from "@/services/jsonData";
@@ -394,7 +394,7 @@ function ListView({
   const plural = names.plural || UNTITLED_LIST;
   const image = definition.display.listImage;
   // A header that opted out of the concept (`["b","b-tag-deferred"]`) is opened by a link to it, and says so.
-  const withdrawn = isWithdrawnHeader(definition.event);
+  const withdrawn = isWithdrawn(definition.event);
 
   return (
     <Shell>

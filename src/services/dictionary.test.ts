@@ -32,6 +32,7 @@ import {
   loadAllHeaders,
   loadConceptHeaders,
   loadDictionaryConcepts,
+  loadOwnHeaders,
   resolveForReader,
   URL_TEMPLATES_CONCEPT,
 } from "./dictionary";
@@ -264,6 +265,39 @@ describe("loadAllHeaders", () => {
 
     setTransport(relayCorpus({ [DCOSL]: [onHub], [INDEX]: [onHub, onIndex] }).transport);
     expect((await loadAllHeaders()).map((h) => h.id).sort()).toEqual([onHub.id, onIndex.id].sort());
+  });
+});
+
+describe("loadOwnHeaders", () => {
+  const alice = actor();
+  const bob = actor();
+
+  it("reads the headers one person published, from the list relays and only there", async () => {
+    const mine = header(alice, "cats", "Cats");
+    const hers = header(alice, "dogs", "Dogs", null);
+    const his = header(bob, "cats", "Cats");
+    const note = sign(alice, 1, [], T0, "hello");
+    const { calls } = everywhere([mine, hers, his, note]);
+
+    const headers = await loadOwnHeaders(alice.pk);
+
+    expect(headers.map((h) => h.id).sort()).toEqual([mine.id, hers.id].sort());
+    expect(calls.filter((c) => c.relay === DCOSL).map((c) => c.filters)).toEqual([[{ kinds: [39998], authors: [alice.pk] }]]);
+    expect(calls.filter((c) => c.relay === INDEX || c.relay === TAG_HUB)).toEqual([]);
+  });
+
+  it("keeps a blank header, so a short name given up since is not counted twice", async () => {
+    const before = header(alice, "cats", "Cats");
+    const blanked = sign(alice, 39998, [["d", "cats"], ["deleted", "true"]], T0 + 10);
+    everywhere([before, blanked]);
+
+    expect((await loadOwnHeaders(alice.pk)).map((h) => h.id).sort()).toEqual([before.id, blanked.id].sort());
+  });
+
+  it("answers with nothing, and does not reject, when the relays fail", async () => {
+    setTransport(fakeTransport({ [DCOSL]: { events: [], end: { state: "error", reason: "connection refused" } } }));
+
+    await expect(loadOwnHeaders(alice.pk)).resolves.toEqual([]);
   });
 });
 

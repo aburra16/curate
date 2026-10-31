@@ -15,6 +15,8 @@ interface Props {
   onSave: (draft: CopyDraft) => void;
   /** A write is in flight. */
   busy: boolean;
+  /** Something the write needs hasn't arrived yet: Publish waits for it. */
+  holding?: boolean;
   /** What Brainstorm's checks found about the list as the person has it now; Publish waits while any would stop it. */
   problems: Problem[];
   /** The draft, each time the person changes it, for the checks to read. */
@@ -108,7 +110,18 @@ function draftOf(opened: CopyDraft, { singular, plural, description, rows }: Val
  * list. Brainstorm's checks are the page's to run on the draft that
  * `onChange` hands over, and come back as `problems`.
  */
-export function ListForm({ draft, onSave, busy, problems, onChange, heading, onCancel, outcome, onDone }: Props) {
+export function ListForm({
+  draft,
+  onSave,
+  busy,
+  holding = false,
+  problems,
+  onChange,
+  heading,
+  onCancel,
+  outcome,
+  onDone,
+}: Props) {
   const headingId = useId();
   const nextRow = useRef(draft.fields.length);
   const [values, setValues] = useState(
@@ -120,7 +133,7 @@ export function ListForm({ draft, onSave, busy, problems, onChange, heading, onC
     }),
   );
   const locked = onDone !== undefined;
-  const canPublish = !busy && !locked && !hasBlocking(problems);
+  const canPublish = !busy && !holding && !locked && !hasBlocking(problems);
 
   const edit = (next: Values) => {
     setValues(next);

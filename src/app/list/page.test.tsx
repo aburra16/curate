@@ -22,7 +22,7 @@ import { clearSeenOn } from "@/services/nostr";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB } from "@/services/relays";
 import { SignerError } from "@/services/signer";
-import { setTransport } from "@/services/transport";
+import { setTransport, transport } from "@/services/transport";
 import { clearTrustCaches } from "@/services/trust";
 import { useRelayStatus } from "@/stores/relay-status";
 import { useSettings } from "@/stores/settings";
@@ -410,6 +410,8 @@ describe("changing a list", () => {
   const click = (name: string) => fireEvent.click(button(name));
   const type = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
   const published = (n = 0) => vi.mocked(signAndPublish).mock.calls[n][0];
+  /** Making a version reads the reader's own lists first, and Publish waits for that. */
+  const readyToPublish = () => vi.waitFor(() => expect((button("Publish") as HTMLButtonElement).disabled).toBe(false));
   const WITHDRAW_ASKED = "Withdraw your version of Food and Drink Places? It will stop counting as a version of this concept.";
 
   beforeEach(() => {
@@ -436,6 +438,7 @@ describe("changing a list", () => {
 
       click("Make my own version");
       expect(screen.getByRole("form", { name: "Make my own version" })).toBeTruthy();
+      await readyToPublish();
       click("Publish");
 
       await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
@@ -451,6 +454,7 @@ describe("changing a list", () => {
 
       click("Make my own version");
       type("Plural name", "Eats");
+      await readyToPublish();
       click("Publish");
 
       await vi.waitFor(() => expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Eats"));
@@ -461,6 +465,103 @@ describe("changing a list", () => {
       expect(maybe("Make my own version")).toBeNull();
       expect(maybe("Edit list")).toBeTruthy();
       expect(maybe("Withdraw my version")).toBeTruthy();
+    });
+
+    it("is published at the community header's short name when the reader has no list by it, and says nothing of it", async () => {
+      signIn(READER);
+      open(FOOD);
+      await title();
+
+      click("Make my own version");
+      await readyToPublish();
+      click("Publish");
+
+      await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+      expect(published().tags).toContainEqual(["d", "food-and-drink-places"]);
+      expect(screen.queryByText(/You already have a list/)).toBeNull();
+    });
+
+    it("is published at a free short name when a list of the reader's already has the community header's", async () => {
+      const owner = generateSecretKey();
+      const OWNER = getPublicKey(owner);
+      const standalone = finalizeEvent(
+        { kind: 39998, created_at: 1_790_000_000, content: "", tags: [["d", "food-and-drink-places"], ["names", "Eat", "Eats"], ["required", "name"]] },
+        owner,
+      ) as NostrEvent;
+      relays([...food, standalone]);
+      signIn(OWNER);
+      open(FOOD);
+      await title();
+
+      click("Make my own version");
+
+      await screen.findByText(
+        "You already have a list with the short name “food-and-drink-places”, so your version is saved as “food-and-drink-places-2”.",
+      );
+      await readyToPublish();
+      click("Publish");
+
+      await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+      const exact = exactCopyTemplate(definitionOf(COMMUNITY));
+      expect(published().tags).toEqual(exact.tags.map((t) => (t[0] === "d" ? ["d", "food-and-drink-places-2"] : t)));
+      expect(published().tags).toContainEqual(["b", FOOD, "pointer"]);
+      await vi.waitFor(() => expect(screen.getByText("Your version")).toBeTruthy());
+      expect(nav.router.replace).toHaveBeenCalledWith(`/list?c=${encodeURIComponent(FOOD)}&version=${OWNER}`);
+    });
+
+    it("replaces a header of the reader's that is withdrawn, where it stands", async () => {
+      signIn(WITHDRAWER);
+      open(FOOD);
+      await title();
+
+      click("Make my own version");
+      await readyToPublish();
+      click("Publish");
+
+      await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+      expect(published()).toEqual(exactCopyTemplate(definitionOf(COMMUNITY)));
+      expect(screen.queryByText(/You already have a list/)).toBeNull();
+    });
+
+    it("waits for the reader's lists to be read before it publishes, and says so", async () => {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const real = transport();
+      const ownLists = (filters: { kinds?: number[]; authors?: string[]; "#d"?: string[] }[]) =>
+        filters.some((f) => f.kinds?.[0] === 39998 && f.authors?.[0] === READER && !f["#d"]);
+      setTransport({
+        ...real,
+        req: (relay, filters, onEvent, timeoutMs) =>
+          ownLists(filters) ? gate.then(() => real.req(relay, filters, onEvent, timeoutMs)) : real.req(relay, filters, onEvent, timeoutMs),
+      });
+      signIn(READER);
+      open(FOOD);
+      await title();
+
+      click("Make my own version");
+
+      expect(screen.getByText("Looking at your lists to choose a short name…")).toBeTruthy();
+      expect((button("Publish") as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.submit(screen.getByRole("form", { name: "Make my own version" }));
+      expect(signAndPublish).not.toHaveBeenCalled();
+
+      release();
+
+      await vi.waitFor(() => expect((button("Publish") as HTMLButtonElement).disabled).toBe(false));
+      expect(screen.queryByText(/Looking at your lists/)).toBeNull();
+      click("Publish");
+      await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+    });
+
+    it("is not delayed by a read when the reader changes a version they have", async () => {
+      signIn(COPIER);
+      open(FOOD);
+      await title();
+
+      click("Edit list");
+
+      expect(screen.queryByText(/Looking at your lists/)).toBeNull();
+      expect((button("Publish") as HTMLButtonElement).disabled).toBe(false);
     });
 
     it("starts from the community header, not from the version that is shown", async () => {

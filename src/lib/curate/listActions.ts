@@ -12,13 +12,18 @@
  *
  * A withdrawn header is never edited: saving one unchanged would give it
  * names it never had, and it stands for a decision, not for a list to keep up.
+ * "Withdrawn" is as grouping reads it (services/concepts `isWithdrawn`): it
+ * carries `["b", "b-tag-deferred"]` and points at no concept. A header that
+ * carries the mark and also a pointer is still a version of that concept.
  */
 import { draftProblems, exactCopyTemplate, type CopyDraft, type EventTemplate } from "@/lib/conceptCopy";
-import { B_DEFERRED, definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
+import { definitionOf, versionOf, type HeaderEvent } from "@/lib/conceptResolution";
 import { editedHeaderTemplate } from "@/lib/curate/headerEdit";
+import { freeShortName, ownShortNames } from "@/lib/curate/newList";
 import { checkHeader, type Problem } from "@/lib/listCheck";
 import { listDraftOf, listHeaderTemplate } from "@/lib/listDraft";
-import { handleOf, type ConceptGroup } from "@/services/concepts";
+import { newestPerAddress } from "@/lib/newestPerAddress";
+import { handleOf, isWithdrawn, type ConceptGroup } from "@/services/concepts";
 import { copyBy } from "@/services/dictionary";
 
 /** A change the reader can make to the list shown. */
@@ -30,11 +35,8 @@ export type ListEdit =
   /** "Make my own version": a copy of someone else's header. */
   | { kind: "make-mine"; community: HeaderEvent };
 
-/** Whether the header has opted out of every concept (`["b", "b-tag-deferred"]`): it is withdrawn. */
-export const isWithdrawnHeader = (header: HeaderEvent): boolean =>
-  header.tags.some((t) => t[0] === "b" && t[1] === B_DEFERRED);
-
-const dOf = (header: HeaderEvent): string => header.tags.find((t) => t[0] === "d")?.[1] ?? "";
+/** A header's short name (`d`); empty when it has none. */
+export const shortNameOf = (header: HeaderEvent): string => header.tags.find((t) => t[0] === "d")?.[1] ?? "";
 
 /** A header an edit can replace: a list at an address of its author's own, which only a 39998 is. */
 const replaceable = (header: HeaderEvent): boolean => header.kind === 39998;
@@ -61,14 +63,14 @@ export function listActionsFor(
 
   const mine = copyBy(reader, group.root, group.copies);
   const { rootHeader } = group;
-  const community = rootHeader && !isWithdrawnHeader(rootHeader) ? rootHeader : null;
+  const community = rootHeader && !isWithdrawn(rootHeader) ? rootHeader : null;
 
-  if (isWithdrawnHeader(shown)) {
-    const copyable = !mine && community && community.pubkey !== reader && dOf(community) !== "";
+  if (isWithdrawn(shown)) {
+    const copyable = !mine && community && community.pubkey !== reader && shortNameOf(community) !== "";
     return { edit: copyable ? { kind: "make-mine", community } : null, withdraw: null };
   }
 
-  const withdraw = mine && handleOf(mine) !== group.root && !isWithdrawnHeader(mine) ? mine : null;
+  const withdraw = mine && handleOf(mine) !== group.root && !isWithdrawn(mine) ? mine : null;
   if (shown.pubkey === reader) {
     return { edit: replaceable(shown) ? { kind: "edit", header: shown } : null, withdraw };
   }
@@ -77,7 +79,7 @@ export function listActionsFor(
   if (community.pubkey === reader) {
     return { edit: replaceable(community) ? { kind: "edit", header: community } : null, withdraw };
   }
-  return { edit: dOf(community) !== "" ? { kind: "make-mine", community } : null, withdraw };
+  return { edit: shortNameOf(community) !== "" ? { kind: "make-mine", community } : null, withdraw };
 }
 
 /** The header the edit starts from: the one to change, or the one to copy. */
@@ -90,17 +92,36 @@ export function listEditDraft(edit: ListEdit): CopyDraft {
 }
 
 /**
+ * The short name a version made of `community` is published at, by `reader`.
+ * It is the community header's own, as an exact copy has, unless a list of the
+ * reader's already goes by that name: publishing there would replace that
+ * list, and its items would belong to the version. Then it is the first of
+ * `<name>-2`, `<name>-3`, ... they have not taken; a copy is found by its
+ * pointer, so a name of its own does it no harm. A header of theirs that is
+ * withdrawn, or is a version of this concept already, is replaced on purpose
+ * and does not count. `own` is the reader's list headers as read (`loadOwnHeaders`).
+ */
+export function versionShortName(community: HeaderEvent, reader: string, own: HeaderEvent[]): string {
+  const concept = handleOf(community);
+  const kept = newestPerAddress(own).filter((header) => !isWithdrawn(header) && versionOf(header) !== concept);
+  return freeShortName(shortNameOf(community), ownShortNames(kept, reader));
+}
+
+/**
  * The header `draft` publishes for `edit`, signed by `reader`. A change keeps
  * the header's `d`, its author and every tag the form doesn't speak
- * (`editedHeaderTemplate`). A version made takes the community header's `d`
- * and the tags an exact copy takes, pointing back at it, so saving the draft
- * the form opened with publishes `exactCopyTemplate`'s tags.
+ * (`editedHeaderTemplate`). A version made takes the tags an exact copy takes,
+ * pointing back at the community header, at `shortName` (`versionShortName`;
+ * the community header's own `d` when not given), so saving the draft the form
+ * opened with publishes `exactCopyTemplate`'s tags.
  */
-export function listEditTemplate(edit: ListEdit, reader: string, draft: CopyDraft): EventTemplate {
+export function listEditTemplate(edit: ListEdit, reader: string, draft: CopyDraft, shortName?: string): EventTemplate {
   if (edit.kind === "edit") return editedHeaderTemplate(definitionOf(edit.header), draft);
   if (edit.kind === "edit-mine") return editedHeaderTemplate(definitionOf(edit.copy), draft);
-  const community = definitionOf(edit.community);
-  return listHeaderTemplate(draft, { d: dOf(edit.community), author: reader, previous: exactCopyTemplate(community) });
+  const d = shortName ?? shortNameOf(edit.community);
+  const exact = exactCopyTemplate(definitionOf(edit.community));
+  const previous = { ...exact, tags: exact.tags.map((tag) => (tag[0] === "d" ? ["d", d] : tag)) };
+  return listHeaderTemplate(draft, { d, author: reader, previous });
 }
 
 /**
@@ -109,10 +130,12 @@ export function listEditTemplate(edit: ListEdit, reader: string, draft: CopyDraf
  * header check reads the names and fields back from tags, where a name left
  * empty can pass for another. The rest of what the header check notes follows.
  */
-export function listEditProblems(edit: ListEdit, reader: string, draft: CopyDraft): Problem[] {
+export function listEditProblems(edit: ListEdit, reader: string, draft: CopyDraft, shortName?: string): Problem[] {
   const own = draftProblems(draft);
   return [
     ...own.map((message): Problem => ({ code: "unpublishable", field: null, message, blocking: true })),
-    ...checkHeader(listEditTemplate(edit, reader, draft).tags).problems.filter((problem) => !own.includes(problem.message)),
+    ...checkHeader(listEditTemplate(edit, reader, draft, shortName).tags).problems.filter(
+      (problem) => !own.includes(problem.message),
+    ),
   ];
 }

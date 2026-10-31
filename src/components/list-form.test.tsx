@@ -238,6 +238,15 @@ describe("the list form", () => {
       expect(screen.getByText("Something else.").hasAttribute("data-blocking")).toBe(false);
     });
 
+    it("waits while something it needs has not arrived", () => {
+      open({ holding: true });
+
+      expect(publish().disabled).toBe(true);
+      expect(publish().textContent).toBe("Publish");
+      fireEvent.submit(publish().closest("form")!);
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
     it("goes ahead when what the checks found would not stop it", () => {
       open({ problems: [problem("Something else.", false)] });
 

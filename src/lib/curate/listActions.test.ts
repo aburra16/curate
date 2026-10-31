@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import { exactCopyTemplate } from "@/lib/conceptCopy";
 import { B_DEFERRED, definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
 import { checkHeader } from "@/lib/listCheck";
-import { groupConcepts } from "@/services/concepts";
+import { groupConcepts, isWithdrawn } from "@/services/concepts";
 import foodCopies from "@/test/fixtures/food.copies.json";
 import foodHeader from "@/test/fixtures/food.header.json";
 import {
-  isWithdrawnHeader,
   listActionsFor,
   listEditDraft,
   listEditProblems,
   listEditTemplate,
+  versionShortName,
   type ListEdit,
 } from "./listActions";
 
@@ -141,20 +141,21 @@ describe("listActionsFor", () => {
       expect(listActionsFor(READER, group, readersWithdrawn)).toEqual({ edit: null, withdraw: null });
     });
 
-    it("offers no Edit on a shown header that carries the withdrawn mark, even with a pointer beside it", () => {
+    it("is read as grouping reads it: the mark with a pointer beside it is a version, edited and withdrawn like any", () => {
       const both = header(READER, [point, ["b", B_DEFERRED]]);
       const group = groupOf(root, both);
 
-      expect(isWithdrawnHeader(both)).toBe(true);
-      expect(listActionsFor(READER, group, both)).toEqual({ edit: null, withdraw: null });
+      expect(isWithdrawn(both)).toBe(false);
+      expect(group.copies).toEqual([both]);
+      expect(listActionsFor(READER, group, both)).toEqual({ edit: { kind: "edit", header: both }, withdraw: both });
+      expect(listActionsFor(READER, group, root)).toEqual({ edit: { kind: "edit-mine", copy: both }, withdraw: both });
     });
 
-    it("does not offer withdrawing a copy that carries the mark already", () => {
-      const both = header(READER, [point, ["b", B_DEFERRED]]);
-      const group = groupOf(root, both);
+    it("does not offer withdrawing a copy that is withdrawn already, however the group came to hold it", () => {
+      const group = groupOf(root, othersCopy);
+      const held = { ...group, copies: [readersWithdrawn, othersCopy] };
 
-      expect(group.copies).toEqual([both]);
-      expect(listActionsFor(READER, group, root)).toEqual({ edit: { kind: "edit-mine", copy: both }, withdraw: null });
+      expect(listActionsFor(READER, held, othersCopy).withdraw).toBeNull();
     });
 
     it("does not offer making a version when the community header has withdrawn itself", () => {
@@ -240,6 +241,18 @@ describe("what a change publishes", () => {
     expect(template.tags).toContainEqual(["b", ROOT_COORDINATE, "pointer"]);
   });
 
+  it("a version made at another short name changes only the short name", () => {
+    const edit: ListEdit = { kind: "make-mine", community: foodHeader[0] as HeaderEvent };
+
+    const template = listEditTemplate(edit, READER, listEditDraft(edit), "food-and-drink-places-2");
+
+    const exact = exactCopyTemplate(definitionOf(foodHeader[0] as HeaderEvent)).tags;
+    expect(template.tags).toEqual(exact.map((t) => (t[0] === "d" ? ["d", "food-and-drink-places-2"] : t)));
+    expect(template.tags.filter((t) => t[0] === "b")).toEqual([
+      ["b", definitionOf(foodHeader[0] as HeaderEvent).coordinate, "pointer"],
+    ]);
+  });
+
   it("a copy of the community header made by the reader points back at it and nowhere else", () => {
     const edit: ListEdit = { kind: "make-mine", community: root };
 
@@ -287,5 +300,54 @@ describe("what stops a change", () => {
 
     expect(found.filter((p) => p.message === "Give the concept a singular and a plural name.")).toHaveLength(1);
     expect(found.every((p) => p.field === null)).toBe(true);
+  });
+});
+
+describe("the short name of a version made", () => {
+  /** A header of `author`'s at "places" that points nowhere, or wherever `tags` say. */
+  const listOf = (author: string, tags: string[][] = [], over: Partial<HeaderEvent> = {}) =>
+    header(author, tags, over);
+
+  it("is the community header's own when the reader has no list by that name", () => {
+    expect(versionShortName(root, READER, [])).toBe("places");
+    expect(versionShortName(root, READER, [listOf(READER, [], { tags: [["d", "dogs"], ["names", "dog", "dogs"]] })])).toBe(
+      "places",
+    );
+  });
+
+  it("is not a name another person's list has: only the reader's lists are replaced", () => {
+    expect(versionShortName(root, READER, [listOf(OTHER)])).toBe("places");
+  });
+
+  it("is the first free `-2`, `-3`, … when a list of the reader's, that is not a version of this concept, has the name", () => {
+    const standalone = listOf(READER);
+    const taken2 = listOf(READER, [], { tags: [["d", "places-2"], ["names", "place", "places"]] });
+    const selfPointing = listOf(READER, [["b", `39998:${READER}:places`, "pointer"]]);
+    const versionOfAnother = listOf(READER, [["b", `39998:${OTHER}:places`, "pointer"]]);
+
+    expect(versionShortName(root, READER, [standalone])).toBe("places-2");
+    expect(versionShortName(root, READER, [selfPointing])).toBe("places-2");
+    expect(versionShortName(root, READER, [versionOfAnother])).toBe("places-2");
+    expect(versionShortName(root, READER, [standalone, taken2])).toBe("places-3");
+  });
+
+  it("replaces a header of the reader's that is withdrawn, or already a version of this concept, in place", () => {
+    expect(versionShortName(root, READER, [readersWithdrawn])).toBe("places");
+    expect(versionShortName(root, READER, [readersCopy])).toBe("places");
+  });
+
+  it("counts the newest header at the name: a withdrawal made since frees it, and a list made since takes it", () => {
+    const before = listOf(READER, [], { created_at: 1_790_000_000 });
+    const withdrawnSince = listOf(READER, [["b", B_DEFERRED]], { created_at: 1_790_000_100 });
+    const standaloneSince = listOf(READER, [], { created_at: 1_790_000_200 });
+
+    expect(versionShortName(root, READER, [before, withdrawnSince])).toBe("places");
+    expect(versionShortName(root, READER, [before, withdrawnSince, standaloneSince])).toBe("places-2");
+  });
+
+  it("ignores a list the reader has blanked", () => {
+    const blanked = listOf(READER, [["deleted", "true"]], { tags: [["d", "places"], ["deleted", "true"]] });
+
+    expect(versionShortName(root, READER, [blanked])).toBe("places");
   });
 });

@@ -61,7 +61,7 @@ const isHandle = (value: string): boolean => parseCoordinate(value) !== null || 
  * sentinel and also points somewhere is affiliated, as it is to
  * `bLinksOf`/`versionOf`, which never count the sentinel as a link.
  */
-const isWithdrawn = (h: HeaderEvent): boolean =>
+export const isWithdrawn = (h: HeaderEvent): boolean =>
   h.tags.some((t) => t[0] === "b" && t[1] === B_DEFERRED) && bLinksOf(h).length === 0;
 
 /**

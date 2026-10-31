@@ -1,7 +1,7 @@
 "use client";
 
 import type { NostrEvent } from "nostr-tools";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { ListForm } from "@/components/list-form";
 import { PublishOutcome } from "@/components/publish-outcome";
 import { useWrite } from "@/hooks/use-write";
@@ -13,9 +13,12 @@ import {
   listEditHeader,
   listEditProblems,
   listEditTemplate,
+  shortNameOf,
+  versionShortName,
   type ListEdit,
 } from "@/lib/curate/listActions";
 import type { ConceptGroup } from "@/services/concepts";
+import { loadOwnHeaders } from "@/services/dictionary";
 import type { PublishResult } from "@/services/publish";
 
 /** What each change is called, on its button and over its form. */
@@ -54,6 +57,10 @@ function useSettled(onSaved: (event: NostrEvent) => void): {
  * The form for one change to a list. It opens on the header being changed or
  * copied as it stands, runs Brainstorm's checks on the header the draft would
  * publish as the person types, and publishes it as `reader`.
+ *
+ * A version made is published at the community header's short name, unless
+ * the reader has a list of their own by that name: then at a free one, and the
+ * form says so. Publish waits until the reader's lists have been read.
  */
 function ListEditor({
   edit,
@@ -71,18 +78,46 @@ function ListEditor({
   const [draft, setDraft] = useState(opened);
   const { waiting, settled } = useSettled(onSaved);
 
-  const problems = useMemo(() => listEditProblems(edit, reader, draft), [edit, reader, draft]);
+  /** The reader's own list headers, read to choose a version's short name; null until then. */
+  const [own, setOwn] = useState<HeaderEvent[] | null>(null);
+  const makes = edit.kind === "make-mine";
+  useEffect(() => {
+    if (!makes) return;
+    let cancelled = false;
+    loadOwnHeaders(reader).then((found) => {
+      if (!cancelled) setOwn(found);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [makes, reader]);
+  const reading = makes && own === null;
+  const shortName = edit.kind === "make-mine" && own ? versionShortName(edit.community, reader, own) : undefined;
+  const wanted = edit.kind === "make-mine" ? shortNameOf(edit.community) : null;
+
+  const problems = useMemo(() => listEditProblems(edit, reader, draft, shortName), [edit, reader, draft, shortName]);
 
   return (
     <ListForm
       heading={EDIT_WORDS[edit.kind]}
       draft={opened}
       onChange={setDraft}
-      onSave={(saved: CopyDraft) => void write(listEditTemplate(edit, reader, saved)).then(settled)}
+      onSave={(saved: CopyDraft) => void write(listEditTemplate(edit, reader, saved, shortName)).then(settled)}
       busy={busy}
+      holding={reading}
       problems={problems}
       onCancel={onCancel}
-      outcome={<PublishOutcome state={state} busy={busy} onRetry={() => void retry().then(settled)} />}
+      outcome={
+        <>
+          {reading ? <p className="text-[12px] text-mute">Looking at your lists to choose a short name…</p> : null}
+          {shortName !== undefined && shortName !== wanted ? (
+            <p className="text-[12px] leading-[1.5] text-ink-soft">
+              You already have a list with the short name “{wanted}”, so your version is saved as “{shortName}”.
+            </p>
+          ) : null}
+          <PublishOutcome state={state} busy={busy} onRetry={() => void retry().then(settled)} />
+        </>
+      }
       onDone={waiting ? () => onSaved(waiting) : undefined}
     />
   );

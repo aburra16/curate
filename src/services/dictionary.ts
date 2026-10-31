@@ -102,6 +102,17 @@ export async function loadAllHeaders(): Promise<HeaderEvent[]> {
   return [...byId.values()].filter(isDListHeader);
 }
 
+/**
+ * The 39998 headers `pubkey` has published to the list relays: the short names
+ * they have taken, for a write that would land on one. Blank headers are kept
+ * (as in `loadAllHeaders`), and only headers are returned. Never rejects: a
+ * relay that fails is an empty answer from that relay, in the relay-status store.
+ */
+export async function loadOwnHeaders(pubkey: string): Promise<HeaderEvent[]> {
+  const found = await readRelays(listRelays(), [{ kinds: [39998], authors: [pubkey] }]).catch(() => [] as NostrEvent[]);
+  return found.filter(isDListHeader);
+}
+
 /** Every kind a header can be published as, 39999 and 9999 only when they declare themselves one. */
 const HEADER_KINDS = [39998, 9998, 39999, 9999];
 
