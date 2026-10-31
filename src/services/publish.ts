@@ -8,7 +8,8 @@
  * list relay. The index and the tag hub are never written to.
  */
 
-import type { EventTemplate, NostrEvent } from "nostr-tools";
+import type { NostrEvent } from "nostr-tools";
+import type { EventTemplate } from "@/lib/conceptCopy";
 import { normalizeRelayUrl } from "@/lib/nostr/relays";
 import { publishUntilEnough, type PublishOutcome } from "@/lib/publishQuorum";
 import { writeRelaysOf } from "@/services/outbox";

@@ -1,7 +1,7 @@
 "use client";
 
-import type { EventTemplate } from "nostr-tools";
 import { useCallback, useRef, useState } from "react";
+import type { EventTemplate } from "@/lib/conceptCopy";
 import { retryPublish, signAndPublish, type PublishResult } from "@/services/publish";
 import { SignerError } from "@/services/signer";
 

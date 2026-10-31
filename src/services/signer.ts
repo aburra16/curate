@@ -10,8 +10,9 @@
 
 import type { ISigner } from "applesauce-signers";
 import { ExtensionMissingError, ExtensionSigner } from "applesauce-signers/signers/extension-signer";
-import type { EventTemplate, NostrEvent } from "nostr-tools";
+import type { EventTemplate as StampedTemplate, NostrEvent } from "nostr-tools";
 import { verifyEvent } from "nostr-tools/pure";
+import type { EventTemplate } from "@/lib/conceptCopy";
 
 export type SignerMethod = "extension" | "remote";
 
@@ -98,17 +99,17 @@ export async function disconnect(): Promise<void> {
 }
 
 /**
- * Sign a template as the connected account. The event carries one
- * `["client","Curate"]` tag in place of any other `client` tag, is stamped with
- * the time of signing, and is refused unless its signature checks out and it
- * is from the account that connected: an extension can switch accounts under
- * an open page.
+ * Sign a template (a kind, content and tags: it has no time of its own) as the
+ * connected account. The event carries one `["client","Curate"]` tag in place
+ * of any other `client` tag, is stamped with the time of signing, and is
+ * refused unless its signature checks out and it is from the account that
+ * connected: an extension can switch accounts under an open page.
  */
 export async function signTemplate(template: EventTemplate): Promise<NostrEvent> {
   const current = active;
   if (!current) throw new SignerError("not-connected", "Connect a signer to write.");
 
-  const stamped: EventTemplate = {
+  const stamped: StampedTemplate = {
     kind: template.kind,
     content: template.content,
     tags: [...template.tags.filter((tag) => tag[0] !== "client"), [...CLIENT_TAG]],

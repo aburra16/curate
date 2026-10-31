@@ -97,7 +97,10 @@ describe("signTemplate", () => {
     const pubkey = await connectExtension();
     const before = Math.floor(Date.now() / 1000);
 
-    const event = await signTemplate({ ...NOTE, kind: 7, content: "+", created_at: 12 });
+    // A template that still carries a time: the signer ignores it.
+    const withATime = { ...NOTE, kind: 7, content: "+", created_at: 12 };
+
+    const event = await signTemplate(withATime);
 
     expect(event).toMatchObject({ kind: 7, content: "+", pubkey });
     expect(event.created_at).toBeGreaterThanOrEqual(before);

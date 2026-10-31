@@ -141,8 +141,7 @@ export default function CreateListPage() {
   const publish = async () => {
     if (!pubkey || !canPublish) return;
     sent.current = listCoordinate(pubkey, d);
-    // A signer template carries a time, and signing stamps the real one over it.
-    const result = await write({ ...template, created_at: 0 });
+    const result = await write(template);
     if (result?.onHub) router.push(listHref(sent.current));
   };
 
