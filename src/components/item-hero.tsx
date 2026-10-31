@@ -62,7 +62,9 @@ function shownFields(p: ItemPresentation, definition: ConceptDefinition): Set<st
 
 /** A field's value, as a link where its type says it opens something and the value is one. */
 function Value({ value, href }: { value: string; href: string | null }) {
-  if (!href) return <span className="break-words [overflow-wrap:anywhere]">{value}</span>;
+  if (!href || !(httpUrl(href) || /^(tel|mailto):/i.test(href))) {
+    return <span className="break-words [overflow-wrap:anywhere]">{value}</span>;
+  }
   return httpUrl(href) ? (
     <a href={href} {...OUT} className={link}>
       {value}
