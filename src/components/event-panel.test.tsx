@@ -238,11 +238,11 @@ describe("Item", () => {
     expect(itemPage().getByRole("button", { name: "More fields (15)" }).getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("offers the map and loads none until it is asked for", () => {
+  it("offers the map and draws none until it is asked for", () => {
     const { container } = panel();
-    expect(container.querySelector("iframe")).toBeNull();
+    expect(container.querySelector("[data-map]")).toBeNull();
     fireEvent.click(itemPage().getByRole("button", { name: /show on map/i }));
-    expect(container.querySelector("iframe")?.getAttribute("src")).toMatch(/^https:\/\/www\.openstreetmap\.org\//);
+    expect(container.querySelector("[data-map]")).toBeTruthy();
   });
 
   it("says a required field the item doesn't give is missing", () => {

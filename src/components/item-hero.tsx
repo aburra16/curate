@@ -5,10 +5,10 @@ import type { NostrEvent } from "nostr-tools/pure";
 import { UNTITLED_LIST } from "@/app/discover-model";
 import { singularOf } from "@/app/list/items-model";
 import type { VersionLabel } from "@/app/list/list-model";
+import { ItemMap } from "@/components/item-map";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
 import { distinctLinks } from "@/lib/curate/links";
 import { fieldCell, httpUrl, undeclaredFields } from "@/lib/dlistFields";
-import { isSpot, osmEmbedUrl, osmPageUrl } from "@/lib/geohash";
 import type { ItemPresentation } from "@/lib/itemPresentation";
 import { itemLinks, type UrlTemplate } from "@/lib/linkTemplates";
 import { cn } from "@/lib/utils";
@@ -147,44 +147,6 @@ function Picture({
         <path d="M5 7h14M5 12h14M5 17h9" />
       </svg>
     </span>
-  );
-}
-
-/**
- * Where the item is, on OpenStreetMap's map. Only on request: until the
- * reader asks, the page contacts no map server. A spot gets a pin; a coarser
- * geohash is framed as the area it is.
- */
-function ItemMap({ location, title }: { location: NonNullable<ItemPresentation["location"]>; title: string }) {
-  const [open, setOpen] = useState(false);
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-baseline gap-1.5 self-start border border-rule bg-surface px-3 py-1.5 text-[12px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
-        style={ROUNDED}
-      >
-        {isSpot(location) ? "Show on map" : "Show area on map"}
-        <span className="text-[11px] text-mute">openstreetmap.org</span>
-      </button>
-    );
-  }
-  return (
-    <div>
-      <iframe
-        src={osmEmbedUrl(location)}
-        title={`Map: ${title}`}
-        loading="lazy"
-        referrerPolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-        className="h-64 w-full border border-rule"
-        style={ROUNDED}
-      />
-      <a href={osmPageUrl(location)} {...OUT} className="mt-1.5 inline-block text-[11px] text-mute hover:text-accent">
-        Open in OpenStreetMap <span className="text-mute/70">www.openstreetmap.org</span>
-      </a>
-    </div>
   );
 }
 

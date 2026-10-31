@@ -13,7 +13,8 @@ is no server and no account: the site is static files, and everything it shows c
   your Assistant's, then Brainstorm's, then the community's), its fields, and its items as rows. Items from
   accounts outside your web of trust fold away behind one line. A row opens a panel with three views of the
   event: Item (the item drawn the way its list defines it, as Brainstorm's item page draws it: its picture,
-  title, summary, links, facts, audio or video, and a map that loads only when you ask), Pretty and Raw.
+  title, summary, links, facts, audio or video, and a map that loads only when you ask, drawn with MapLibre
+  from OpenFreeMap's tiles on `map-tiles-server.brainstorm.world`), Pretty and Raw.
 - **Create** (`/create`) and the edit forms: make a list, add and edit items, and vote. Reading never
   signs; writing asks your NIP-07 extension (nos2x, Alby and the like).
 - **Settings** (`/settings`): extra relays to read lists from.

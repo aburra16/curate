@@ -9,7 +9,6 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { NostrEvent } from "nostr-tools/pure";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
-import { decodeGeohash, osmEmbedUrl, osmPageUrl } from "@/lib/geohash";
 import type { ItemPresentation } from "@/lib/itemPresentation";
 import type { UrlTemplate } from "@/lib/linkTemplates";
 import bookSubmissionsHeaders from "@/test/fixtures/book-submissions.header.json";
@@ -301,33 +300,18 @@ describe("the media", () => {
 });
 
 describe("the map", () => {
+  // The map itself, once asked for, is item-map.test.tsx's.
   it("is offered, and asks no map server for anything until the reader asks", () => {
     const { container } = hero();
-    expect(screen.getByRole("button", { name: /show on map/i })).toBeTruthy();
-    expect(container.querySelector("iframe")).toBeNull();
-    expect(container.querySelector('[src*="openstreetmap"], [href*="openstreetmap"]')).toBeNull();
+    const offer = screen.getByRole("button", { name: /show on map/i });
+    expect(offer.textContent).toContain("map-tiles-server.brainstorm.world");
+    expect(container.querySelector("iframe, [data-map]")).toBeNull();
+    expect(container.querySelector('[src*="map-tiles-server"], [href*="openstreetmap"]')).toBeNull();
   });
 
-  it("shows a spot's map with a pin, and a way to OpenStreetMap, when asked", () => {
-    const { container } = hero();
-    fireEvent.click(screen.getByRole("button", { name: /show on map/i }));
-    const cell = { ...decodeGeohash("dp0pzrexj")!, geohash: "dp0pzrexj" };
-    const frame = container.querySelector("iframe")!;
-    expect(frame.getAttribute("src")).toBe(osmEmbedUrl(cell));
-    expect(frame.getAttribute("src")).toContain("marker=");
-    expect(frame.getAttribute("title")).toBe("Map: Steak 'n Shake");
-    const open = screen.getByRole("link", { name: /Open in OpenStreetMap/ });
-    expect(open.getAttribute("href")).toBe(osmPageUrl(cell));
-    expect(open.getAttribute("target")).toBe("_blank");
-    expect(open.getAttribute("rel")).toBe("noopener noreferrer nofollow");
-    expect(screen.queryByRole("button", { name: /show on map/i })).toBeNull();
-  });
-
-  it("frames a coarser cell as the area it is, with no pin", () => {
-    const area = event({ tags: [...steak.tags.filter((t) => t[0] !== "g"), ["g", "dp0p"]] });
-    const { container } = hero({ item: area });
-    fireEvent.click(screen.getByRole("button", { name: /show area on map/i }));
-    expect(container.querySelector("iframe")!.getAttribute("src")).not.toContain("marker=");
+  it("offers a coarser cell as the area it is", () => {
+    hero({ item: event({ tags: [...steak.tags.filter((t) => t[0] !== "g"), ["g", "dp0p"]] }) });
+    expect(screen.getByRole("button", { name: /show area on map/i })).toBeTruthy();
   });
 
   it("is not offered for an item with no location", () => {
