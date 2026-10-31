@@ -50,7 +50,7 @@ describe("the signer store without working storage", () => {
     vi.stubGlobal("localStorage", throwingStorage());
     const { useSigner } = await import("@/stores/signer");
 
-    expect(() => useSigner.getState().setConnected(PUBKEY)).not.toThrow();
+    expect(() => useSigner.getState().setConnected(PUBKEY, "extension")).not.toThrow();
     expect(useSigner.getState()).toMatchObject({ pubkey: PUBKEY, status: "connected" });
 
     expect(() => useSigner.getState().setDisconnected()).not.toThrow();
@@ -63,16 +63,24 @@ describe("the signer store without working storage", () => {
     });
     const { useSigner } = await import("@/stores/signer");
 
-    expect(() => useSigner.getState().setConnected(PUBKEY)).not.toThrow();
+    expect(() => useSigner.getState().setConnected(PUBKEY, "extension")).not.toThrow();
     expect(useSigner.getState().pubkey).toBe(PUBKEY);
   });
 
   it("remembers the last pubkey in working storage", async () => {
     const { useSigner } = await import("@/stores/signer");
 
-    useSigner.getState().setConnected(PUBKEY);
+    useSigner.getState().setConnected(PUBKEY, "extension");
 
     expect(JSON.parse(localStorage.getItem("curate-signer") ?? "{}")).toMatchObject({ state: { pubkey: PUBKEY } });
+  });
+
+  it("does not remember how the signer signed", async () => {
+    const { useSigner } = await import("@/stores/signer");
+
+    useSigner.getState().setConnected(PUBKEY, "extension");
+
+    expect(JSON.parse(localStorage.getItem("curate-signer") ?? "{}").state).not.toHaveProperty("method");
   });
 });
 

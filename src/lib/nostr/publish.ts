@@ -2,7 +2,7 @@
  * Sign + broadcast — the write pipeline for Curate.
  *
  * 1. Build an EventTemplate (via events.ts builders)
- * 2. Sign it via the NIP-07 extension (signer.ts)
+ * 2. Sign it with the connected signer (services/signer.ts)
  * 3. Publish to all configured relays (pool)
  *
  * All write flows funnel through `signAndPublish()`.
@@ -14,7 +14,7 @@
  */
 
 import type { EventTemplate, NostrEvent } from "nostr-tools/pure";
-import { signEvent } from "./signer";
+import { signTemplate } from "@/services/signer";
 import { ensurePool } from "./ndk";
 
 export interface PublishResult {
@@ -34,7 +34,7 @@ export async function signAndPublish(
   template: EventTemplate
 ): Promise<PublishResult> {
   // 1. Sign (this is the only part the user waits for)
-  const signed = await signEvent(template);
+  const signed = await signTemplate(template);
 
   // 2. Publish in the background — don't await
   const { pool, relays } = ensurePool();
