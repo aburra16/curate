@@ -1,24 +1,28 @@
 "use client";
 
-import { memo, useDeferredValue, useMemo, useState, type ReactNode } from "react";
+import { memo, useDeferredValue, useId, useMemo, useState, type ReactNode } from "react";
 import type { NostrEvent } from "nostr-tools/pure";
 import { ItemForm } from "@/components/item-form";
 import { ItemRow } from "@/components/item-row";
+import { PublishOutcome } from "@/components/publish-outcome";
 import { ReactionButtons } from "@/components/reaction-buttons";
 import { TrustFold } from "@/components/trust-fold";
 import { useReader } from "@/hooks/use-reader";
 import { useTemplates } from "@/hooks/use-templates";
+import { useWrite } from "@/hooks/use-write";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
+import { deletionTemplate } from "@/lib/curate/writeTemplates";
 import { ITEM_ORDERS, type ItemOrder } from "@/lib/dictionaryItems";
-import { coordinateOf, DLIST_ITEM_KIND, headerReference } from "@/lib/dlistFields";
+import { coordinateOf, DLIST_ITEM_KIND, DLIST_ITEM_KINDS, headerReference } from "@/lib/dlistFields";
 import { itemLinks, type LinkRef, type UrlTemplate } from "@/lib/linkTemplates";
 import { cn } from "@/lib/utils";
-import type { ItemEvent } from "@/services/concepts";
+import { itemIdentity, type ItemEvent } from "@/services/concepts";
 import { mergePages, shownItems } from "@/services/items";
 import { namesOf } from "@/services/jsonData";
+import type { PublishResult } from "@/services/publish";
 import type { ReactionCount } from "@/services/reactions";
 import { useShowEverything } from "@/stores/view";
-import { itemsModel, type RowModel } from "./items-model";
+import { itemsModel, singularOf, withoutRemoved, type RowModel } from "./items-model";
 import {
   useAuthorRanks,
   useItemCount,
@@ -85,7 +89,7 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
   // Search reads what's loaded; past that, while more pages remain, the index finds the rest.
   const found = useSearchedItems(handles, query, items.more);
   const all = useMemo(() => (found.length ? mergePages(items.held, found) : items.held), [items.held, found]);
-  const visible = useMemo(() => shownItems(all), [all]);
+  const visible = useMemo(() => shownItems(withoutRemoved(all, items.removed)), [all, items.removed]);
   const authors = useMemo(() => visible.map((item) => item.pubkey), [visible]);
 
   // Authors the scorer didn't answer for are asked again as authors or pages come in.
@@ -98,8 +102,9 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
 
   const searched = useDeferredValue(query);
   const model = useMemo(
-    () => itemsModel({ items: all, definition, ranks, answered, showEverything, query: searched, order }),
-    [all, definition, ranks, answered, showEverything, searched, order],
+    () =>
+      itemsModel({ items: all, definition, ranks, answered, removed: items.removed, showEverything, query: searched, order }),
+    [all, definition, ranks, answered, items.removed, showEverything, searched, order],
   );
 
   const names = definition ? namesOf(definition.event) : null;
@@ -108,7 +113,10 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
   // A list that declares no fields gives the form nothing to fill in.
   const noFields = definition !== null && definition.fields.length === 0;
   const canAdd = definition !== null && !noFields;
-  const loaded = useMemo(() => shownItems(items.held).length, [items.held]);
+  const loaded = useMemo(
+    () => shownItems(withoutRemoved(items.held, items.removed)).length,
+    [items.held, items.removed],
+  );
   const total = count ?? (items.firstLoaded ? loaded : null);
   const searching = searched.trim() !== "";
   const matches = model.shown.length + model.folded;
@@ -124,6 +132,8 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
       definition={definition}
       reader={reader.pubkey}
       onSaved={items.add}
+      versionsOf={items.versionsOf}
+      onRemoved={items.remove}
       onOpenItem={onOpenItem}
     />
   );
@@ -276,8 +286,9 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
 /**
  * A row, and its Edit while the reader is the author of an addressable item
  * (a kind 9999 can't be replaced) under a list that declares fields to change.
- * Edit keeps every tag the item has, so any such item can be changed. Drawn
- * again only when a prop changes.
+ * Edit keeps every tag the item has, so any such item can be changed. Delete
+ * is offered to the same author on a 9999 as well, under the same lists, and
+ * asks first. Drawn again only when a prop changes.
  */
 const EditableRow = memo(function EditableRow({
   row,
@@ -287,6 +298,8 @@ const EditableRow = memo(function EditableRow({
   definition,
   reader,
   onSaved,
+  versionsOf,
+  onRemoved,
   onOpenItem,
 }: {
   row: RowModel;
@@ -298,9 +311,14 @@ const EditableRow = memo(function EditableRow({
   reader: string | null;
   /** Merges what an edit published into the list. */
   onSaved: (events: ItemEvent[]) => void;
+  /** The ids of every version of an item the page holds, for a deletion to name. */
+  versionsOf: (identity: string) => string[];
+  /** Takes the item out of the list from now on, once its deletion is saved. */
+  onRemoved: (identity: string, at: number) => void;
   onOpenItem?: (identity: string, opener: HTMLElement) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { identity } = row;
   const onOpen = useMemo(
     () => (onOpenItem ? (opener: HTMLElement) => onOpenItem(identity, opener) : undefined),
@@ -308,12 +326,9 @@ const EditableRow = memo(function EditableRow({
   );
   // Items come off a relay signed; ItemEvent only leaves out what the readers never use.
   const event = row.item as NostrEvent;
-  const editable =
-    !!definition &&
-    definition.fields.length > 0 &&
-    !!reader &&
-    reader === event.pubkey &&
-    event.kind === DLIST_ITEM_KIND;
+  const own = !!definition && definition.fields.length > 0 && !!reader && reader === event.pubkey;
+  const editable = own && event.kind === DLIST_ITEM_KIND;
+  const deletable = own && (DLIST_ITEM_KINDS as readonly number[]).includes(event.kind);
   const links = useMemo(() => itemLinks(event, refs, templates), [event, refs, templates]);
 
   if (editing && editable && definition) {
@@ -340,13 +355,22 @@ const EditableRow = memo(function EditableRow({
       onOpen={onOpen}
       actions={
         <>
-          {editable ? (
+          {editable && !deleting ? (
             <button
               type="button"
               onClick={() => setEditing(true)}
               className="text-[11px] text-mute hover:text-accent transition-colors"
             >
               Edit
+            </button>
+          ) : null}
+          {deletable && !deleting ? (
+            <button
+              type="button"
+              onClick={() => setDeleting(true)}
+              className="text-[11px] text-mute hover:text-accent transition-colors"
+            >
+              Delete
             </button>
           ) : null}
           <ReactionButtons
@@ -359,6 +383,96 @@ const EditableRow = memo(function EditableRow({
           />
         </>
       }
+      asking={
+        deleting && deletable ? (
+          <DeleteConfirm
+            item={row.item}
+            singular={singularOf(definition)}
+            versionsOf={versionsOf}
+            onDeleted={(deletion) => onRemoved(identity, deletion.created_at)}
+            onCancel={() => setDeleting(false)}
+          />
+        ) : undefined
+      }
     />
   );
 });
+
+/**
+ * Asks before the reader's item is deleted, then publishes a deletion naming
+ * every version of it the page holds, and the item as shown (a search result
+ * is not held). Until the list relay has taken it the item stays as it was: a
+ * refusal says so, and Retry sends the same event again. A deletion the list
+ * relay took is handed on at once, unless one of the author's own relays
+ * missed it: then the question stays with that note until the person presses
+ * Done.
+ */
+function DeleteConfirm({
+  item,
+  singular,
+  versionsOf,
+  onDeleted,
+  onCancel,
+}: {
+  item: ItemEvent;
+  singular: string;
+  versionsOf: (identity: string) => string[];
+  /** The list relay has the deletion; handed the signed event. */
+  onDeleted: (deletion: NostrEvent) => void;
+  onCancel: () => void;
+}) {
+  const { state, busy, write, retry } = useWrite();
+  const [waiting, setWaiting] = useState<NostrEvent | null>(null);
+  const askedId = useId();
+
+  const settled = (result: PublishResult | null) => {
+    if (!result?.onHub) return;
+    if (result.failed.length === 0) onDeleted(result.event);
+    else setWaiting(result.event);
+  };
+  const confirm = () => {
+    const held = versionsOf(itemIdentity(item));
+    void write(deletionTemplate(item, held.includes(item.id) ? held : [item.id, ...held])).then(settled);
+  };
+
+  return (
+    <div role="group" aria-labelledby={askedId} className="flex flex-col gap-3">
+      <p id={askedId} className="text-[13px] text-ink">
+        Delete this {singular}? Relays that honour deletions will drop it.
+      </p>
+      <PublishOutcome state={state} busy={busy} onRetry={() => void retry().then(settled)} />
+      <div className="flex items-center justify-end gap-3">
+        {waiting ? (
+          <button
+            type="button"
+            onClick={() => onDeleted(waiting)}
+            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
+            style={{ borderRadius: "var(--radius-input)" }}
+          >
+            Done
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={busy}
+              className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirm}
+              disabled={busy}
+              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderRadius: "var(--radius-input)" }}
+            >
+              {busy ? "Deleting…" : "Delete"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

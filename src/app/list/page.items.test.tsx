@@ -79,7 +79,7 @@ vi.mock("@/services/trust", async (importOriginal) => {
   return { ...actual, fetchAuthorRanks: ranking.fetchAuthorRanks };
 });
 
-import { signAndPublish } from "@/services/publish";
+import { retryPublish, signAndPublish } from "@/services/publish";
 import ListPage from "./page";
 
 const CURATOR = "b83a28b7e4e5d20bd960c5faeb6625f95529166b8bdb045d42634a2f35919450";
@@ -630,6 +630,242 @@ describe("editing an item", () => {
     );
     expect(rowTitles()).toEqual(["Cafe Lua", "Alpha"]);
     expect(screen.queryByRole("form")).toBeNull();
+  });
+});
+
+describe("deleting an item", () => {
+  const own = (name: string, created_at: number, extra: string[][] = []) => place(name, created_at, READER, extra);
+  /** The same item as `item`, made again later: the same address, a new id and name. */
+  const again = (item: ItemEvent, id: string, created_at: number, name: string): ItemEvent => ({
+    ...item,
+    id,
+    created_at,
+    tags: item.tags.map((t) => (t[0] === "name" ? ["name", name] : t)),
+  });
+  /** The deletion the list relay took last: its tags, and the kind. */
+  const sent = () => vi.mocked(signAndPublish).mock.calls.at(-1)![0];
+  const tagsNamed = (name: string) => sent().tags.filter((t) => t[0] === name);
+  /** Delete on the row; once the question is open, the row's own is gone and this is the question's. */
+  const pressDelete = (title: string) => fireEvent.click(within(rowOf(title)).getByRole("button", { name: "Delete" }));
+  const askToDelete = pressDelete;
+  const confirmDelete = pressDelete;
+
+  beforeEach(() => {
+    vi.mocked(retryPublish).mockReset();
+    vi.mocked(signAndPublish).mockImplementation(async (template) => signedBy(READER, template));
+    signIn(READER);
+  });
+
+  it("offers Delete on the reader's own items, short ones too, and on no other", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(
+      page(
+        [own("Mine", 1_792_000_500), { ...own("Mine, short", 1_792_000_300), kind: 9999 }, place("Theirs", 1_792_000_200)],
+        null,
+      ),
+    );
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Theirs" });
+
+    const deletes = screen.getAllByRole("button", { name: "Delete" });
+    expect(deletes.map((d) => d.closest("article")?.querySelector("h3")?.textContent)).toEqual(["Mine", "Mine, short"]);
+  });
+
+  it("offers Delete to no one who isn't connected, and on no list that declares no fields", async () => {
+    useSigner.setState({ pubkey: null, status: "disconnected", error: null });
+    reads.loadItemsPage.mockResolvedValueOnce(page([own("Mine", 1_792_000_500)], null));
+    const signedOut = open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Mine" });
+    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+    signedOut.unmount();
+
+    signIn(READER);
+    relays(tagsHeaders as NostrEvent[]);
+    const mine: ItemEvent = {
+      id: "7".repeat(64),
+      pubkey: READER,
+      kind: 39999,
+      created_at: 1_792_000_100,
+      content: "",
+      tags: [
+        ["d", "espresso"],
+        ["z", TAGS_ROOT],
+      ],
+    };
+    reads.loadItemsPage.mockResolvedValueOnce(page([mine], null));
+    nav.params = new URLSearchParams({ c: TAGS_ROOT });
+    render(<ListPage />);
+    await screen.findAllByRole("heading", { level: 3 });
+    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+  });
+
+  it("asks first, in the list's own word, and publishes nothing when the person cancels", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([own("Mine", 1_792_000_500)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Mine" });
+
+    askToDelete("Mine");
+    expect(
+      within(rowOf("Mine")).getByText("Delete this Food and Drink Place? Relays that honour deletions will drop it."),
+    ).toBeTruthy();
+    fireEvent.click(within(rowOf("Mine")).getByRole("button", { name: "Cancel" }));
+
+    expect(within(rowOf("Mine")).queryByText(/Relays that honour deletions/)).toBeNull();
+    expect(within(rowOf("Mine")).getByRole("button", { name: "Delete" })).toBeTruthy();
+    expect(signAndPublish).not.toHaveBeenCalled();
+  });
+
+  it("publishes a deletion that names the item and its address, and the row leaves at once", async () => {
+    const mine = own("Cafe Luna", 1_792_000_500);
+    reads.loadItemsPage.mockResolvedValueOnce(page([mine, place("Alpha", 1_792_000_100)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+
+    askToDelete("Cafe Luna");
+    confirmDelete("Cafe Luna");
+
+    await vi.waitFor(() => expect(rowTitles()).toEqual(["Alpha"]));
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+    expect(sent()).toMatchObject({ kind: 5, content: "" });
+    expect(sent().tags).toEqual([
+      ["e", mine.id],
+      ["a", `39999:${READER}:cafe-luna`],
+      ["k", "39999"],
+    ]);
+  });
+
+  it("names every version of the item the page holds", async () => {
+    const first = own("Cafe Luna", 1_792_000_100);
+    const second = again(first, "d".repeat(64), 1_792_000_200, "Cafe Luna II");
+    let onItem: (ev: ItemEvent) => void = () => {};
+    reads.liveItems.mockImplementation((_handles: string[], handler: (ev: ItemEvent) => void) => {
+      onItem = handler;
+      return () => {};
+    });
+    reads.loadItemsPage.mockResolvedValueOnce(page([first], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+    await vi.waitFor(() => expect(reads.liveItems).toHaveBeenCalled());
+    act(() => onItem(second));
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna II" });
+
+    askToDelete("Cafe Luna II");
+    confirmDelete("Cafe Luna II");
+
+    await vi.waitFor(() => expect(rowTitles()).toEqual([]));
+    expect(tagsNamed("e")).toEqual([
+      ["e", first.id],
+      ["e", second.id],
+    ]);
+  });
+
+  it("names a short item by its id alone", async () => {
+    const short = { ...own("Mine, short", 1_792_000_300), kind: 9999 };
+    reads.loadItemsPage.mockResolvedValueOnce(page([short], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Mine, short" });
+
+    askToDelete("Mine, short");
+    confirmDelete("Mine, short");
+
+    await vi.waitFor(() => expect(rowTitles()).toEqual([]));
+    expect(sent().tags).toEqual([
+      ["e", short.id],
+      ["k", "9999"],
+    ]);
+  });
+
+  it("keeps the row, and offers Retry, when the list relay doesn't take the deletion", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([own("Mine", 1_792_000_500)], null));
+    vi.mocked(signAndPublish).mockImplementation(async (template) => ({
+      ...signedBy(READER, template),
+      onHub: false,
+      hubMessage: "blocked: not today",
+      accepted: [],
+    }));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Mine" });
+
+    askToDelete("Mine");
+    confirmDelete("Mine");
+
+    expect(await screen.findByText(/Not saved to the list relay: blocked: not today/)).toBeTruthy();
+    expect(rowTitles()).toEqual(["Mine"]);
+
+    // Retry sends the same event again; once the list relay has it, the row leaves.
+    vi.mocked(retryPublish).mockImplementation(async (last) => ({ ...last, onHub: true, hubMessage: null, accepted: [DCOSL] }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await vi.waitFor(() => expect(rowTitles()).toEqual([]));
+    expect(signAndPublish).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the question open with the note when an own relay missed the deletion, and removes the row on Done", async () => {
+    reads.loadItemsPage.mockResolvedValueOnce(page([own("Mine", 1_792_000_500), place("Alpha", 1_792_000_100)], null));
+    vi.mocked(signAndPublish).mockImplementation(async (template) => ({
+      ...signedBy(READER, template),
+      failed: [{ ok: false, from: "wss://own.example.test", message: "timed out" }],
+    }));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Mine" });
+
+    askToDelete("Mine");
+    confirmDelete("Mine");
+
+    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
+    expect(rowTitles()).toEqual(["Mine", "Alpha"]);
+    expect(within(rowOf("Mine")).queryByRole("button", { name: "Cancel" })).toBeNull();
+
+    fireEvent.click(within(rowOf("Mine")).getByRole("button", { name: "Done" }));
+    await vi.waitFor(() => expect(rowTitles()).toEqual(["Alpha"]));
+  });
+
+  it("keeps the item out through a later page and live items no newer than the deletion, and shows a newer version", async () => {
+    const mine = own("Cafe Luna", 1_792_000_500);
+    const cursor = { hub: 5, index: 5 };
+    let onItem: (ev: ItemEvent) => void = () => {};
+    reads.liveItems.mockImplementation((_handles: string[], handler: (ev: ItemEvent) => void) => {
+      onItem = handler;
+      return () => {};
+    });
+    reads.loadItemsPage
+      .mockResolvedValueOnce(page([mine, place("Alpha", 1_792_000_100)], cursor))
+      // The index is behind: it still lists an older version.
+      .mockResolvedValueOnce(page([again(mine, "c".repeat(64), 1_791_000_000, "Cafe Luna, once"), place("Beta", 1)], null));
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+    await vi.waitFor(() => expect(reads.liveItems).toHaveBeenCalled());
+
+    askToDelete("Cafe Luna");
+    confirmDelete("Cafe Luna");
+    await vi.waitFor(() => expect(rowTitles()).toEqual(["Alpha"]));
+    // The deletion was signed at 1_793_000_000.
+    expect(vi.mocked(signAndPublish)).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(loadMore());
+    await screen.findByRole("heading", { level: 3, name: "Beta" });
+    expect(rowTitles()).toEqual(["Alpha", "Beta"]);
+
+    act(() => onItem(again(mine, "b".repeat(64), 1_793_000_000, "Cafe Luna, in the same second")));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+    expect(rowTitles()).toEqual(["Alpha", "Beta"]);
+
+    act(() => onItem(again(mine, "a".repeat(64), 1_793_000_100, "Cafe Luna, back")));
+    await vi.waitFor(() => expect(rowTitles()).toEqual(["Cafe Luna, back", "Alpha", "Beta"]));
+  });
+
+  it("keeps the item out of what the index finds past what is loaded", async () => {
+    const mine = own("Cafe Luna", 1_792_000_500);
+    reads.loadItemsPage.mockResolvedValueOnce(page([mine, place("Alpha", 1_792_000_100)], { hub: 5, index: 5 }));
+    reads.searchItems.mockResolvedValue([mine, place("Cafe Lumen", 1_700_000_000)]);
+    open(FOOD);
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
+
+    askToDelete("Cafe Luna");
+    confirmDelete("Cafe Luna");
+    await vi.waitFor(() => expect(rowTitles()).toEqual(["Alpha"]));
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "cafe lu" } });
+    expect(await screen.findByRole("heading", { level: 3, name: "Cafe Lumen" }, { timeout: 2000 })).toBeTruthy();
+    expect(rowTitles()).toEqual(["Cafe Lumen"]);
   });
 });
 

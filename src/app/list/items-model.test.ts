@@ -48,6 +48,7 @@ const input = (over: Partial<ItemsModelInput>): ItemsModelInput => ({
   definition: dogNames,
   ranks: null,
   answered: new Set(),
+  removed: new Map(),
   showEverything: false,
   query: "",
   order: "newest",
@@ -227,6 +228,48 @@ describe("itemsModel", () => {
     expect(laterById.get(rex.id)).toBe(byId.get(rex.id));
     expect(laterById.get(bo.id)).not.toBe(byId.get(bo.id));
     expect(laterById.get(bo.id)?.outside).toBe(false);
+  });
+
+  describe("items removed for the session", () => {
+    /** One version of the addressable dog `d`, by A. */
+    const version = (d: string, created_at: number, name = "Rex"): ItemEvent => ({
+      id: (++n).toString(16).padStart(64, "0"),
+      pubkey: A,
+      kind: 39999,
+      created_at,
+      content: "",
+      tags: [["d", d], ["z", dogNames.event.id], ["t", name]],
+    });
+
+    it("leaves a removed item out, whichever of its versions are held", () => {
+      const older = version("rex", 1_790_000_100);
+      const newer = version("rex", 1_790_000_200);
+      const removed = new Map([[`39999:${A}:rex`, 1_790_000_300]]);
+
+      expect(itemsModel(input({ items: [newer, bo], removed })).shown.map((r) => r.title)).toEqual(["Bo"]);
+      // A version that came in late, older than the deletion, stays out too.
+      expect(itemsModel(input({ items: [older, bo], removed })).shown.map((r) => r.title)).toEqual(["Bo"]);
+    });
+
+    it("hides a version made in the second of the deletion, and shows one made after it", () => {
+      const removed = new Map([[`39999:${A}:rex`, 1_790_000_300]]);
+      const sameSecond = version("rex", 1_790_000_300);
+      const after = version("rex", 1_790_000_301, "Rex again");
+
+      expect(itemsModel(input({ items: [sameSecond], removed })).shown).toEqual([]);
+      expect(itemsModel(input({ items: [after], removed })).shown.map((r) => r.title)).toEqual(["Rex again"]);
+    });
+
+    it("takes a removed item out of the fold's count, and touches no other item", () => {
+      const removed = new Map([[bo.id, 1_790_000_900]]);
+      const { shown, folded, foldedRows } = itemsModel(
+        input({ items: [rex, bo, kip], ranks: ranked, answered: everyone, removed }),
+      );
+
+      expect(shown.map((r) => r.title)).toEqual(["Rex"]);
+      expect(foldedRows.map((r) => r.title)).toEqual(["Kip"]);
+      expect(folded).toBe(1);
+    });
   });
 
   it("with no definition, every row is an Untitled item", () => {

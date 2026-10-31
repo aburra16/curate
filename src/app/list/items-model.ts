@@ -11,6 +11,11 @@
  * - **Blank items never show.** The page holds what `mergePages` keeps, blank
  *   versions included, so a blank can shadow an older version of its item;
  *   they are left out here, as `shownItems` does.
+ * - **Removed items stay out.** An item the reader deleted this session
+ *   (`removed`: its identity and the second of the deletion) is left out
+ *   with every version no newer than that second, whatever page or live
+ *   event brought it in, so a lagging relay can't bring it back; a version
+ *   made after the deletion shows again.
  * - **Search** reads what a row shows, its title and summary, words in any
  *   order, ignoring case and accents: lib/dictionaryItems' `filterItems`
  *   rule. That function reads `presentItem`, which can't see a title kept in
@@ -60,6 +65,8 @@ export interface ItemsModelInput {
   ranks: Map<string, number> | null;
   /** The authors the scorer answered for. Only their items can fold; anyone else's is unknown, and shown. */
   answered: ReadonlySet<string>;
+  /** The items deleted this session, by identity: the second of the deletion. */
+  removed: ReadonlyMap<string, number>;
   showEverything: boolean;
   query: string;
   order: ItemOrder;
@@ -104,6 +111,19 @@ export function itemKindsOf(header: { tags: string[][] }): number[] {
     .map((t) => Number(t[1]))
     .filter((k) => k <= 65535);
   return [...new Set(kinds)];
+}
+
+/**
+ * `items` without the removed ones: an item whose identity is in `removed`
+ * stays out with every version made no later than the deletion's second; a
+ * version made after it is kept.
+ */
+export function withoutRemoved<T extends ItemEvent>(items: T[], removed: ReadonlyMap<string, number>): T[] {
+  if (!removed.size) return items;
+  return items.filter((item) => {
+    const at = removed.get(itemIdentity(item));
+    return at === undefined || item.created_at > at;
+  });
 }
 
 /** The name an item of this list goes by, singular; "item" when the list has none. */
@@ -171,7 +191,7 @@ export function itemsModel(input: ItemsModelInput): ItemsModel {
   const words = fold(input.query).split(/\s+/).filter(Boolean);
 
   const rows: RowModel[] = [];
-  for (const item of shownItems(input.items)) {
+  for (const item of shownItems(withoutRemoved(input.items, input.removed))) {
     const outside = ranks !== null && answered.has(item.pubkey) && !inWebOfTrust(ranks, item.pubkey);
     const row = rowOf(item, definition, outside);
     if (words.length) {

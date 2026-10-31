@@ -14,6 +14,11 @@
  *   blank that comes in removes its row. Every page's crowded seconds are
  *   kept, so a second one page cut short and no page read to the end stays
  *   `lost` however many pages come after (`lostSeconds`).
+ *   The hook also remembers every id it has held for each item, the versions
+ *   a merge left behind too (`versionsOf`: what a deletion names), and which
+ *   items the reader deleted this session (`remove`, `removed`): those stay
+ *   hidden, though a later page or live event brings an older version in, and
+ *   a version made after the deletion shows again.
  * - `useAuthorRanks`: the reader's scorer's ranks of the items' authors,
  *   and which authors it answered for. An author whose read didn't end is
  *   asked again with the next request (new authors, or a new page).
@@ -56,6 +61,10 @@ interface ItemsState {
   /** Every page's crowded seconds a relay cut short, and those dcosl or the index read to the end. */
   truncated: CrowdedSecond[];
   filled: CrowdedSecond[];
+  /** Every id held for each item (`itemIdentity`), in the order they came in: the versions a merge dropped too. */
+  versions: Map<string, string[]>;
+  /** The items the reader deleted: their identity, and the second of the deletion. */
+  removed: Map<string, number>;
 }
 
 const freshItems = (key: string): ItemsState => ({
@@ -68,12 +77,33 @@ const freshItems = (key: string): ItemsState => ({
   pages: 0,
   truncated: [],
   filled: [],
+  versions: new Map(),
+  removed: new Map(),
+});
+
+/** `versions` with the ids of `events` added under their items; the same map when there is nothing new. */
+function withVersions(versions: Map<string, string[]>, events: ItemEvent[]): Map<string, string[]> {
+  let next: Map<string, string[]> | null = null;
+  for (const ev of events) {
+    const identity = itemIdentity(ev);
+    const seen = (next ?? versions).get(identity);
+    if (seen?.includes(ev.id)) continue;
+    next ??= new Map(versions);
+    next.set(identity, seen ? [...seen, ev.id] : [ev.id]);
+  }
+  return next ?? versions;
+}
+
+/** The state after `events` come in: merged into what the list holds, and their ids remembered. */
+const taking = (s: ItemsState, events: ItemEvent[]): ItemsState => ({
+  ...s,
+  held: mergePages(s.held, events),
+  versions: withVersions(s.versions, events),
 });
 
 /** The state after a page: its items merged in, its cursor and crowded seconds taken. */
 const withPage = (s: ItemsState, page: ItemsPage): ItemsState => ({
-  ...s,
-  held: mergePages(s.held, page.items),
+  ...taking(s, page.items),
   firstLoaded: true,
   loadingMore: false,
   next: page.next,
@@ -106,9 +136,16 @@ export interface ListItems {
   loadMore: () => void;
   /** Merge events this page wrote (a new item, an edit), as a page would be: only those filed under the list. */
   add: (events: ItemEvent[]) => void;
+  /** The ids of every event held for the item, blank versions and those a newer one replaced included. */
+  versionsOf: (identity: string) => string[];
+  /** The items deleted this session, by identity: the second of the deletion. */
+  removed: ReadonlyMap<string, number>;
+  /** Hide the item, and every version of it no newer than `at` (a Unix second), for the rest of the session. */
+  remove: (identity: string, at: number) => void;
 }
 
 const NO_ITEMS = "[[],[]]";
+const NO_VERSIONS: string[] = [];
 /** How long live items gather before they're merged in. */
 const LIVE_BATCH_MS = 100;
 
@@ -144,7 +181,7 @@ export function useListItems(handles: string[], itemKinds: number[]): ListItems 
       flushing = null;
       const batch = arrived;
       arrived = [];
-      update((s) => ({ ...s, held: mergePages(s.held, batch) }));
+      update((s) => taking(s, batch));
     };
     // Live items start where the first read did: anything listed while it ran comes live.
     const since = Math.floor(Date.now() / 1000);
@@ -188,9 +225,22 @@ export function useListItems(handles: string[], itemKinds: number[]): ListItems 
       if (key === NO_ITEMS) return;
       const [hs, kinds] = JSON.parse(key) as [string[], number[]];
       const filed = filedItems(events, hs, kinds);
-      if (filed.length) update((s) => ({ ...s, held: mergePages(s.held, filed) }));
+      if (filed.length) update((s) => taking(s, filed));
     },
     [key, update],
+  );
+
+  /** Read when an item is deleted, so the function stays the same as versions come in and the rows aren't drawn again. */
+  const versions = useRef(current.versions);
+  useEffect(() => {
+    versions.current = current.versions;
+  }, [current.versions]);
+  const versionsOf = useCallback((identity: string) => versions.current.get(identity) ?? NO_VERSIONS, []);
+
+  const remove = useCallback(
+    (identity: string, at: number) =>
+      update((s) => ({ ...s, removed: new Map(s.removed).set(identity, Math.max(at, s.removed.get(identity) ?? at)) })),
+    [update],
   );
 
   const lost = useMemo(
@@ -208,6 +258,9 @@ export function useListItems(handles: string[], itemKinds: number[]): ListItems 
     lost,
     loadMore,
     add,
+    versionsOf,
+    removed: current.removed,
+    remove,
   };
 }
 

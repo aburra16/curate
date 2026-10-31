@@ -13,8 +13,10 @@ interface Props {
   row: RowModel;
   /** The links the definition's URL templates build for this item (lib/linkTemplates `itemLinks`). */
   links: ItemLink[];
-  /** What the reader can do with the item: vote, edit. */
+  /** What the reader can do with the item: vote, edit, delete. */
   actions?: ReactNode;
+  /** A question the reader is being asked about the item, under the row's footer. Clicking in it never opens the panel. */
+  asking?: ReactNode;
   /** Opens the item's event panel. Handed the element that opened it, so focus can go back there. */
   onOpen?: (opener: HTMLElement) => void;
 }
@@ -47,7 +49,7 @@ const INTERACTIVE = "a, button, input, select, textarea, label, summary, audio, 
  * a keyboard, and by a click anywhere on the row that isn't on something
  * with a click of its own (and isn't selecting text).
  */
-export function ItemRow({ row, links, actions, onOpen }: Props) {
+export function ItemRow({ row, links, actions, asking, onOpen }: Props) {
   const { p, item } = row;
   const [mapOpen, setMapOpen] = useState(false);
   const opener = useRef<HTMLButtonElement>(null);
@@ -186,6 +188,13 @@ export function ItemRow({ row, links, actions, onOpen }: Props) {
             </p>
             {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
           </div>
+
+          {asking ? (
+            // Not the row's own click: a question is answered, not opened.
+            <div onClick={(e) => e.stopPropagation()} className="mt-3 border-t border-rule pt-3">
+              {asking}
+            </div>
+          ) : null}
         </div>
       </div>
     </article>
