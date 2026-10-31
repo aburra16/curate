@@ -1,5 +1,6 @@
 import type { Filter, NostrEvent } from "nostr-tools";
 import { RelayClosedError } from "applesauce-relay";
+import { TimeoutError } from "applesauce-core/observable";
 import { Subject } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import foodHeader from "@/test/fixtures/food.header.json";
@@ -11,7 +12,7 @@ import { DCOSL } from "@/services/relays";
 const relayOf = vi.fn();
 vi.mock("@/lib/nostr/ndk", () => ({ getPool: () => ({ relay: relayOf }) }));
 
-import { transport } from "@/services/transport";
+import { PUBLISH_TIMED_OUT, transport } from "@/services/transport";
 
 const [event] = foodHeader as NostrEvent[];
 const URL = "wss://relay.test";
@@ -214,6 +215,31 @@ describe("transport().publish", () => {
     relay.publish.mockResolvedValue({ ok: false, message: "blocked: no", from: URL });
 
     expect(await transport().publish(URL, event, 8000)).toEqual({ ok: false, from: URL, message: "blocked: no" });
+  });
+
+  it("reports its own timeout as timed out", async () => {
+    relay.publish.mockRejectedValue(new TimeoutError("Timeout"));
+
+    expect(await transport().publish(URL, event, 8000)).toEqual({ ok: false, from: URL, message: "timed out" });
+  });
+
+  it("reports the relay library's Timeout result as timed out", async () => {
+    relay.publish.mockResolvedValue({ ok: false, message: "Timeout", from: URL });
+
+    expect(await transport().publish(URL, event, 8000)).toEqual({ ok: false, from: URL, message: "timed out" });
+  });
+
+  it("words a timeout the same on the real transport and the fake", async () => {
+    relay.publish.mockRejectedValue(new TimeoutError("Timeout"));
+    const real = await transport().publish(URL, event, 8000);
+
+    vi.useFakeTimers();
+    const fake = fakeTransport({ [URL]: { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: 5000 } });
+    const slow = fake.publish(URL, event, 1000);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect((await slow).message).toBe(real.message);
+    expect(real.message).toBe(PUBLISH_TIMED_OUT);
   });
 
   it("publish never rejects", async () => {

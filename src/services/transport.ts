@@ -10,11 +10,19 @@
  * OK, its refusal, or a failure, and is never retried here.
  */
 
+import { TimeoutError } from "applesauce-core/observable";
 import { RelayClosedError } from "applesauce-relay";
 import type { Filter, NostrEvent } from "nostr-tools";
 import type { Subscription } from "rxjs";
 import { getPool } from "@/lib/nostr/ndk";
 import type { PublishOutcome } from "@/lib/publishQuorum";
+
+/**
+ * What a publish says when the relay never answered in time. The publish
+ * service tells a silent relay from a refusing one by this exact text, so every
+ * transport words a timeout this way.
+ */
+export const PUBLISH_TIMED_OUT = "timed out";
 
 export type ReqEnd =
   | { state: "eose" }
@@ -60,6 +68,9 @@ function endOfError(err: unknown): ReqEnd {
   if (err instanceof RelayClosedError) return { state: "closed", reason: err.reason };
   return { state: "error", reason: messageOf(err) };
 }
+
+/** The message the relay library puts in the result of a publish no relay answered. */
+const LIBRARY_TIMEOUT = "Timeout";
 
 const poolTransport: RelayTransport = {
   req(relay, filters, onEvent, timeoutMs) {
@@ -150,9 +161,12 @@ const poolTransport: RelayTransport = {
   async publish(relay, event, timeoutMs) {
     try {
       const res = await getPool().relay(relay).publish(event, { retries: false, timeout: timeoutMs });
-      return res.ok ? { ok: true, from: relay } : { ok: false, from: relay, message: res.message };
+      if (res.ok) return { ok: true, from: relay };
+      // The relay library answers a silent relay with a plain "Timeout" result.
+      return { ok: false, from: relay, message: res.message === LIBRARY_TIMEOUT ? PUBLISH_TIMED_OUT : res.message };
     } catch (err) {
-      return { ok: false, from: relay, message: messageOf(err) };
+      // Our own `timeoutMs` ends the wait with a TimeoutError.
+      return { ok: false, from: relay, message: err instanceof TimeoutError ? PUBLISH_TIMED_OUT : messageOf(err) };
     }
   },
 };

@@ -1,6 +1,6 @@
 import type { NostrEvent } from "nostr-tools";
 import type { PublishOutcome } from "@/lib/publishQuorum";
-import type { RelayTransport, ReqEnd } from "@/services/transport";
+import { PUBLISH_TIMED_OUT, type RelayTransport, type ReqEnd } from "@/services/transport";
 
 /** What one relay does when asked. */
 export interface FakeRelay {
@@ -82,7 +82,7 @@ export function fakeTransport(script: Record<string, FakeRelay>): FakeTransport 
       const delay = entry?.delayMs ?? 0;
       if (delay > timeoutMs) {
         await sleep(timeoutMs);
-        return { ok: false, from: relay, message: "timed out" };
+        return { ok: false, from: relay, message: PUBLISH_TIMED_OUT };
       }
       if (delay > 0) await sleep(delay);
       const accept = entry?.accept;
