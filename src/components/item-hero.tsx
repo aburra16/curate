@@ -160,7 +160,7 @@ function ItemMap({ location, title }: { location: NonNullable<ItemPresentation["
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-baseline gap-1.5 border border-rule bg-surface px-3 py-1.5 text-[12px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
+        className="inline-flex items-baseline gap-1.5 self-start border border-rule bg-surface px-3 py-1.5 text-[12px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
         style={ROUNDED}
       >
         {isSpot(location) ? "Show on map" : "Show area on map"}
@@ -191,7 +191,7 @@ function Rows({ children, dashed = false }: { children: ReactNode; dashed?: bool
   return (
     <dl
       className={cn(
-        "grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-2 border p-3 text-[13px]",
+        "grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-4 gap-y-2 border p-3 text-[13px]",
         dashed ? "border-dashed border-rule" : "border-rule",
       )}
       style={ROUNDED}
