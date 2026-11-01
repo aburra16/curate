@@ -66,6 +66,12 @@ export function SiteHeader() {
               Create
             </Link>
             <Link
+              href="/guide"
+              className="text-ink-soft hover:text-ink transition-colors duration-150"
+            >
+              Guide
+            </Link>
+            <Link
               href="/settings"
               className="text-ink-soft hover:text-ink transition-colors duration-150"
             >

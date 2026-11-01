@@ -62,6 +62,16 @@ const watchPopups = () => {
 afterEach(() => popups?.mockRestore());
 
 describe("SiteHeader", () => {
+  it("links the pages, with the guide between Create and Settings", () => {
+    render(<SiteHeader />);
+
+    const nav = within(screen.getByRole("navigation"));
+    const pages = ["Discover", "Create", "Guide", "Settings"].map((name) => nav.getByRole("link", { name }));
+    expect(pages.map((link) => link.getAttribute("href"))).toEqual(["/", "/create", "/guide", "/settings"]);
+    const order = nav.getAllByRole("link").map((link) => link.textContent);
+    expect(order).toEqual(["Discover", "Create", "Guide", "Settings"]);
+  });
+
   it("offers Connect, which opens the chooser", () => {
     render(<SiteHeader />);
     expect(screen.queryByRole("dialog")).toBeNull();

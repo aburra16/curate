@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "maplibre-gl": "^6.16.0",
+    "marked": "^18.1.2",
     "next": "16.2.6",
     "nostr-tools": "^2.23.3",
     "qrcode.react": "^4.2.0",

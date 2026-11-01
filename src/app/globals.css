@@ -87,3 +87,178 @@ body::before {
   background-repeat: repeat;
   background-size: 256px 256px;
 }
+
+/*
+ * The guide's pages: Markdown turned into HTML, so there are no classes on it to hang styles on. In a
+ * layer, like the plain `a` rule above, so the base reset yields to it and a utility class still beats it.
+ */
+@layer components {
+  .guide-prose {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    overflow-wrap: break-word;
+  }
+
+  .guide-prose > :first-child {
+    margin-top: 0;
+  }
+
+  .guide-prose p,
+  .guide-prose ul,
+  .guide-prose ol,
+  .guide-prose pre,
+  .guide-prose table,
+  .guide-prose blockquote {
+    margin: 1.1em 0;
+  }
+
+  .guide-prose h2,
+  .guide-prose h3,
+  .guide-prose h4 {
+    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
+    color: var(--ink);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  .guide-prose h2 {
+    margin: 2.2em 0 0.6em;
+    font-size: 26px;
+    line-height: 1.2;
+  }
+
+  .guide-prose h3 {
+    margin: 1.8em 0 0.5em;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .guide-prose h4 {
+    margin: 1.5em 0 0.4em;
+    font-size: 17px;
+    line-height: 1.3;
+  }
+
+  .guide-prose strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .guide-prose a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 3px;
+    transition: color 150ms;
+  }
+
+  .guide-prose a:hover {
+    color: var(--accent);
+  }
+
+  .guide-prose ul,
+  .guide-prose ol {
+    padding-left: 1.5em;
+  }
+
+  .guide-prose ul {
+    list-style: disc;
+  }
+
+  .guide-prose ol {
+    list-style: decimal;
+  }
+
+  .guide-prose li {
+    margin: 0.4em 0;
+    padding-left: 0.25em;
+  }
+
+  .guide-prose li::marker {
+    color: var(--mute);
+  }
+
+  .guide-prose li > ul,
+  .guide-prose li > ol {
+    margin: 0.4em 0;
+  }
+
+  .guide-prose code {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.875em;
+    color: var(--ink);
+    background: var(--surface-raised);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-input);
+    padding: 0.1em 0.35em;
+  }
+
+  .guide-prose pre {
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-card);
+    padding: 1em 1.2em;
+  }
+
+  .guide-prose pre code {
+    font-size: inherit;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .guide-prose blockquote {
+    border-left: 2px solid var(--accent-soft);
+    padding-left: 1.1em;
+    font-family: var(--font-newsreader), ui-serif, Georgia, serif;
+    font-style: italic;
+  }
+
+  .guide-prose blockquote > :first-child {
+    margin-top: 0;
+  }
+
+  .guide-prose blockquote > :last-child {
+    margin-bottom: 0;
+  }
+
+  .guide-prose hr {
+    margin: 2.2em 0;
+    border: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  /* A wide table scrolls on its own instead of widening the page. */
+  .guide-prose table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .guide-prose th,
+  .guide-prose td {
+    padding: 0.6em 0.9em;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .guide-prose th {
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom-color: var(--rule-strong);
+  }
+
+  .guide-prose img {
+    max-width: 100%;
+    height: auto;
+  }
+}
