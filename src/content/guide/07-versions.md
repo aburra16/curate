@@ -18,7 +18,7 @@ The header that started the concept is called the community header. Every list m
 When you open a list, Curate picks one version to show, in this order:
 
 1. **Your own version**, if you have made one.
-2. **Your Assistant's version**, if you have an Assistant and it has made one. An Assistant is a service your nostr account names to act on your behalf, often the same service that works out your web of trust. Your nostr account is your identity on nostr, the open network DLists live on.
+2. **Your Assistant's version**, if you have an Assistant and it has made one. An Assistant is a service your nostr account names to act on your behalf, often the same service that works out your web of trust. Your nostr account is your identity on nostr, the open network DLists live on. Curate can't name an Assistant for you: it uses the one an app has published for your account.
 3. **Brainstorm's version**, if Brainstorm has made one. Brainstorm is the service Curate is built on.
 4. **The community header** itself.
 

@@ -1,6 +1,6 @@
 ---
 title: Connecting to write
-summary: Reading needs nothing, and to write you connect a signer, a browser extension or a remote signer on your phone, which Curate asks to sign each change.
+summary: Reading needs nothing, and to write you need a signer, a browser extension or a phone app that can also make your key, which Curate asks to sign each change.
 ---
 
 ## Reading needs nothing
@@ -17,6 +17,15 @@ Curate works with two kinds of signer:
 
 - a **browser extension**, which lives in your web browser (NIP-07 is the public description of how these work);
 - a **remote signer**, which lives somewhere else, such as an app on your phone, and talks to Curate through relays, the servers that store nostr events and pass them between apps (NIP-46).
+
+## If you don't have a key yet
+
+Curate can't make a key for you, because it never holds one. A signer can.
+
+1. Install a nostr signer: a browser extension, or a signer app on your phone.
+2. Let it make a new key for you. Most signers can.
+3. Keep the backup it gives you somewhere safe. Nobody can recover your key for you if you lose it, and nobody else should ever see it.
+4. Come back to Curate and press "Connect".
 
 ## Connecting
 

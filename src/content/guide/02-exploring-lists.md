@@ -76,7 +76,7 @@ Click an item's title, or anywhere on its row, to open its panel. The panel open
 
 The panel has three tabs.
 
-- **"Item"** shows the item the way its list describes it: the list's name, the item's title and summary, its picture, links, audio or video, and a "Show on map" button when the list gives places. If a required field is empty, a note says so, such as "Missing name. The list requires it." Fields not shown above wait behind a "More fields" button, which says how many there are. Anything the item carries that its list never asked for sits apart, under "Outside this list’s definition". The last line says which version of the list the item was read through.
+- **"Item"** shows the item the way its list describes it: the list's name, the item's title and summary, its picture, links, audio or video, and a "Show on map" button when the list gives places, or "Show area on map" when the item gives an area rather than a spot. If a required field is empty, a note says so, such as "Missing name. The list requires it." Fields not shown above wait behind a "More fields" button, which says how many there are. Anything the item carries that its list never asked for sits apart, under "Outside this list’s definition". The last line says which version of the list the item was read through.
 - **"Pretty"** shows every tag the item carries. A tag is one labelled piece of an event, such as `["name", "Corner Press"]`. Each tag is marked "field" (a field the list declares), "protocol" (a tag nostr itself uses, such as the one that points at the list), "metadata" (such as the app that wrote it) or "undeclared". Tags that point at a list or at another event are links, and a tag that names a person shows their name. Under the tags, "Identity" gives the event's id and address with "Copy" buttons, and "Provenance" gives its author, its date, and the relays it was "Seen on".
 - **"Raw"** shows the event exactly as it was signed, with a "Copy" button. This is the same text any other nostr app would see.
 
@@ -99,7 +99,7 @@ On Discover, it adds:
 
 ## When a relay doesn't answer
 
-Curate reads lists from relays. A relay is a server, a computer on the internet that stores nostr events and hands them to any app that asks. Curate always reads from dcosl.brainstorm.world, which Curate calls the list relay, and from Brainstorm's search index at search.brainstorm.world. Only the search index can count items.
+Curate reads lists from relays. A relay is a server, a computer on the internet that stores nostr events and hands them to any app that asks. Curate always reads from dcosl.brainstorm.world, which Curate calls the list relay, and from Brainstorm's search index at search.brainstorm.world. Only the search index can count items. Curate also reads the tag hub, tags.brainstorm.world, to find the Dictionary and the link templates some lists use.
 
 If one of them does not answer, a line near the top of the page names it, for example: "No answer from the index (search.brainstorm.world). What's shown comes from the other relays, so counts are missing." The page carries on with what the other relays sent.
 

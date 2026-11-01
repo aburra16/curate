@@ -1,6 +1,6 @@
 ---
 title: Glossary and questions
-summary: The words this guide uses, each in a sentence or two, and answers to common questions about cost, privacy, deleting, missing items and other apps.
+summary: The words this guide uses, each in a sentence or two, and answers to common questions, from getting started and cost to deleting and missing items.
 ---
 
 ## Glossary
@@ -43,13 +43,13 @@ summary: The words this guide uses, each in a sentence or two, and answers to co
 
 **Community header.** The header that started a concept.
 
-**Version.** One person's header for a concept, with their own names, description and fields. Items added under any version show together.
+**Version.** One person's header for a concept, with their own names, description and fields. Items added under any version show together. In this guide, version always means this. Editing an item or a list doesn't make a version: it publishes a newer copy at the same address, and apps show the latest one.
 
-**Assistant.** A service your nostr account can name to act for you. If it has made a version of a list, you see that version unless you have your own.
+**Assistant.** A service your nostr account can name to act for you. If it has made a version of a list, you see that version unless you have your own. Curate can't name one for you: it uses the one an app has published for your account.
 
 **Dictionary.** The first group on Discover: shared lists published by curators whom Brainstorm has chosen.
 
-**Web of trust.** A way to work out which accounts to trust, based on who trusts whom. In Curate it decides which items you see straight away and whose votes count.
+**Web of trust.** A way to work out which accounts to trust, based on who trusts whom. In Curate it decides which items you see straight away and whose votes count. Curate uses the one an app has published for your account, or Brainstorm's default when there is none.
 
 **Vote.** An up or down reaction to an item, a small public event. Only votes from people inside your web of trust are counted.
 
@@ -60,6 +60,17 @@ summary: The words this guide uses, each in a sentence or two, and answers to co
 **NIP.** A "nostr implementation possibility": a short public document that describes part of how nostr works. DLists are described in the [Decentralized Lists NIP](https://nostrhub.io/naddr1qvzqqqrcvypzpef89h53f0fsza2ugwdc3e54nfpun5nxfqclpy79r6w8nxsk5yp0qythwumn8ghj7erpwe5kgtnwdaehgu339e3k7mf0qqfkgetrv4h8gunpd35h5ety94kxjum5wv4px7v6).
 
 ## Questions
+
+### I've never used nostr. How do I start?
+
+To read lists, you need nothing: open Discover and look around. To add to a list or make one, you need a nostr key and a signer to hold it.
+
+1. Install a nostr signer: a browser extension, or a signer app on your phone.
+2. Let it make a new key for you. Most signers can.
+3. Keep the backup it gives you somewhere safe. Nobody can recover your key for you.
+4. Press "Connect" in Curate's top bar.
+
+See [Connecting to write](/guide/signing-in).
 
 ### Is it free?
 

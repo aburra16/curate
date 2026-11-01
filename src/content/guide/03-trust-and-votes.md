@@ -18,6 +18,8 @@ Curate never shows anyone's score. A score only decides what is shown and what i
 - **If you have not connected,** Curate uses Brainstorm's default scores. Brainstorm is the service Curate is built on, at [brainstorm.world](https://brainstorm.world).
 - **If you have connected,** Curate uses the scoring service your own nostr account names, if it names one. This is your own web of trust. If your account names none, Curate uses Brainstorm's default scores.
 
+Curate can't set up a web of trust for you. It uses the one an app has published for your account. Brainstorm's own site, brainstorm.world, says it builds trust scores from your own connections.
+
 The page [Connecting to write](/guide/signing-in) explains connecting.
 
 ## What it changes

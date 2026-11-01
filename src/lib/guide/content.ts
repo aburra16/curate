@@ -82,8 +82,12 @@ export function guidePage(slug: string): GuidePage | null {
 const escapeHtml = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
-/** A table, with the name its box is given (`guideHtml` sets it). */
-type NamedTable = Tokens.Table & { label?: string };
+/** A table or a code block, with the name its scrolling box is given (`guideHtml` sets it). */
+type Named<T> = T & { label?: string };
+
+/** The attributes that make a box that scrolls sideways reachable by keyboard, and named. */
+const scrollBox = (label: string | undefined, fallback: string) =>
+  `tabindex="0" role="region" aria-label="${escapeHtml(label ?? fallback)}"`;
 
 const markdown = new Marked({
   gfm: true,
@@ -92,10 +96,13 @@ const markdown = new Marked({
     html: ({ text }) => escapeHtml(text),
     // A wide table scrolls inside a box of its own, and stays a table, which a screen reader reads as one.
     // The box takes focus, so a keyboard can scroll it too, and is named, so a page's boxes can be told apart.
-    table(this: Renderer, token: NamedTable) {
+    table(this: Renderer, token: Named<Tokens.Table>) {
       const table = Renderer.prototype.table.call(this, token);
-      const label = escapeHtml(token.label ?? "Table");
-      return `<div class="guide-table" tabindex="0" role="region" aria-label="${label}">${table}</div>\n`;
+      return `<div class="guide-table" ${scrollBox(token.label, "Table")}>${table}</div>\n`;
+    },
+    // A code block scrolls sideways too, so it takes focus and a name the same way.
+    code(this: Renderer, token: Named<Tokens.Code>) {
+      return Renderer.prototype.code.call(this, token).replace(/^<pre>/, `<pre ${scrollBox(token.label, "Code")}>`);
     },
   },
 });
@@ -108,9 +115,10 @@ function plainText(tokens: Token[]): string {
 }
 
 /**
- * A page's Markdown as HTML. Each table's box is named by the heading above it,
- * or by the page's title before any heading, as "<heading>, table", and
- * numbered when one heading has several, so no two on a page share a name.
+ * A page's Markdown as HTML. Each table's and code block's box is named by the
+ * heading above it, or by the page's title before any heading, as
+ * "<heading>, table" or "<heading>, code", and numbered when one heading has
+ * several of a kind, so no two on a page share a name.
  */
 export function guideHtml(page: GuidePage): string {
   const tokens = markdown.lexer(page.markdown);
@@ -118,10 +126,12 @@ export function guideHtml(page: GuidePage): string {
   const named = new Map<string, number>();
   for (const token of tokens) {
     if (token.type === "heading") heading = plainText((token as Tokens.Heading).tokens).trim();
-    if (token.type !== "table") continue;
-    const count = (named.get(heading) ?? 0) + 1;
-    named.set(heading, count);
-    (token as NamedTable).label = count === 1 ? `${heading}, table` : `${heading}, table ${count}`;
+    if (token.type !== "table" && token.type !== "code") continue;
+    const kind = token.type === "table" ? "table" : "code";
+    const key = `${heading}\n${kind}`;
+    const count = (named.get(key) ?? 0) + 1;
+    named.set(key, count);
+    (token as Named<Tokens.Table | Tokens.Code>).label = count === 1 ? `${heading}, ${kind}` : `${heading}, ${kind} ${count}`;
   }
   return markdown.parser(tokens);
 }

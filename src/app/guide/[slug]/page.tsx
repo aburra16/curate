@@ -54,7 +54,7 @@ export default async function GuideArticle({ params }: Props) {
   return (
     <div className="mx-auto max-w-[700px] px-8 py-12 md:py-16">
       <Link href="/guide" className="text-[13px] text-mute transition-colors hover:text-ink-soft">
-        &larr; Guide
+        <span aria-hidden="true">&larr;</span> Guide
       </Link>
 
       <h1 className="mt-8 font-serif text-[36px] leading-[1.1] tracking-[-0.015em] text-ink font-light">{page.title}</h1>

@@ -21,8 +21,10 @@ As you type, Curate runs Brainstorm's checks on the item, the same rules Brainst
 
 When every required field has something in it, press "Publish". Your signer asks you to approve, and the button says "Publishing…". "Cancel" closes the form without publishing.
 
-- **Saved.** The list relay, dcosl.brainstorm.world, accepted the item. The form closes, and the item appears in the list. If some of your own relays missed it, a short notice names them. The item is saved all the same.
+- **Saved.** The list relay, dcosl.brainstorm.world, accepted the item. The form closes, and the item joins the list. If some of your own relays missed it, a short notice names them. The item is saved all the same.
 - **Not saved.** The list relay refused it. Curate shows "Not saved to the list relay:" followed by the relay's reason, and a "Retry" button that sends the same signed item again. If you change anything in the form first, "Retry" goes away, and the next "Publish" signs the item as you see it now.
+
+If your account is outside the web of trust Curate uses, your item waits under a line such as "1 more from accounts outside your web of trust". A new account the scoring service has no score for yet is outside. Open the line, or turn on "Show everything", to see your item. The page [Whose items you see, and how votes count](/guide/trust-and-votes) explains why.
 
 Your item stays yours. It is signed by you, and nobody else can change or delete it.
 
@@ -34,7 +36,7 @@ Items you added have an "Edit" button. Press it, and a form called "Edit coffee 
 
 Change what you like and press "Publish". Curate changes only the fields you changed. Everything else the item carries stays exactly as it was, including anything the list's fields don't cover. Clearing a box removes that field from the item.
 
-An edit publishes a new version of the item at the same address, and apps show the newest. Votes cast in Curate stay with the item, because they point at the item's address as well as at the version voted on.
+An edit publishes a newer copy of the item at the same address, and apps show the latest one. Votes cast in Curate stay with the item, because they point at the item's address as well as at the copy voted on.
 
 Some items are fixed: they were published in the form that can't be replaced (kind 9999). They have no "Edit" button, only "Delete". Every item Curate writes is the editable kind.
 
@@ -48,7 +50,7 @@ Deleting on nostr works differently from deleting a file. Curate publishes a del
 - A relay may ignore the request, so a copy can survive somewhere.
 - An app or person that already saved a copy may still have it.
 
-Curate's request names every version of the item you made, and its address, so no older version comes back. Once the list relay has saved the request, the item leaves the list.
+An item you edited may still have older copies on some relays. Curate's request names every copy it knows of, and the item's address, so no older copy comes back. Once the list relay has saved the request, the item leaves the list.
 
 You can only delete items you added. You can't remove other people's items from a list. If you think an item doesn't belong, vote it down: see [Whose items you see, and how votes count](/guide/trust-and-votes).
 

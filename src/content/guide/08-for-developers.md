@@ -40,7 +40,7 @@ A field tag may carry a third element, a short description for people. Curate wr
 Which of these are in the NIP:
 
 - **In the NIP:** `names`, which it requires, `description`, which its examples use, and the field tags `required`, `allowed`, `recommended` and `disallowed`. The `d` tag on an editable header comes from NIP-01.
-- **Not in the NIP:** `optional`, `field-type`, `b`, `display`, `image` and `link`. These are conventions Curate shares with Brainstorm, and an app that doesn't know them can ignore them. The NIP's own word for a field items may leave out is `allowed`. Curate writes `optional` and reads `allowed` the same way. It ignores `disallowed`.
+- **Not in the NIP:** `optional`, `field-type`, `b`, `display`, `image` and `link`. These are conventions Curate shares with Brainstorm, and an app that doesn't know them can ignore them. Curate ignores the NIP's `disallowed`.
 
 The `display`, `image` and `link` tags say how items are drawn: which field is the title, the list's picture, links built from a field. Curate reads them and keeps them when a list is edited, but its form doesn't write them. On a list without them, an item's title is its first required field, and its summary is a field called `summary` or `description`.
 
@@ -126,7 +126,7 @@ An up vote on that item. A down vote is the same with `"content": "-"`:
 }
 ```
 
-The item's author deleting it names each version's id, then the item's address and kind:
+The item's author deleting it names the id of each copy of the item that Curate knows of, then the item's address and kind:
 
 ```json
 {
@@ -149,13 +149,13 @@ Someone else's version of the list, made with "Make my own version", is a 39998 
 
 ## How votes are counted
 
-- Each person's latest kind 7 on an item counts, found by the item's `e` or its `a`. Because an edit changes an item's id, the `a` is what carries votes across versions.
+- Each person's latest kind 7 on an item counts, found by the item's `e` or its `a`. Because an edit changes an item's id, the `a` is what carries votes from one edit to the next.
 - `"+"` is up, `"-"` is down, and an empty content counts as up. Anything else, such as an emoji, is not a vote.
 - Only voters inside the reader's web of trust are counted. Curate doesn't read deletions of votes.
 
 ## Reading from relays
 
-Curate reads lists from `wss://dcosl.brainstorm.world`, the list relay. Brainstorm's search index, `wss://search.brainstorm.world`, also holds lists, answers NIP-45 counts and NIP-50 search, and only answers a filter that carries a `search` field. Curate adds `include:spam` to every filter it sends to the index, and reads both relays at once.
+Curate reads lists from `wss://dcosl.brainstorm.world`, the list relay. Brainstorm's search index, `wss://search.brainstorm.world`, also holds lists, answers NIP-45 counts and NIP-50 search, and only answers a filter that carries a `search` field. Curate adds `include:spam` to every filter it sends to the index, and reads both relays at once. It also reads the tag hub, `wss://tags.brainstorm.world/relay`, for the Dictionary and for the URL templates some lists build links from.
 
 Every list header:
 

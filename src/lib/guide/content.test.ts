@@ -215,10 +215,10 @@ describe("guideHtml", () => {
     expect(html).toContain("<li>two</li>");
   });
 
-  it("renders a code block, with its contents escaped", () => {
+  it("renders a code block, with its contents escaped, in a box that scrolls sideways and that a keyboard can reach", () => {
     const html = guideHtml(page('```json\n{ "kind": 39998, "tags": [["names", "a<b"]] }\n```\n'));
 
-    expect(html).toContain("<pre><code");
+    expect(html).toContain('<pre tabindex="0" role="region" aria-label="Coffee shops, code"><code');
     expect(html).toContain("&quot;kind&quot;");
     expect(html).toContain("a&lt;b");
   });
@@ -226,6 +226,9 @@ describe("guideHtml", () => {
   const TABLE = "| Name | Type |\n| --- | --- |\n| Website | Link |\n";
   /** The names a page's table boxes are given, in order. */
   const tableLabels = (html: string) => [...html.matchAll(/<div class="guide-table"[^>]*aria-label="([^"]*)"/g)].map((m) => m[1]);
+  /** The names of a page's scrolling boxes, tables and code alike, in order. */
+  const regionLabels = (html: string) =>
+    [...html.matchAll(/<(?:div class="guide-table"|pre)[^>]*role="region" aria-label="([^"]*)"/g)].map((m) => m[1]);
 
   it("renders a table, still a table, inside a box that scrolls it sideways and that a keyboard can reach", () => {
     const html = guideHtml(page(`## Fields\n\n${TABLE}`));
@@ -249,11 +252,18 @@ describe("guideHtml", () => {
     expect(tableLabels(html)).toEqual(["Fields, table", "Fields, table 2", "Fields, table 3"]);
   });
 
-  it("gives every table in the guide a name of its own within its page", () => {
+  it("names code blocks by their heading too, counted apart from the tables under it", () => {
+    const code = "```json\n{}\n```\n";
+    const html = guideHtml(page(`## Examples\n\n${code}\n${TABLE}\n${code}\n## Filters\n\n${code}`));
+
+    expect(regionLabels(html)).toEqual(["Examples, code", "Examples, table", "Examples, code 2", "Filters, code"]);
+  });
+
+  it("gives every table and code block in the guide a name of its own within its page", () => {
     for (const p of guidePages()) {
-      const labels = tableLabels(guideHtml(p));
+      const labels = regionLabels(guideHtml(p));
       expect(new Set(labels).size).toBe(labels.length);
-      for (const label of labels) expect(label).toMatch(/^\S.*, table( \d+)?$/);
+      for (const label of labels) expect(label).toMatch(/^\S.*, (table|code)( \d+)?$/);
     }
   });
 

@@ -102,12 +102,12 @@ Changing either name puts the choice away until you press "Publish" again.
 
 Press "Publish". Your signer asks you to approve, and the button says "Publishing…".
 
-Curate sends the list to the list relay, dcosl.brainstorm.world. It also sends it to your own relays: the relays your nostr account, the account your key signs for, lists for writing, up to four of them.
+Curate sends the list to the list relay, dcosl.brainstorm.world. If you have published your own relay list on nostr, Curate also sends your new list to up to four of the relays you write to.
 
 - **Saved.** The list relay accepted the list. Curate opens your new list at once. If some of your own relays missed it, a short notice names them, such as "Saved to the list relay. Not saved to 1 of your own relays: relay.example.com." The list is saved all the same.
 - **Not saved.** The list relay refused it. Curate shows "Not saved to the list relay:" followed by the relay's reason, and a "Retry" button that sends the same signed list again. If you change anything in the form first, "Retry" goes away, and the next "Publish" signs the list as you see it now.
 
-A brand new list is empty. The next page, [Adding, editing and deleting items](/guide/adding-items), shows how to fill it.
+A brand new list is empty. The next page, [Adding, editing and deleting items](/guide/adding-items), shows how to fill it. If your account is new, the items you add may first wait under a line such as "1 more from accounts outside your web of trust": that page explains why.
 
 ## What the form doesn't do
 

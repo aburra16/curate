@@ -62,10 +62,12 @@ describe("a guide page", () => {
     expect(link.getAttribute("href")).toBe(`/guide/${FIRST.slug}.md`);
   });
 
-  it("links back to the guide", async () => {
+  it("links back to the guide, its arrow left out of what a screen reader says", async () => {
     render(await GuideArticle(forSlug(FIRST.slug)));
 
-    expect(screen.getByRole("link", { name: /Guide$/ }).getAttribute("href")).toBe("/guide");
+    const back = screen.getByRole("link", { name: "Guide" });
+    expect(back.getAttribute("href")).toBe("/guide");
+    expect(back.querySelector('[aria-hidden="true"]')?.textContent).toBe("\u2190");
   });
 
   describe("with pages on either side", () => {

@@ -34,7 +34,7 @@ The rules for DLists are written down in a public document called the [Decentral
 
 ## Editable or fixed
 
-A header or an item comes in one of two forms. An editable one can be replaced later: its author publishes a new version, and apps show the newest. A fixed one stays exactly as it was signed.
+A header or an item comes in one of two forms. An editable one can be replaced later: its author publishes a newer copy, and apps show the latest one. A fixed one stays exactly as it was signed.
 
 Curate makes the editable form. If you spot a typo in an item you added, you can fix it.
 
@@ -48,7 +48,7 @@ On a list's page, Curate shows the items added by accounts inside your web of tr
 
 To see everything at once, turn on the "Show everything" switch in the top bar. Curate then shows every item, and marks the ones from outside your web of trust with the label "outside your web of trust".
 
-Whose web of trust is it? If you have not connected, Curate uses the default one from [Brainstorm](https://brainstorm.world), the service Curate is built on. If you connect a signer, Curate uses your own web of trust when you have set one up, and Brainstorm's when you have not. A signer is a small program that holds your nostr key, the secret that proves who you are, and signs for you.
+Whose web of trust is it? If you have not connected, Curate uses the default one from [Brainstorm](https://brainstorm.world), the service Curate is built on. If you connect a signer, Curate uses your own web of trust when an app has set one up for your account, and Brainstorm's when none has. Curate can't set one up itself. A signer is a small program that holds your nostr key, the secret that proves who you are, and signs for you.
 
 ## More lists you could make
 
