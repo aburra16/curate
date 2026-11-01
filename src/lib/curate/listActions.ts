@@ -99,7 +99,7 @@ export function listEditDraft(edit: ListEdit): CopyDraft {
  * `<name>-2`, `<name>-3`, ... they have not taken; a copy is found by its
  * pointer, so a name of its own does it no harm. A header of theirs that is
  * withdrawn, or is a version of this concept already, is replaced on purpose
- * and does not count. `own` is the reader's list headers as read (`loadOwnHeaders`).
+ * and does not count. `own` is the reader's list headers as read (`loadOwnHeaders`'s `headers`).
  */
 export function versionShortName(community: HeaderEvent, reader: string, own: HeaderEvent[]): string {
   const concept = handleOf(community);

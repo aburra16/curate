@@ -553,6 +553,40 @@ describe("changing a list", () => {
       await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
     });
 
+    it("holds Publish when no list relay answered the read of the reader's lists, and Try again reads them again", async () => {
+      const real = transport();
+      let ownReads = 0;
+      const ownLists = (filters: { kinds?: number[]; authors?: string[]; "#d"?: string[] }[]) =>
+        filters.some((f) => f.kinds?.[0] === 39998 && f.authors?.[0] === READER && !f["#d"]);
+      setTransport({
+        ...real,
+        req: async (relay, filters, onEvent, timeoutMs) => {
+          if (!ownLists(filters)) return real.req(relay, filters, onEvent, timeoutMs);
+          ownReads += 1;
+          return ownReads === 1 ? { state: "error", reason: "connection refused" } : real.req(relay, filters, onEvent, timeoutMs);
+        },
+      });
+      signIn(READER);
+      open(FOOD);
+      await title();
+
+      click("Make my own version");
+
+      expect(await screen.findByText("Couldn't check your lists. Try again.")).toBeTruthy();
+      expect((button("Publish") as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.submit(screen.getByRole("form", { name: "Make my own version" }));
+      expect(signAndPublish).not.toHaveBeenCalled();
+
+      click("Try again");
+
+      await readyToPublish();
+      expect(screen.queryByText(/Couldn't check your lists/)).toBeNull();
+      expect(ownReads).toBe(2);
+      click("Publish");
+      await vi.waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(1));
+      expect(published().tags).toContainEqual(["d", "food-and-drink-places"]);
+    });
+
     it("is not delayed by a read when the reader changes a version they have", async () => {
       signIn(COPIER);
       open(FOOD);

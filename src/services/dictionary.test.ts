@@ -271,6 +271,7 @@ describe("loadAllHeaders", () => {
 describe("loadOwnHeaders", () => {
   const alice = actor();
   const bob = actor();
+  const EXTRA = "wss://extra.example.test";
 
   it("reads the headers one person published, from the list relays and only there", async () => {
     const mine = header(alice, "cats", "Cats");
@@ -279,9 +280,10 @@ describe("loadOwnHeaders", () => {
     const note = sign(alice, 1, [], T0, "hello");
     const { calls } = everywhere([mine, hers, his, note]);
 
-    const headers = await loadOwnHeaders(alice.pk);
+    const { headers, answered } = await loadOwnHeaders(alice.pk);
 
     expect(headers.map((h) => h.id).sort()).toEqual([mine.id, hers.id].sort());
+    expect(answered).toBe(true);
     expect(calls.filter((c) => c.relay === DCOSL).map((c) => c.filters)).toEqual([[{ kinds: [39998], authors: [alice.pk] }]]);
     expect(calls.filter((c) => c.relay === INDEX || c.relay === TAG_HUB)).toEqual([]);
   });
@@ -291,13 +293,42 @@ describe("loadOwnHeaders", () => {
     const blanked = sign(alice, 39998, [["d", "cats"], ["deleted", "true"]], T0 + 10);
     everywhere([before, blanked]);
 
-    expect((await loadOwnHeaders(alice.pk)).map((h) => h.id).sort()).toEqual([before.id, blanked.id].sort());
+    expect((await loadOwnHeaders(alice.pk)).headers.map((h) => h.id).sort()).toEqual([before.id, blanked.id].sort());
   });
 
-  it("answers with nothing, and does not reject, when the relays fail", async () => {
-    setTransport(fakeTransport({ [DCOSL]: { events: [], end: { state: "error", reason: "connection refused" } } }));
+  it("says it was answered when a list relay answered with nothing", async () => {
+    everywhere([]);
 
-    await expect(loadOwnHeaders(alice.pk)).resolves.toEqual([]);
+    await expect(loadOwnHeaders(alice.pk)).resolves.toEqual({ headers: [], answered: true });
+  });
+
+  it("says it was answered when one list relay answered and another failed", async () => {
+    const mine = header(alice, "cats", "Cats");
+    useSettings.setState({ relays: [...DEFAULT_RELAYS, EXTRA] });
+    setTransport(relayCorpus({ [DCOSL]: { fails: "connection refused" }, [EXTRA]: [mine] }).transport);
+
+    const { headers, answered } = await loadOwnHeaders(alice.pk);
+
+    expect(answered).toBe(true);
+    expect(headers.map((h) => h.id)).toEqual([mine.id]);
+  });
+
+  it("says it was not answered, and does not reject, when no list relay answered", async () => {
+    useSettings.setState({ relays: [...DEFAULT_RELAYS, EXTRA] });
+    setTransport(
+      fakeTransport({
+        [DCOSL]: { events: [], end: { state: "error", reason: "connection refused" } },
+        [EXTRA]: { events: [], end: { state: "timeout" } },
+      }),
+    );
+
+    await expect(loadOwnHeaders(alice.pk)).resolves.toEqual({ headers: [], answered: false });
+  });
+
+  it("says it was not answered when the list relay refused the read", async () => {
+    setTransport(fakeTransport({ [DCOSL]: { events: [], end: { state: "closed", reason: "auth-required: sign in" } } }));
+
+    await expect(loadOwnHeaders(alice.pk)).resolves.toEqual({ headers: [], answered: false });
   });
 });
 

@@ -22,10 +22,11 @@ vi.mock("next/navigation", () => ({ useRouter: () => nav.router }));
 vi.mock("@/services/dictionary", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/dictionary")>()),
   loadAllHeaders: vi.fn(),
+  loadOwnHeaders: vi.fn(),
 }));
 vi.mock("@/services/publish", () => ({ signAndPublish: vi.fn(), retryPublish: vi.fn() }));
 
-import { loadAllHeaders } from "@/services/dictionary";
+import { loadAllHeaders, loadOwnHeaders, type OwnHeaders } from "@/services/dictionary";
 import { retryPublish, signAndPublish } from "@/services/publish";
 import CreatePage from "./page";
 
@@ -82,6 +83,11 @@ function listsOnTheRelay(headers: HeaderEvent[]) {
   vi.mocked(loadAllHeaders).mockResolvedValue(headers);
 }
 
+/** The reader's own lists, as `loadOwnHeaders` reads them. */
+function readersLists(headers: HeaderEvent[], answered = true) {
+  vi.mocked(loadOwnHeaders).mockResolvedValue({ headers, answered });
+}
+
 const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
 const type = (label: string, value: string) => fireEvent.change(field(label), { target: { value } });
 const publishButton = () => screen.getByRole("button", { name: "Publish" }) as HTMLButtonElement;
@@ -99,7 +105,9 @@ beforeEach(() => {
   vi.mocked(signAndPublish).mockReset().mockResolvedValue(saved);
   vi.mocked(retryPublish).mockReset().mockResolvedValue(saved);
   vi.mocked(loadAllHeaders).mockReset();
+  vi.mocked(loadOwnHeaders).mockReset();
   listsOnTheRelay([]);
+  readersLists([]);
   setTransport(fakeTransport({}));
   signIn(READER);
 });
@@ -195,16 +203,26 @@ describe("Create", () => {
     });
 
     it("counts up past a list the reader already has", async () => {
-      listsOnTheRelay([ownTags]);
+      readersLists([ownTags]);
       render(<CreatePage />);
 
       type("Plural name", "Tags");
 
       await waitFor(() => expect(field("Short name").value).toBe("tags-2"));
+      expect(loadOwnHeaders).toHaveBeenCalledWith(READER);
+    });
+
+    it("knows the reader's lists from the read of their own, not from every list there is", async () => {
+      listsOnTheRelay([ownTags]);
+      readersLists([]);
+      render(<CreatePage />);
+      await nameIt();
+
+      expect(field("Short name").value).toBe("tags");
     });
 
     it("refuses one the reader already has, and says publishing would replace it", async () => {
-      listsOnTheRelay([ownTags]);
+      readersLists([ownTags]);
       render(<CreatePage />);
       await nameIt();
       await waitFor(() => expect(field("Short name").value).toBe("tags-2"));
@@ -383,7 +401,44 @@ describe("Create", () => {
       expect(publishButton().disabled).toBe(false);
     });
 
-    it("waits for the lists on the relay to be read before it can replace one", async () => {
+    it("waits for the reader's own lists to be read before it can replace one", async () => {
+      let read: (own: OwnHeaders) => void = () => {};
+      vi.mocked(loadOwnHeaders).mockReturnValue(new Promise<OwnHeaders>((resolve) => (read = resolve)));
+      render(<CreatePage />);
+
+      type("Singular name", "tag");
+      type("Plural name", "tags");
+      await waitFor(() => expect(screen.queryByText(/Looking for lists that already exist/)).toBeTruthy());
+      expect(publishButton().disabled).toBe(true);
+
+      read({ headers: [ownTags], answered: true });
+
+      await waitFor(() => expect(publishButton().disabled).toBe(false));
+      expect(field("Short name").value).toBe("tags-2");
+    });
+
+    it("holds Publish when the reader's own lists couldn't be read, and Try again reads them again", async () => {
+      vi.mocked(loadOwnHeaders)
+        .mockResolvedValueOnce({ headers: [], answered: false })
+        .mockResolvedValueOnce({ headers: [ownTags], answered: true });
+      render(<CreatePage />);
+      type("Singular name", "tag");
+      type("Plural name", "tags");
+
+      expect(await screen.findByText("Couldn't check your lists. Try again.")).toBeTruthy();
+      expect(publishButton().disabled).toBe(true);
+      fireEvent.submit(publishButton().closest("form")!);
+      expect(signAndPublish).not.toHaveBeenCalled();
+
+      click("Try again");
+
+      await waitFor(() => expect(publishButton().disabled).toBe(false));
+      expect(screen.queryByText(/Couldn't check your lists/)).toBeNull();
+      expect(field("Short name").value).toBe("tags-2");
+      expect(loadOwnHeaders).toHaveBeenCalledTimes(2);
+    });
+
+    it("waits for the lists on the relay to be read before it publishes", async () => {
       let read: (headers: HeaderEvent[]) => void = () => {};
       vi.mocked(loadAllHeaders).mockReturnValue(new Promise<HeaderEvent[]>((resolve) => (read = resolve)));
       render(<CreatePage />);

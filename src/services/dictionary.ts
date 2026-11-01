@@ -33,7 +33,7 @@ import {
 import { conceptsOf, curatorsOf } from "@/lib/dictionaryConcepts";
 import { coordinateOf, isDListHeader, parseCoordinate } from "@/lib/dlistFields";
 import { conceptRefOf, type ConceptGroup } from "@/services/concepts";
-import { readIndex, readRelays } from "@/services/nostr";
+import { readIndex, readRelays, readRelaysReporting, type RelayRead } from "@/services/nostr";
 import { listRelays, TAG_HUB } from "@/services/relays";
 import { resolveHouseObserver, resolveTrustSource } from "@/services/trust";
 
@@ -102,15 +102,31 @@ export async function loadAllHeaders(): Promise<HeaderEvent[]> {
   return [...byId.values()].filter(isDListHeader);
 }
 
+/** One person's list headers as read, and whether the read can be trusted to hold them all. */
+export interface OwnHeaders {
+  headers: HeaderEvent[];
+  /**
+   * A list relay answered the read to its end. When none did, `headers` says
+   * nothing about which short names are free, and a write that picks one waits.
+   */
+  answered: boolean;
+}
+
 /**
  * The 39998 headers `pubkey` has published to the list relays: the short names
  * they have taken, for a write that would land on one. Blank headers are kept
  * (as in `loadAllHeaders`), and only headers are returned. Never rejects: a
- * relay that fails is an empty answer from that relay, in the relay-status store.
+ * relay that fails, refuses or times out is an empty answer from that relay,
+ * in the relay-status store, and `answered` is false when every one did.
  */
-export async function loadOwnHeaders(pubkey: string): Promise<HeaderEvent[]> {
-  const found = await readRelays(listRelays(), [{ kinds: [39998], authors: [pubkey] }]).catch(() => [] as NostrEvent[]);
-  return found.filter(isDListHeader);
+export async function loadOwnHeaders(pubkey: string): Promise<OwnHeaders> {
+  const read = await readRelaysReporting(listRelays(), [{ kinds: [39998], authors: [pubkey] }]).catch(
+    (): RelayRead => ({ events: [], outcomes: {} }),
+  );
+  return {
+    headers: read.events.filter(isDListHeader),
+    answered: Object.values(read.outcomes).some((outcome) => outcome.end.state === "eose"),
+  };
 }
 
 /** Every kind a header can be published as, 39999 and 9999 only when they declare themselves one. */

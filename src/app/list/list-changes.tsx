@@ -20,7 +20,7 @@ import {
   type ListEdit,
 } from "@/lib/curate/listActions";
 import type { ConceptGroup } from "@/services/concepts";
-import { loadOwnHeaders } from "@/services/dictionary";
+import { loadOwnHeaders, type OwnHeaders } from "@/services/dictionary";
 
 /** What each change is called, on its button and over its form. */
 const EDIT_WORDS: Record<ListEdit["kind"], string> = {
@@ -32,6 +32,9 @@ const EDIT_WORDS: Record<ListEdit["kind"], string> = {
 const NOTHING = { edit: null, withdraw: null };
 
 const buttonClass = "text-[12px] text-mute hover:text-accent transition-colors";
+const smallButtonClass =
+  "shrink-0 px-3 py-1 text-[12px] bg-surface-raised border border-rule text-ink-soft hover:text-ink transition-colors";
+const smallButtonStyle = { borderRadius: "var(--radius-input)" as const };
 const panelClass = "mt-6 border border-accent/20 bg-surface p-5";
 const panelStyle = { borderRadius: "var(--radius-card)" as const };
 
@@ -42,7 +45,8 @@ const panelStyle = { borderRadius: "var(--radius-card)" as const };
  *
  * A version made is published at the community header's short name, unless
  * the reader has a list of their own by that name: then at a free one, and the
- * form says so. Publish waits until the reader's lists have been read.
+ * form says so. Publish waits until the reader's lists have been read, and
+ * holds, offering to read them again, when no list relay answered.
  */
 function ListEditor({
   edit,
@@ -61,7 +65,9 @@ function ListEditor({
   const { waiting, settled } = useSettled(onSaved);
 
   /** The reader's own list headers, read to choose a version's short name; null until then. */
-  const [own, setOwn] = useState<HeaderEvent[] | null>(null);
+  const [own, setOwn] = useState<OwnHeaders | null>(null);
+  /** How many times the reader asked for their lists to be read again. */
+  const [ownReads, setOwnReads] = useState(0);
   const makes = edit.kind === "make-mine";
   useEffect(() => {
     if (!makes) return;
@@ -72,9 +78,16 @@ function ListEditor({
     return () => {
       cancelled = true;
     };
-  }, [makes, reader]);
+  }, [makes, reader, ownReads]);
   const reading = makes && own === null;
-  const shortName = edit.kind === "make-mine" && own ? versionShortName(edit.community, reader, own) : undefined;
+  /** No list relay answered the read of the reader's lists: a short name can't be known to be free. */
+  const unchecked = makes && own !== null && !own.answered;
+  const readAgain = () => {
+    setOwn(null);
+    setOwnReads((n) => n + 1);
+  };
+  const shortName =
+    edit.kind === "make-mine" && own?.answered ? versionShortName(edit.community, reader, own.headers) : undefined;
   const wanted = edit.kind === "make-mine" ? shortNameOf(edit.community) : null;
 
   const problems = useMemo(() => listEditProblems(edit, reader, draft, shortName), [edit, reader, draft, shortName]);
@@ -86,12 +99,20 @@ function ListEditor({
       onChange={setDraft}
       onSave={(saved: CopyDraft) => void write(listEditTemplate(edit, reader, saved, shortName)).then(settled)}
       busy={busy}
-      holding={reading}
+      holding={reading || unchecked}
       problems={problems}
       onCancel={onCancel}
       outcome={
         <>
           {reading ? <p className="text-[12px] text-mute">Looking at your lists to choose a short name…</p> : null}
+          {unchecked ? (
+            <div className="flex items-center gap-3">
+              <p className="text-[12px] text-ink-soft">Couldn&apos;t check your lists. Try again.</p>
+              <button type="button" onClick={readAgain} className={smallButtonClass} style={smallButtonStyle}>
+                Try again
+              </button>
+            </div>
+          ) : null}
           {shortName !== undefined && shortName !== wanted ? (
             <p className="text-[12px] leading-[1.5] text-ink-soft">
               You already have a list with the short name “{wanted}”, so your version is saved as “{shortName}”.

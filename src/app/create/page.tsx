@@ -25,7 +25,7 @@ import { checkHeader, type Problem } from "@/lib/listCheck";
 import { listCoordinate, previewDefinition, slugOf } from "@/lib/listDraft";
 import { cn } from "@/lib/utils";
 import { listHref } from "@/app/list/list-model";
-import { loadAllHeaders } from "@/services/dictionary";
+import { loadAllHeaders, loadOwnHeaders, type OwnHeaders } from "@/services/dictionary";
 
 /** A field row on the form: the field, and an id that stays with it as rows come and go. */
 type Row = QuickField & { id: number };
@@ -52,9 +52,12 @@ const blockingProblem = (message: string, field: string | null): Problem => ({
 /**
  * Make a list: its names, a description, the fields each item holds and a
  * short name. Brainstorm's checks run as the person types, and Publish waits
- * until none would stop the list. When a shared concept already goes by the
- * same name, publishing offers a choice first: make a version of that one, or
- * offer a new one anyway. A list the list relay took opens at once, unless one
+ * until none would stop the list, and until the person's own lists have been
+ * read, so a short name they already use is never published over: when no
+ * list relay answered that read, Publish holds and offers to read again. When
+ * a shared concept already goes by the same name, publishing offers a choice
+ * first: make a version of that one, or offer a new one anyway. A list the
+ * list relay took opens at once, unless one
  * of the person's own relays missed it: then the page says which, and the
  * person opens the list when ready.
  */
@@ -73,8 +76,12 @@ export default function CreateListPage() {
   const [rows, setRows] = useState<Row[]>([{ id: 0, ...FIRST_FIELD }]);
   /** The short name as the person typed it; null while it follows the plural. */
   const [typedShortName, setTypedShortName] = useState<string | null>(null);
-  /** Every list header on the list relay; null until it has been read. */
+  /** Every list header on the list relay, for a shared concept of the same name; null until it has been read. */
   const [headers, setHeaders] = useState<HeaderEvent[] | null>(null);
+  /** The reader's own list headers, for the short names they have taken, and whose they are; null until read. */
+  const [own, setOwn] = useState<(OwnHeaders & { pubkey: string }) | null>(null);
+  /** How many times the reader asked for their lists to be read again. */
+  const [ownReads, setOwnReads] = useState(0);
   /** Problems stay quiet until the person has started. */
   const [touched, setTouched] = useState(false);
   /** The choice between a version and a new concept is on show; changing a name takes it away. */
@@ -104,7 +111,27 @@ export default function CreateListPage() {
     };
   }, []);
 
-  const taken = useMemo(() => ownShortNames(headers ?? [], pubkey), [headers, pubkey]);
+  useEffect(() => {
+    if (!pubkey) return;
+    let cancelled = false;
+    loadOwnHeaders(pubkey).then((found) => {
+      if (!cancelled) setOwn({ ...found, pubkey });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pubkey, ownReads]);
+
+  /** The reader's lists as read for them; null while they are being read. */
+  const ownRead = own && own.pubkey === pubkey ? own : null;
+  /** No list relay answered the read of the reader's lists: a short name can't be known to be free. */
+  const unchecked = ownRead !== null && !ownRead.answered;
+  const readAgain = () => {
+    setOwn(null);
+    setOwnReads((n) => n + 1);
+  };
+
+  const taken = useMemo(() => ownShortNames(ownRead?.headers ?? [], pubkey), [ownRead, pubkey]);
   const d = (typedShortName ?? freeShortName(slugOf(plural), taken)).trim();
   const list = { singular, plural, description, fields: rows };
   const template = newListTemplate(list, d, pubkey ?? NO_ONE);
@@ -126,7 +153,13 @@ export default function CreateListPage() {
 
   /** The list relay has the list, and one of the person's own relays doesn't: the page says which and waits. */
   const savedWithMisses = waiting !== null;
-  const canPublish = pubkey !== null && headers !== null && !hasBlocking(problems) && !busy && !savedWithMisses;
+  const canPublish =
+    pubkey !== null &&
+    headers !== null &&
+    ownRead?.answered === true &&
+    !hasBlocking(problems) &&
+    !busy &&
+    !savedWithMisses;
 
   const rename = (set: (name: string) => void, name: string) => {
     set(name);
@@ -396,8 +429,21 @@ export default function CreateListPage() {
         <div className="flex flex-col gap-3">
           <PublishOutcome state={state} busy={busy} onRetry={() => void retryWrite()} />
           <div className="flex items-center justify-end gap-3">
-            {pubkey && headers === null ? (
+            {pubkey && (headers === null || ownRead === null) ? (
               <p className="mr-auto text-[12px] text-mute">Looking for lists that already exist…</p>
+            ) : null}
+            {unchecked ? (
+              <div className="mr-auto flex items-center gap-3">
+                <p className="text-[12px] text-ink-soft">Couldn&apos;t check your lists. Try again.</p>
+                <button
+                  type="button"
+                  onClick={readAgain}
+                  className="shrink-0 px-3 py-1 text-[12px] bg-surface-raised border border-rule text-ink-soft hover:text-ink transition-colors"
+                  style={inputStyle}
+                >
+                  Try again
+                </button>
+              </div>
             ) : null}
             {savedWithMisses ? (
               <button
