@@ -203,7 +203,7 @@ The "Relationships" tab reads these, from the list relay and the tag hub, never 
 - **Tags applied to it:** `{ "kinds": [39999], "#e": ["<event id>"] }` and `{ "kinds": [39999], "#a": ["<address>"] }` find Brainstorm's taggings. Curate counts a tagging only when its per-tag header joins a namespace Brainstorm honours, and counts each person once, by their latest apply or dispute.
 - **The lists it is on:** the headers its `z` tags name, read by address or by id.
 
-Copies, mentions and taggings by accounts outside the reader's web of trust are folded, and only for accounts the scoring service answered for.
+Copies and mentions by accounts outside the reader's web of trust are folded, and only for accounts the scoring service answered for. A tagging counts only when its author is inside it; it is not folded.
 
 ## Whose web of trust
 

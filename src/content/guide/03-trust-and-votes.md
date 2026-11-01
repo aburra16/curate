@@ -30,9 +30,9 @@ On a list's page:
 - items from accounts outside it are folded under a line such as "3 more from accounts outside your web of trust". Click the line to open them. Nothing is deleted;
 - if the scoring service does not answer about an account, Curate shows that account's items rather than hide them. An account the service answers for but has no score for counts as outside.
 
-The "Relationships" tab in an item's panel works the same way. Copies and mentions from accounts outside your web of trust are folded under "From outside your web of trust", and a tag counts only people inside it. [An item's panel](/guide/exploring-lists) describes the tab.
-
 The "Show everything" switch in the top bar turns the folding off. Every item is then shown, and the ones from outside your web of trust are marked "outside your web of trust".
+
+The "Relationships" tab in an item's panel uses your web of trust too, but "Show everything" does not change it. Copies and mentions from accounts outside your web of trust stay folded under "From outside your web of trust" until you open the line, and a tag's numbers count only people inside your web of trust. [Finding and reading lists](/guide/exploring-lists) describes the tab.
 
 The counts on Discover, and the count at the top of a list, are not filtered. They include items from everyone, which is why they say "counted before the web-of-trust filter".
 

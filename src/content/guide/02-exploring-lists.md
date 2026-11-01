@@ -90,10 +90,10 @@ The panel has its own web address, so you can copy the page's address from your 
 The tab shows what an item, or a list's header, is connected to. Curate reads it from relays when you open the tab, and not before. Each section has a count beside its name, and a section with nothing in it is left out.
 
 - **"On these lists"** names each list the item says it belongs to, and each name is a link to that list. An item has this section, and a header does not.
-- **"Copies"** shows copies of the item that other people made on their own lists. Each shows the copy's title, who made it and the list it is on, and links to it there. An item has this section, and a header does not.
-- **"Tags"** shows labels that people have put on the event, such as "Cosy". Each tag says "applied by" and how many people put it on, and "disputed by" and how many disagreed, if anyone did. If you are connected and have put a tag on it or disputed it yourself, it says "you applied" or "you disputed". Only people inside your web of trust are counted.
+- **"Copies"** shows copies of the item that people made on their own lists. Each shows the copy's title, who made it and the list it is on, and links to it there. An item has this section, and a header does not.
+- **"Tags"** shows labels that people have put on the event, such as "Cosy". Each tag shows only the parts that apply: "applied by" and a number, "disputed by" and a number, and, if you are connected and have applied or disputed it yourself, "you applied" or "you disputed". A tag that only you applied shows just "you applied". The numbers count only people inside your web of trust.
 - **"Mentioned by"** shows items on other lists that point at this one, under the list each is on. For a header, these are lists that include it, such as a list of lists. Copies and tags are not counted here, because they have sections of their own.
-- **"This item names"**, or "This list names" for a header, shows what the event itself points at. A person is shown by name, a list or another item is a link, and anything else is shown as text with a "Copy" button.
+- **"This item names"**, or "This list names" for a header, shows what the event itself points at. A person is shown by name, and a list is a link to its page. An item, or any event the item names by its id, opens in the panel. Anything else is shown as text with a "Copy" button.
 
 Copies and mentions from accounts outside your web of trust wait behind a line such as "From outside your web of trust (3)". Click it to open them. The page [Whose items you see, and how votes count](/guide/trust-and-votes) explains the web of trust. If there is nothing to show, the tab says "Nothing links here yet".
 
