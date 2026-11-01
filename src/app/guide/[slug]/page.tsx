@@ -38,7 +38,7 @@ function Neighbour({ page, direction }: { page: GuidePage; direction: "previous"
       href={`/guide/${page.slug}`}
       rel={direction === "previous" ? "prev" : "next"}
       className={`block border border-rule bg-surface px-5 py-4 transition-all duration-200 hover:border-rule-strong hover:bg-surface-hover ${
-        direction === "next" ? "col-start-2 text-right" : ""
+        direction === "next" ? "text-right sm:col-start-2" : ""
       }`}
       style={{ borderRadius: "var(--radius-card)" }}
     >
@@ -69,7 +69,7 @@ export default async function GuideArticle({ params }: Props) {
 
       <article className="guide-prose mt-8" dangerouslySetInnerHTML={{ __html: guideHtml(page) }} />
 
-      <nav aria-label="More of the guide" className="mt-14 grid grid-cols-2 gap-4 border-t border-rule pt-8">
+      <nav aria-label="More of the guide" className="mt-14 grid grid-cols-1 gap-4 border-t border-rule pt-8 sm:grid-cols-2">
         {previous ? <Neighbour page={previous} direction="previous" /> : null}
         {next ? <Neighbour page={next} direction="next" /> : null}
       </nav>

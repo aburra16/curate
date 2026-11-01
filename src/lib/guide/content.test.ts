@@ -138,13 +138,55 @@ describe("guidePages", () => {
     expect(guidePage("three")).toBeNull();
   });
 
-  it("holds the first page of the guide, in the project's own folder", () => {
-    const first = guidePages()[0];
+  it("reads the project's own folder in order, starting with what a DList is", () => {
+    const pages = guidePages();
+    const orders = pages.map((p) => p.order);
 
-    expect(first.slug).toBe("what-is-a-dlist");
-    expect(first.order).toBe(1);
-    expect(first.title).toBe("What is a DList?");
-    expect(first.summary.length).toBeGreaterThan(0);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(orders.length);
+    expect(pages[0].slug).toBe("what-is-a-dlist");
+  });
+});
+
+describe("the guide's pages", () => {
+  const pages = guidePages();
+  const slugs = new Set(pages.map((p) => p.slug));
+
+  /** Every page a link inside the guide names: `/guide/<slug>`, on its own or after Curate's address. */
+  const linkedSlugs = (markdown: string): string[] =>
+    [...markdown.matchAll(/\]\((?:https:\/\/curate\.brainstorm\.world)?\/guide\/([^)#\s]+)[)#]/g)].map((m) => m[1]);
+
+  it("are the nine pages, in order", () => {
+    expect(pages.map((p) => p.slug)).toEqual([
+      "what-is-a-dlist",
+      "exploring-lists",
+      "trust-and-votes",
+      "signing-in",
+      "creating-a-list",
+      "adding-items",
+      "versions",
+      "for-developers",
+      "glossary-and-faq",
+    ]);
+  });
+
+  it.each(pages.map((p) => [p.slug, p] as const))("%s has a summary of at most 160 characters", (_, page) => {
+    expect(page.summary.length).toBeGreaterThan(0);
+    expect(page.summary.length).toBeLessThanOrEqual(160);
+  });
+
+  it.each(pages.map((p) => [p.slug, p] as const))("%s links only to pages the guide has", (_, page) => {
+    for (const slug of linkedSlugs(page.markdown)) expect(slugs).toContain(slug);
+  });
+
+  it("finds the links it checks, with or without Curate's address and an anchor", () => {
+    expect(
+      linkedSlugs("[a](/guide/signing-in) [b](https://curate.brainstorm.world/guide/versions#buttons) [c](/create)"),
+    ).toEqual(["signing-in", "versions"]);
+  });
+
+  it("link forward from the first page to the second", () => {
+    expect(linkedSlugs(pages[0].markdown)).toContain(pages[1].slug);
   });
 });
 
@@ -175,12 +217,19 @@ describe("guideHtml", () => {
     expect(html).toContain("a&lt;b");
   });
 
-  it("renders a table", () => {
+  it("renders a table, still a table, inside a box that scrolls it sideways", () => {
     const html = guideHtml(page("| Name | Type |\n| --- | --- |\n| Website | Link |\n"));
 
-    expect(html).toContain("<table>");
+    expect(html).toMatch(/^<div class="guide-table"><table>[\s\S]*<\/table>\s*<\/div>\s*$/);
     expect(html).toContain("<th>Name</th>");
     expect(html).toContain("<td>Website</td>");
+  });
+
+  it("keeps a table's cells as Markdown renders them, links and code included", () => {
+    const html = guideHtml(page("| Tag | Means |\n| --- | --- |\n| `z` | [the list](/guide/versions) |\n"));
+
+    expect(html).toContain("<td><code>z</code></td>");
+    expect(html).toContain('<td><a href="/guide/versions">the list</a></td>');
   });
 
   it("renders a link", () => {

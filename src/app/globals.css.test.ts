@@ -38,6 +38,13 @@ describe("globals.css", () => {
     expect(withoutLayers(css)).not.toMatch(/(^|[\s,}])a\s*(,|\{)/);
   });
 
+  it("keeps a guide table a table, and lets the box around it scroll sideways", () => {
+    // `display: block` on a table drops its table semantics for some screen readers.
+    const table = /\.guide-prose table\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    expect(table).not.toMatch(/display\s*:/);
+    expect(css).toMatch(/\.guide-prose \.guide-table\s*\{[^}]*overflow-x:\s*auto/);
+  });
+
   it("still resets a link to its surroundings, in the base layer", () => {
     expect(css).toMatch(/@layer base\s*\{[^@]*\ba\s*\{[^}]*color:\s*inherit[^}]*text-decoration:\s*none/);
   });

@@ -10,7 +10,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { Marked } from "marked";
+import { Marked, Renderer, type Tokens } from "marked";
 
 /** Where the site is published. */
 export const SITE_URL = "https://curate.brainstorm.world";
@@ -87,6 +87,10 @@ const markdown = new Marked({
   renderer: {
     // The guide's text is Curate's own and uses no raw HTML: should any slip in, it shows as the text it is.
     html: ({ text }) => escapeHtml(text),
+    // A wide table scrolls inside a box of its own, and stays a table, which a screen reader reads as one.
+    table(this: Renderer, token: Tokens.Table) {
+      return `<div class="guide-table">${Renderer.prototype.table.call(this, token)}</div>\n`;
+    },
   },
 });
 

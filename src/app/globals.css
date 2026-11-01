@@ -108,7 +108,7 @@ body::before {
   .guide-prose ul,
   .guide-prose ol,
   .guide-prose pre,
-  .guide-prose table,
+  .guide-prose .guide-table,
   .guide-prose blockquote {
     margin: 1.1em 0;
   }
@@ -233,11 +233,13 @@ body::before {
     border-top: 1px solid var(--rule);
   }
 
-  /* A wide table scrolls on its own instead of widening the page. */
-  .guide-prose table {
-    display: block;
+  /* A wide table scrolls inside its box instead of widening the page. The table itself stays a table. */
+  .guide-prose .guide-table {
     max-width: 100%;
     overflow-x: auto;
+  }
+
+  .guide-prose table {
     border-collapse: collapse;
     font-size: 14px;
     line-height: 1.5;

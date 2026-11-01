@@ -22,13 +22,13 @@ describe("the guide index", () => {
   });
 
   it("shows every page as a card with its title and its summary, linked to the page", () => {
-    render(<GuideIndex />);
+    const { container } = render(<GuideIndex />);
 
     for (const page of guidePages()) {
-      const link = screen.getByRole("link", { name: new RegExp(page.title.replace("?", "\\?")) });
-      expect(link.getAttribute("href")).toBe(`/guide/${page.slug}`);
-      expect(within(link).getByRole("heading", { level: 2, name: page.title })).toBeTruthy();
-      expect(within(link).getByText(page.summary)).toBeTruthy();
+      const links = container.querySelectorAll<HTMLElement>(`a[href="/guide/${page.slug}"]`);
+      expect(links).toHaveLength(1);
+      expect(within(links[0]).getByRole("heading", { level: 2, name: page.title })).toBeTruthy();
+      expect(within(links[0]).getByText(page.summary)).toBeTruthy();
     }
   });
 
@@ -105,6 +105,19 @@ describe("a guide page", () => {
       render(await GuideArticle(forSlug("third")));
       expect(screen.queryByRole("link", { name: /^Next/ })).toBeNull();
       expect(screen.getByRole("link", { name: "Previous Second page" })).toBeTruthy();
+    });
+
+    it("stacks the links to the pages around it on a narrow screen, and sets them side by side on a wider one", async () => {
+      threePages();
+      render(await GuideArticle(forSlug("second")));
+
+      const nav = screen.getByRole("navigation", { name: "More of the guide" });
+      expect(nav.className).toMatch(/(^|\s)grid-cols-1(\s|$)/);
+      expect(nav.className).toMatch(/(^|\s)sm:grid-cols-2(\s|$)/);
+      // A bare column start would open a second column on a narrow screen too.
+      const next = screen.getByRole("link", { name: "Next Third page" });
+      expect(next.className).not.toMatch(/(^|\s)col-start-2(\s|$)/);
+      expect(next.className).toMatch(/(^|\s)sm:col-start-2(\s|$)/);
     });
 
     it("has no page for a slug the guide doesn't hold", async () => {
