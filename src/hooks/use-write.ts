@@ -15,6 +15,13 @@ export type WriteState =
   | { phase: "done"; result: PublishResult }
   | { phase: "error"; message: string; reason?: SignerFailure };
 
+/**
+ * The last write reached the relays and the list relay didn't take it: Retry
+ * would send that same event. A form calls `reset` when the person changes
+ * anything then, so the next Publish signs what the form holds now.
+ */
+export const missedHub = (state: WriteState): boolean => state.phase === "done" && !state.result.onHub;
+
 /** What the person is told when something other than the signer went wrong. */
 const UNKNOWN_FAILURE = "Something went wrong, and the write may not have been saved.";
 

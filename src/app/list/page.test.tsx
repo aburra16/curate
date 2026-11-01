@@ -728,6 +728,28 @@ describe("changing a list", () => {
       expect(screen.queryByRole("form")).toBeNull();
     });
 
+    it("signs the form as it now stands after a refusal and a change, never the header signed before", async () => {
+      vi.mocked(signAndPublish)
+        .mockResolvedValueOnce(refusedByList)
+        .mockImplementationOnce(async (template) => signedBy(COPIER, template));
+      signIn(COPIER);
+      open(FOOD);
+      await title();
+      click("Edit list");
+      type("Plural name", "Eats");
+      click("Publish");
+      await screen.findByText(/Not saved to the list relay: blocked: not allowed/);
+
+      type("Plural name", "Bites");
+
+      expect(maybe("Retry")).toBeNull();
+      click("Publish");
+      await vi.waitFor(() => expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Bites"));
+      expect(signAndPublish).toHaveBeenCalledTimes(2);
+      expect(published(1).tags.find((t) => t[0] === "names")?.[2]).toBe("Bites");
+      expect(retryPublish).not.toHaveBeenCalled();
+    });
+
     it("shows the change at once when an own relay missed it, and a toast says which", async () => {
       vi.mocked(signAndPublish).mockImplementation(async (template) => signedBy(COPIER, template, OWN_RELAY_MISSED));
       signIn(COPIER);

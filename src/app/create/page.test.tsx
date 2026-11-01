@@ -360,6 +360,35 @@ describe("Create", () => {
       );
     });
 
+    it("signs the form as it now stands after a refusal and a change, never the list signed before", async () => {
+      vi.mocked(signAndPublish).mockResolvedValueOnce(refusedByList).mockResolvedValueOnce(saved);
+      render(<CreatePage />);
+      await nameIt();
+      click("Publish");
+      await screen.findByRole("button", { name: "Retry" });
+
+      type("Description", "Words that sort things");
+
+      expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+      click("Publish");
+      await waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(2));
+      expect(vi.mocked(signAndPublish).mock.calls[1][0].tags).toContainEqual(["description", "Words that sort things"]);
+      expect(retryPublish).not.toHaveBeenCalled();
+      await waitFor(() => expect(nav.router.push).toHaveBeenCalledTimes(1));
+    });
+
+    it("forgets the refused list when a field row is added or removed too", async () => {
+      vi.mocked(signAndPublish).mockResolvedValueOnce(refusedByList);
+      render(<CreatePage />);
+      await nameIt();
+      click("Publish");
+      await screen.findByRole("button", { name: "Retry" });
+
+      click("Add a field");
+
+      expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    });
+
     it("opens the list at once when one of the person's own relays missed it, and a toast says which", async () => {
       vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
       render(<CreatePage />, { wrapper: ToastProvider });

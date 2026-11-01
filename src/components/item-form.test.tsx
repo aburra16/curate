@@ -316,6 +316,39 @@ describe("what the list relay said", () => {
     expect(signAndPublish).toHaveBeenCalledTimes(1);
   });
 
+  it("signs the form as it now stands after a refusal and a change, never the event signed before", async () => {
+    vi.mocked(signAndPublish).mockResolvedValueOnce(refusedByList).mockResolvedValueOnce(saved);
+    open();
+    type("name", "Blue Bottle");
+    type("category", "cafe");
+    fireEvent.click(publishButton());
+    await screen.findByRole("button", { name: "Retry" });
+
+    type("name", "Red Bottle");
+
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    expect(screen.queryByText(/Not saved to the list relay/)).toBeNull();
+    fireEvent.click(publishButton());
+    await waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(2));
+    expect(tag(sentTags(), "name")).toEqual(["name", "Red Bottle"]);
+    expect(retryPublish).not.toHaveBeenCalled();
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(SIGNED));
+  });
+
+  it("does the same for a changed item", async () => {
+    vi.mocked(signAndPublish).mockResolvedValueOnce(refusedByList).mockResolvedValueOnce(saved);
+    open({ item: ITEM });
+    fireEvent.click(publishButton());
+    await screen.findByRole("button", { name: "Retry" });
+
+    type("category", "bakery");
+    fireEvent.click(publishButton());
+
+    await waitFor(() => expect(signAndPublish).toHaveBeenCalledTimes(2));
+    expect(tag(sentTags(), "category")).toEqual(["category", "bakery"]);
+    expect(retryPublish).not.toHaveBeenCalled();
+  });
+
   it("hands the event on at once when one of the author's own relays missed it, and a toast says which", async () => {
     vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
     open();

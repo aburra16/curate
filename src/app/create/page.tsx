@@ -8,7 +8,7 @@ import { FieldsPanel } from "@/components/fields-panel";
 import { PublishOutcome } from "@/components/publish-outcome";
 import { useReader } from "@/hooks/use-reader";
 import { useSettled } from "@/hooks/use-settled";
-import { useWrite } from "@/hooks/use-write";
+import { missedHub, useWrite } from "@/hooks/use-write";
 import { definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
 import {
   QUICK_FIELD_TYPES,
@@ -63,7 +63,7 @@ const blockingProblem = (message: string, field: string | null): Problem => ({
 export default function CreateListPage() {
   const router = useRouter();
   const { pubkey } = useReader();
-  const { state, busy, write, retry } = useWrite();
+  const { state, busy, write, retry, reset } = useWrite();
   const fieldsId = useId();
   const previewId = useId();
   const choiceId = useId();
@@ -153,13 +153,19 @@ export default function CreateListPage() {
   const canPublish =
     pubkey !== null && headers !== null && ownRead?.answered === true && !hasBlocking(problems) && !busy && !saved;
 
+  /** The person changed the list: a refused event no longer says what it is, and the next Publish signs it afresh. */
+  const changed = () => {
+    setTouched(true);
+    if (missedHub(state)) reset();
+  };
+
   const rename = (set: (name: string) => void, name: string) => {
     set(name);
     setOffered(false);
   };
 
   const addRow = () => {
-    setTouched(true);
+    changed();
     setRows((prev) => [
       ...prev,
       { id: nextRowId.current++, name: "", type: "text", requirement: "optional", description: "" },
@@ -168,7 +174,7 @@ export default function CreateListPage() {
   const changeRow = (id: number, patch: Partial<QuickField>) =>
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   const removeRow = (id: number) => {
-    setTouched(true);
+    changed();
     setRows((prev) => prev.filter((row) => row.id !== id));
   };
 
@@ -213,7 +219,7 @@ export default function CreateListPage() {
         Name what you are collecting and say what each item holds. You add the items once the list is published.
       </p>
 
-      <form onSubmit={onSubmit} onChange={() => setTouched(true)} className="mt-8 flex flex-col gap-8">
+      <form onSubmit={onSubmit} onChange={changed} className="mt-8 flex flex-col gap-8">
         <div className="flex flex-col gap-4">
           <Labelled label="Singular name" hint="What one item is called, as in “Café”.">
             {(id, hint) => (

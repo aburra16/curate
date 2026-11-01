@@ -6,7 +6,7 @@ import { CheckProblems, hasBlocking, problemsFor } from "@/components/check-prob
 import { PublishOutcome } from "@/components/publish-outcome";
 import { useReader } from "@/hooks/use-reader";
 import { useSettled } from "@/hooks/use-settled";
-import { useWrite } from "@/hooks/use-write";
+import { missedHub, useWrite } from "@/hooks/use-write";
 import type { ConceptDefinition } from "@/lib/conceptResolution";
 import { editedItemTemplate } from "@/lib/curate/writeTemplates";
 import { fieldCell, type FieldDecl } from "@/lib/dlistFields";
@@ -50,11 +50,13 @@ const REQUIREMENT_WORDS = { required: "Required", recommended: "Recommended", op
  * its own changes.
  *
  * A save the list relay took closes the form at once (`onSaved`), and a
- * toast names any of the author's own relays that missed it.
+ * toast names any of the author's own relays that missed it. After a refusal,
+ * Retry sends the same event again, until the person changes a field: then
+ * the next Publish signs the form as it stands.
  */
 export function ItemForm({ definition, templates, item, onSaved, onCancel }: Props) {
   const { pubkey } = useReader();
-  const { state, busy, write, retry } = useWrite();
+  const { state, busy, write, retry, reset } = useWrite();
   const settled = useSettled(onSaved);
   const headingId = useId();
   const singular = namesOf(definition.event).singular || "item";
@@ -115,7 +117,11 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
         event.preventDefault();
         void publish();
       }}
-      onChange={() => setTouched(true)}
+      onChange={() => {
+        setTouched(true);
+        // A refused event no longer says what the form does: the next Publish signs it afresh.
+        if (missedHub(state)) reset();
+      }}
       className="flex flex-col gap-4"
     >
       <div className="flex items-center justify-between">

@@ -6,7 +6,7 @@ import { ConfirmWrite } from "@/components/confirm-write";
 import { ListForm } from "@/components/list-form";
 import { PublishOutcome } from "@/components/publish-outcome";
 import { useSettled } from "@/hooks/use-settled";
-import { useWrite } from "@/hooks/use-write";
+import { missedHub, useWrite } from "@/hooks/use-write";
 import { withdrawnTemplate, type CopyDraft } from "@/lib/conceptCopy";
 import { definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
 import {
@@ -46,7 +46,9 @@ const panelStyle = { borderRadius: "var(--radius-card)" as const };
  * A version made is published at the community header's short name, unless
  * the reader has a list of their own by that name: then at a free one, and the
  * form says so. Publish waits until the reader's lists have been read, and
- * holds, offering to read them again, when no list relay answered.
+ * holds, offering to read them again, when no list relay answered. After a
+ * refusal, Retry sends the same header again until the person changes the
+ * form: then the next Publish signs it as it stands.
  */
 function ListEditor({
   edit,
@@ -59,7 +61,7 @@ function ListEditor({
   onSaved: (event: NostrEvent) => void;
   onCancel: () => void;
 }) {
-  const { state, busy, write, retry } = useWrite();
+  const { state, busy, write, retry, reset } = useWrite();
   const [opened] = useState(() => listEditDraft(edit));
   const [draft, setDraft] = useState(opened);
   const settled = useSettled(onSaved);
@@ -96,7 +98,11 @@ function ListEditor({
     <ListForm
       heading={EDIT_WORDS[edit.kind]}
       draft={opened}
-      onChange={setDraft}
+      onChange={(next) => {
+        setDraft(next);
+        // A refused event no longer says what the form does: the next Publish signs it afresh.
+        if (missedHub(state)) reset();
+      }}
       onSave={(saved: CopyDraft) => void write(listEditTemplate(edit, reader, saved, shortName)).then(settled)}
       busy={busy}
       holding={reading || unchecked}
