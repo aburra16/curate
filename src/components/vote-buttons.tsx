@@ -7,6 +7,7 @@ import { useWrite } from "@/hooks/use-write";
 import { applyVote, voteTemplate, type ReactionCount, type Vote } from "@/lib/curate/writeTemplates";
 import { cn } from "@/lib/utils";
 import type { ItemEvent } from "@/services/concepts";
+import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
 
 interface Props {
@@ -82,6 +83,7 @@ function Side({
  * holds sends nothing. A vote counts once the list relay has it, and a toast
  * names any of the author's own relays that missed it. Beneath the buttons, a
  * vote the list relay didn't take says so with Retry, until the next vote.
+ * Signed out, a click invites the reader to connect.
  */
 export function VoteButtons({ item, count, readerCounts, onVoted }: Props) {
   const signedIn = useSigner((s) => s.status === "connected");
@@ -104,7 +106,7 @@ export function VoteButtons({ item, count, readerCounts, onVoted }: Props) {
 
   // A saved vote needs no word here; the signer's failure and the list relay's refusal do.
   const speaks = state.phase === "error" || (state.phase === "done" && !state.result.onHub);
-  const disabled = busy || !signedIn;
+  const disabled = busy;
 
   return (
     <div className="flex flex-col items-end gap-1">
@@ -117,7 +119,7 @@ export function VoteButtons({ item, count, readerCounts, onVoted }: Props) {
             pressed={count.mine === side}
             disabled={disabled}
             title={signedIn ? SIDES[side].words : "Connect to vote"}
-            onClick={() => void vote(side)}
+            onClick={() => (signedIn ? void vote(side) : useConnectDialog.getState().show())}
           />
         ))}
       </div>

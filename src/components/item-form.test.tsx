@@ -12,6 +12,7 @@ import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
 import { setTransport } from "@/services/transport";
 import type { ItemEvent } from "@/services/concepts";
+import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
 import { fakeTransport } from "@/test/fakeTransport";
 import { ToastProvider } from "@/components/toast";
@@ -402,15 +403,30 @@ describe("what the list relay said", () => {
 });
 
 describe("signed out", () => {
-  it("invites connecting and publishes nothing", () => {
+  beforeEach(() => useConnectDialog.getState().hide());
+
+  it("invites connecting: the button opens the Connect chooser, and publishes nothing", () => {
     signIn(null);
     open();
     type("name", "Blue Bottle");
     type("category", "cafe");
 
     expect(publishButton().textContent).toBe("Connect to publish");
-    expect(publishButton().disabled).toBe(true);
+    expect(publishButton().disabled).toBe(false);
+    fireEvent.click(publishButton());
+
+    expect(useConnectDialog.getState().open).toBe(true);
+    expect(signAndPublish).not.toHaveBeenCalled();
+  });
+
+  it("publishes nothing when the form is submitted another way", () => {
+    signIn(null);
+    open();
+    type("name", "Blue Bottle");
+    type("category", "cafe");
+
     fireEvent.submit(screen.getByRole("form"));
+
     expect(signAndPublish).not.toHaveBeenCalled();
   });
 });

@@ -20,6 +20,7 @@ import { mergePages, shownItems } from "@/services/items";
 import { namesOf } from "@/services/jsonData";
 import type { ReactionCount } from "@/services/reactions";
 import { inWebOfTrust } from "@/services/trust";
+import { useConnectDialog } from "@/stores/connect-dialog";
 import { useShowEverything } from "@/stores/view";
 import { itemsModel, singularOf, withoutRemoved, type RowModel } from "./items-model";
 import {
@@ -187,9 +188,9 @@ export function ListItems({ handles, definition, items, onOpenItem }: Props) {
           ) : canAdd && !showAddForm ? (
             <button
               type="button"
-              disabled={!reader.pubkey}
-              onClick={() => setShowAddForm(true)}
-              className="text-[12px] font-medium px-4 py-1.5 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              // Signed out, it invites the reader to connect.
+              onClick={() => (reader.pubkey ? setShowAddForm(true) : useConnectDialog.getState().show())}
+              className="text-[12px] font-medium px-4 py-1.5 bg-accent text-ink hover:brightness-110 transition-all"
               style={{ borderRadius: "var(--radius-input)" }}
             >
               {reader.pubkey ? `+ Add ${singular}` : `Connect to add a ${singular}`}

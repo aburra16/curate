@@ -12,6 +12,7 @@ import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
 import { SignerError } from "@/services/signer";
 import { setTransport } from "@/services/transport";
+import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
 import { fakeTransport } from "@/test/fakeTransport";
 import { ToastProvider } from "@/components/toast";
@@ -506,18 +507,27 @@ describe("Create", () => {
   });
 
   describe("signed out", () => {
-    beforeEach(() => signIn(null));
+    beforeEach(() => {
+      signIn(null);
+      useConnectDialog.getState().hide();
+    });
 
-    it("lets the form be filled in, and reads Connect to publish", async () => {
+    it("lets the form be filled in, and Connect to publish opens the Connect chooser", async () => {
       render(<CreatePage />);
 
       type("Singular name", "tag");
       type("Plural name", "tags");
 
       expect(within(screen.getByRole("region", { name: "Preview" })).getByText("tags")).toBeTruthy();
-      const button = screen.getByRole("button", { name: "Connect to publish" }) as HTMLButtonElement;
-      expect(button.disabled).toBe(true);
       expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
+      const button = screen.getByRole("button", { name: "Connect to publish" }) as HTMLButtonElement;
+      expect(button.disabled).toBe(false);
+
+      fireEvent.click(button);
+
+      expect(useConnectDialog.getState().open).toBe(true);
+      expect(signAndPublish).not.toHaveBeenCalled();
+      expect(loadOwnHeaders).not.toHaveBeenCalled();
     });
   });
 });

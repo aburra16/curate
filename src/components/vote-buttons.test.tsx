@@ -8,6 +8,7 @@ import type { ItemEvent } from "@/services/concepts";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
 import { SignerError } from "@/services/signer";
+import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
 import { ToastProvider } from "@/components/toast";
 
@@ -94,16 +95,20 @@ describe("VoteButtons", () => {
     expect(down().getAttribute("aria-pressed")).toBe("false");
   });
 
-  it("is disabled when signed out, and says to connect", () => {
+  it("invites connecting when signed out: a vote opens the Connect chooser and sends nothing", () => {
     useSigner.setState({ pubkey: null, status: "disconnected", error: null });
-    show();
+    useConnectDialog.getState().hide();
+    const { onVoted } = show();
 
     for (const button of [up(), down()]) {
-      expect(button.disabled).toBe(true);
+      expect(button.disabled).toBe(false);
       expect(button.title).toBe("Connect to vote");
     }
     fireEvent.click(up());
+
+    expect(useConnectDialog.getState().open).toBe(true);
     expect(signAndPublish).not.toHaveBeenCalled();
+    expect(onVoted).not.toHaveBeenCalled();
   });
 
   it("signs the endorsement with the vote as its content, naming the item and not the list", async () => {

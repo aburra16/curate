@@ -26,6 +26,7 @@ import { setTransport, type RelayTransport } from "@/services/transport";
 import { clearTrustCaches, type AuthorRanks } from "@/services/trust";
 import { useRelayStatus } from "@/stores/relay-status";
 import { useSettings } from "@/stores/settings";
+import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
 import { useView } from "@/stores/view";
 import { relayCorpus } from "@/test/relayCorpus";
@@ -456,14 +457,20 @@ describe("adding an item", () => {
     expect(screen.queryByText("Be the first to add something to this list.")).toBeNull();
   });
 
-  it("invites a reader who isn't connected to connect, and opens no form", async () => {
+  it("invites a reader who isn't connected to connect: the button opens the Connect chooser, and no form", async () => {
+    useConnectDialog.getState().hide();
     reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
     open(FOOD);
     await screen.findByRole("heading", { level: 3, name: "Alpha" });
 
     const invite = screen.getByRole("button", { name: "Connect to add a Food and Drink Place" }) as HTMLButtonElement;
-    expect(invite.disabled).toBe(true);
+    expect(invite.disabled).toBe(false);
     expect(screen.queryByRole("button", { name: /^\+ Add/ })).toBeNull();
+
+    fireEvent.click(invite);
+
+    expect(useConnectDialog.getState().open).toBe(true);
+    expect(screen.queryByRole("form")).toBeNull();
   });
 
   it("asks for the list's fields, publishes the item under the list, and shows it at the top once the list relay has it", async () => {
@@ -1300,15 +1307,20 @@ describe("voting on an item", () => {
     expect(downvote("Cafe Luna").textContent).not.toMatch(/\d/);
   });
 
-  it("is disabled for a reader who isn't connected, and says to connect", async () => {
+  it("invites a reader who isn't connected to connect: a vote opens the Connect chooser", async () => {
     useSigner.setState({ pubkey: null, status: "disconnected", error: null });
+    useConnectDialog.getState().hide();
     reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
     open(FOOD);
     await screen.findByRole("heading", { level: 3, name: "Alpha" });
 
     for (const button of [upvote("Alpha"), downvote("Alpha")]) {
-      expect(button.disabled).toBe(true);
+      expect(button.disabled).toBe(false);
       expect(button.title).toBe("Connect to vote");
     }
+    fireEvent.click(upvote("Alpha"));
+
+    expect(useConnectDialog.getState().open).toBe(true);
+    expect(signAndPublish).not.toHaveBeenCalled();
   });
 });

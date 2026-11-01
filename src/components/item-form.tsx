@@ -15,6 +15,7 @@ import { checkItemUnder, type Problem } from "@/lib/listCheck";
 import { itemProblems, itemTemplate, randomTail, type ItemValues } from "@/lib/listItem";
 import type { ItemEvent } from "@/services/concepts";
 import { namesOf } from "@/services/jsonData";
+import { useConnectDialog } from "@/stores/connect-dialog";
 
 interface Props {
   /** The list's governing definition: it names the fields, and the checks read the item through it. */
@@ -40,7 +41,8 @@ const REQUIREMENT_WORDS = { required: "Required", recommended: "Recommended", op
 /**
  * Add an item to a list, or change one of the reader's own. One input per
  * field the list declares, required first, and Brainstorm's checks run as the
- * values change: Publish waits until none would stop the item.
+ * values change: Publish waits until none would stop the item. Signed out,
+ * the button invites the person to connect.
  *
  * An added item gets a `d` of its title and a random tail, chosen when the
  * form opens, so a second Publish after a refusal is the same item and not a
@@ -153,14 +155,25 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
       <div className="flex flex-col gap-3">
         <PublishOutcome state={state} busy={busy} onRetry={() => void retryWrite()} />
         <div className="flex items-center justify-end gap-3">
-          <button
-            type="submit"
-            disabled={!canPublish}
-            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={inputStyle}
-          >
-            {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
-          </button>
+          {pubkey ? (
+            <button
+              type="submit"
+              disabled={!canPublish}
+              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={inputStyle}
+            >
+              {busy ? "Publishing…" : "Publish"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => useConnectDialog.getState().show()}
+              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
+              style={inputStyle}
+            >
+              Connect to publish
+            </button>
+          )}
         </div>
       </div>
     </form>

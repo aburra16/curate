@@ -26,6 +26,7 @@ import { listCoordinate, previewDefinition, slugOf } from "@/lib/listDraft";
 import { cn } from "@/lib/utils";
 import { listHref } from "@/app/list/list-model";
 import { loadAllHeaders, loadOwnHeaders, type OwnHeaders } from "@/services/dictionary";
+import { useConnectDialog } from "@/stores/connect-dialog";
 
 /** A field row on the form: the field, and an id that stays with it as rows come and go. */
 type Row = QuickField & { id: number };
@@ -58,7 +59,8 @@ const blockingProblem = (message: string, field: string | null): Problem => ({
  * a shared concept already goes by the same name, publishing offers a choice
  * first: make a version of that one, or offer a new one anyway. A list the
  * list relay took opens at once, and a toast names any of the person's own
- * relays that missed it.
+ * relays that missed it. Signed out, the form can be filled in and the button
+ * invites the person to connect.
  */
 export default function CreateListPage() {
   const router = useRouter();
@@ -443,14 +445,25 @@ export default function CreateListPage() {
                 </button>
               </div>
             ) : null}
-            <button
-              type="submit"
-              disabled={!canPublish}
-              className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={inputStyle}
-            >
-              {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
-            </button>
+            {pubkey ? (
+              <button
+                type="submit"
+                disabled={!canPublish}
+                className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={inputStyle}
+              >
+                {busy ? "Publishing…" : "Publish"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => useConnectDialog.getState().show()}
+                className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all"
+                style={inputStyle}
+              >
+                Connect to publish
+              </button>
+            )}
           </div>
         </div>
       </form>
