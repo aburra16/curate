@@ -14,6 +14,7 @@ import { SignerError } from "@/services/signer";
 import { setTransport } from "@/services/transport";
 import { useSigner } from "@/stores/signer";
 import { fakeTransport } from "@/test/fakeTransport";
+import { ToastProvider } from "@/components/toast";
 import tagsHeaders from "@/test/fixtures/tags.headers.json";
 
 const nav = vi.hoisted(() => ({ router: { push: vi.fn(), replace: vi.fn() } }));
@@ -359,37 +360,43 @@ describe("Create", () => {
       );
     });
 
-    it("says which of the person's own relays missed the list and opens it when the person chooses", async () => {
+    it("opens the list at once when one of the person's own relays missed it, and a toast says which", async () => {
       vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
-      render(<CreatePage />);
+      render(<CreatePage />, { wrapper: ToastProvider });
       await nameIt();
 
       click("Publish");
 
-      await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/);
-      expect(nav.router.push).not.toHaveBeenCalled();
-      expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
-
-      click("Open the list");
-
-      expect(nav.router.push).toHaveBeenCalledWith(`/list?c=${encodeURIComponent(`39998:${READER}:tags`)}`);
+      await waitFor(() =>
+        expect(nav.router.push).toHaveBeenCalledWith(`/list?c=${encodeURIComponent(`39998:${READER}:tags`)}`),
+      );
+      expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Open the list" })).toBeNull();
       expect(signAndPublish).toHaveBeenCalledTimes(1);
     });
 
-    it("waits for the person after a Retry too, when an own relay still misses the list", async () => {
+    it("does the same after a Retry, when an own relay still misses the list", async () => {
       vi.mocked(signAndPublish).mockResolvedValue(refusedByList);
       vi.mocked(retryPublish).mockResolvedValue(missedOwnRelay);
-      render(<CreatePage />);
+      render(<CreatePage />, { wrapper: ToastProvider });
       await nameIt();
       click("Publish");
       await screen.findByText(/Not saved to the list relay/);
 
       click("Retry");
 
-      await screen.findByText(/Not saved to 1 of your own relays/);
-      expect(nav.router.push).not.toHaveBeenCalled();
-      click("Open the list");
-      expect(nav.router.push).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(nav.router.push).toHaveBeenCalledTimes(1));
+      expect(screen.getByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
+    });
+
+    it("holds Publish once the list relay has the list, while the page opens it", async () => {
+      render(<CreatePage />);
+      await nameIt();
+
+      click("Publish");
+
+      await waitFor(() => expect(nav.router.push).toHaveBeenCalledTimes(1));
+      expect(publishButton().disabled).toBe(true);
     });
 
     it("keeps every typed value when the signer refuses", async () => {

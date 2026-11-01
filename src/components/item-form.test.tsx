@@ -14,6 +14,7 @@ import { setTransport } from "@/services/transport";
 import type { ItemEvent } from "@/services/concepts";
 import { useSigner } from "@/stores/signer";
 import { fakeTransport } from "@/test/fakeTransport";
+import { ToastProvider } from "@/components/toast";
 
 vi.mock("@/services/publish", () => ({ signAndPublish: vi.fn(), retryPublish: vi.fn() }));
 
@@ -116,7 +117,7 @@ const onCancel = vi.fn();
 const form = (props: Partial<Parameters<typeof ItemForm>[0]> = {}) => (
   <ItemForm definition={places} templates={noTemplates} onSaved={onSaved} onCancel={onCancel} {...props} />
 );
-const open = (props: Partial<Parameters<typeof ItemForm>[0]> = {}) => render(form(props));
+const open = (props: Partial<Parameters<typeof ItemForm>[0]> = {}) => render(form(props), { wrapper: ToastProvider });
 
 const input = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
 const type = (label: string, value: string) => fireEvent.change(input(label), { target: { value } });
@@ -315,25 +316,17 @@ describe("what the list relay said", () => {
     expect(signAndPublish).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the form open with the note when the list relay has it and one of the author's own relays missed it, and hands the event on from Done", async () => {
+  it("hands the event on at once when one of the author's own relays missed it, and a toast says which", async () => {
     vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
     open();
     type("name", "Blue Bottle");
     type("category", "cafe");
     fireEvent.click(publishButton());
 
-    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
-    expect(onSaved).not.toHaveBeenCalled();
-    // Nothing is left to publish or to change.
-    expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
-    expect(input("name").disabled).toBe(true);
-    fireEvent.submit(screen.getByRole("form"));
-    expect(signAndPublish).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(SIGNED));
     expect(onSaved).toHaveBeenCalledTimes(1);
-    expect(onSaved).toHaveBeenCalledWith(SIGNED);
+    expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
   });
 
   it("does the same for a Retry that gets the list relay to take it while an own relay still misses it", async () => {
@@ -345,22 +338,17 @@ describe("what the list relay said", () => {
     fireEvent.click(publishButton());
     fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
 
-    expect(await screen.findByText(/Not saved to 1 of your own relays/)).toBeTruthy();
-    expect(onSaved).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    expect(onSaved).toHaveBeenCalledWith(SIGNED);
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(SIGNED));
+    expect(screen.getByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
   });
 
-  it("keeps a changed item's form open with the note too", async () => {
+  it("hands a changed item on at once too", async () => {
     vi.mocked(signAndPublish).mockResolvedValue(missedOwnRelay);
     open({ item: ITEM });
     fireEvent.click(publishButton());
 
-    expect(await screen.findByText(/Not saved to 1 of your own relays/)).toBeTruthy();
-    expect(onSaved).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    expect(onSaved).toHaveBeenCalledWith(SIGNED);
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(SIGNED));
+    expect(screen.getByText(/Not saved to 1 of your own relays/)).toBeTruthy();
   });
 
   it("disables Publish and Cancel while the write is in flight", async () => {

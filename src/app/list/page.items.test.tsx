@@ -29,6 +29,7 @@ import { useSettings } from "@/stores/settings";
 import { useSigner } from "@/stores/signer";
 import { useView } from "@/stores/view";
 import { relayCorpus } from "@/test/relayCorpus";
+import { ToastProvider } from "@/components/toast";
 import foodHeader from "@/test/fixtures/food.header.json";
 import tagsHeaders from "@/test/fixtures/tags.headers.json";
 
@@ -161,7 +162,7 @@ const foldButton = () => screen.queryByRole("button", { name: /more from account
 
 function open(c: string) {
   nav.params = new URLSearchParams({ c, version: CURATOR });
-  return render(<ListPage />);
+  return render(<ListPage />, { wrapper: ToastProvider });
 }
 
 const rowTitles = () => screen.queryAllByRole("heading", { level: 3 }).map((h) => h.textContent);
@@ -488,7 +489,7 @@ describe("adding an item", () => {
     expect(screen.getByRole("button", { name: "+ Add Food and Drink Place" })).toBeTruthy();
   });
 
-  it("keeps the form and the note when one of the author's own relays missed the item, and adds the item when Done is pressed", async () => {
+  it("adds the item and closes the form at once when one of the author's own relays missed it, and a toast says which", async () => {
     signIn(READER);
     reads.loadItemsPage.mockResolvedValueOnce(page([place("Alpha", 1_792_000_100)], null));
     vi.mocked(signAndPublish).mockImplementation(async (template) => ({
@@ -503,13 +504,10 @@ describe("adding an item", () => {
     type("category", "cafe");
     fireEvent.click(screen.getByRole("button", { name: "Publish" }));
 
-    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
-    expect(screen.queryByRole("heading", { level: 3, name: "Cafe Luna" })).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-
+    await screen.findByRole("heading", { level: 3, name: "Cafe Luna" });
     expect(rowTitles()).toEqual(["Cafe Luna", "Alpha"]);
     expect(screen.queryByRole("form")).toBeNull();
+    expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
   });
 
   it("leaves the list as it was when the person cancels", async () => {
@@ -891,7 +889,7 @@ describe("deleting an item", () => {
     expect(signAndPublish).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the question open with the note when an own relay missed the deletion, and removes the row on Done", async () => {
+  it("removes the row at once when an own relay missed the deletion, and a toast says which", async () => {
     reads.loadItemsPage.mockResolvedValueOnce(page([own("Mine", 1_792_000_500), place("Alpha", 1_792_000_100)], null));
     vi.mocked(signAndPublish).mockImplementation(async (template) => ({
       ...signedBy(READER, template),
@@ -903,12 +901,8 @@ describe("deleting an item", () => {
     askToDelete("Mine");
     confirmDelete("Mine");
 
-    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
-    expect(rowTitles()).toEqual(["Mine", "Alpha"]);
-    expect(within(rowOf("Mine")).queryByRole("button", { name: "Cancel" })).toBeNull();
-
-    fireEvent.click(within(rowOf("Mine")).getByRole("button", { name: "Done" }));
     await vi.waitFor(() => expect(rowTitles()).toEqual(["Alpha"]));
+    expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
   });
 
   it("keeps the item out through a later page and live items no newer than the deletion, and shows a newer version", async () => {

@@ -44,7 +44,6 @@ const initial = listDraftOf(definitionOf(PLACES));
 const onSave = vi.fn();
 const onChange = vi.fn();
 const onCancel = vi.fn();
-const onDone = vi.fn();
 
 function open(props: Partial<Parameters<typeof ListForm>[0]> = {}) {
   return render(<ListForm draft={initial} onSave={onSave} busy={false} problems={[]} {...props} />);
@@ -62,7 +61,6 @@ beforeEach(() => {
   onSave.mockReset();
   onChange.mockReset();
   onCancel.mockReset();
-  onDone.mockReset();
 });
 
 describe("the list form", () => {
@@ -286,31 +284,5 @@ describe("the list form", () => {
 
       expect(screen.getByText("Saved to the list relay.")).toBeTruthy();
     });
-
-    it("has no Done until the list is saved and waiting", () => {
-      open({ onCancel });
-
-      expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
-    });
-  });
-});
-
-describe("a list saved but waiting for the person", () => {
-  beforeEach(() => {
-    open({ onDone, onCancel, heading: "Edit list" });
-  });
-
-  it("locks the fields, drops Cancel and Publish, and hands on when the person says Done", () => {
-    expect(field("Plural name").disabled).toBe(true);
-    expect(field("Field 1 name").disabled).toBe(true);
-    expect(field("Field 1 type").disabled).toBe(true);
-    expect((screen.getByRole("button", { name: "Add a field" }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-
-    expect(onDone).toHaveBeenCalledTimes(1);
-    expect(onSave).not.toHaveBeenCalled();
   });
 });

@@ -14,8 +14,8 @@ const inputStyle = { borderRadius: "var(--radius-input)" as const };
  * button, which signs and publishes what `template` makes when it is pressed.
  * Until the list relay has taken the write nothing has changed: a refusal says
  * so, and Retry sends the same event again. A write the list relay took is
- * handed to `onDone` at once, unless one of the author's own relays missed it:
- * then the question stays with that note until the person presses Done.
+ * handed to `onDone` at once, and a toast names any of the author's own relays
+ * that missed it.
  */
 export function ConfirmWrite({
   question,
@@ -36,7 +36,7 @@ export function ConfirmWrite({
   onCancel: () => void;
 }) {
   const { state, busy, write, retry } = useWrite();
-  const { waiting, settled } = useSettled(onDone);
+  const settled = useSettled(onDone);
   const askedId = useId();
 
   return (
@@ -46,36 +46,23 @@ export function ConfirmWrite({
       </p>
       <PublishOutcome state={state} busy={busy} onRetry={() => void retry().then(settled)} />
       <div className="flex items-center justify-end gap-3">
-        {waiting ? (
-          <button
-            type="button"
-            onClick={() => onDone(waiting)}
-            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
-            style={inputStyle}
-          >
-            Done
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={busy}
-              className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => void write(template()).then(settled)}
-              disabled={busy}
-              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={inputStyle}
-            >
-              {busy ? busyLabel : confirmLabel}
-            </button>
-          </>
-        )}
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => void write(template()).then(settled)}
+          disabled={busy}
+          className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={inputStyle}
+        >
+          {busy ? busyLabel : confirmLabel}
+        </button>
       </div>
     </div>
   );

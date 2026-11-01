@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-/** What happens once a write has been answered: handed on, kept waiting for the person, or nothing. */
-import { act, renderHook } from "@testing-library/react";
+/** What happens once a write has been answered: handed on at once, with a toast for own relays that missed it, or nothing. */
+import { act, renderHook, screen } from "@testing-library/react";
 import type { NostrEvent } from "nostr-tools";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/toast";
 import { useSettled } from "@/hooks/use-settled";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
@@ -26,36 +28,62 @@ const result = (over: Partial<PublishResult>): PublishResult => ({
   ...over,
 });
 
-describe("useSettled", () => {
-  it("hands on a write that every relay took, and waits for nothing", () => {
-    const onSaved = vi.fn();
-    const { result: hook } = renderHook(() => useSettled(onSaved));
+const withToasts = ({ children }: { children: ReactNode }) => <ToastProvider>{children}</ToastProvider>;
 
-    act(() => hook.current.settled(result({})));
+describe("useSettled", () => {
+  it("hands on a write that every relay took, and says nothing", () => {
+    const onSaved = vi.fn();
+    const { result: hook } = renderHook(() => useSettled(onSaved), { wrapper: withToasts });
+
+    act(() => hook.current(result({})));
 
     expect(onSaved).toHaveBeenCalledTimes(1);
     expect(onSaved).toHaveBeenCalledWith(EVENT);
-    expect(hook.current.waiting).toBeNull();
+    expect(screen.queryByText(/Saved to the list relay/)).toBeNull();
   });
 
-  it("holds a write the list relay took and one of the author's own relays missed, until the person is done", () => {
+  it("hands on a write the list relay took at once, and a toast names the author's own relays that missed it", () => {
     const onSaved = vi.fn();
-    const { result: hook } = renderHook(() => useSettled(onSaved));
+    const { result: hook } = renderHook(() => useSettled(onSaved), { wrapper: withToasts });
 
-    act(() => hook.current.settled(result({ failed: [{ ok: false, from: "wss://own.example.test", message: "timed out" }] })));
+    act(() =>
+      hook.current(
+        result({
+          failed: [
+            { ok: false, from: "wss://own-a.example.test", message: "timed out" },
+            { ok: false, from: "wss://own-b.example.test/", message: "rate-limited: slow down" },
+          ],
+        }),
+      ),
+    );
 
-    expect(onSaved).not.toHaveBeenCalled();
-    expect(hook.current.waiting).toBe(EVENT);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(onSaved).toHaveBeenCalledWith(EVENT);
+    expect(
+      screen.getByText("Saved to the list relay. Not saved to 2 of your own relays: own-a.example.test, own-b.example.test."),
+    ).toBeTruthy();
   });
 
   it("does nothing for a write the list relay refused, or one that never went out", () => {
     const onSaved = vi.fn();
-    const { result: hook } = renderHook(() => useSettled(onSaved));
+    const { result: hook } = renderHook(() => useSettled(onSaved), { wrapper: withToasts });
 
-    act(() => hook.current.settled(result({ onHub: false, hubMessage: "blocked", accepted: [] })));
-    act(() => hook.current.settled(null));
+    act(() =>
+      hook.current(
+        result({
+          onHub: false,
+          hubMessage: "blocked",
+          accepted: [],
+          failed: [
+            { ok: false, from: DCOSL, message: "blocked" },
+            { ok: false, from: "wss://own.example.test", message: "timed out" },
+          ],
+        }),
+      ),
+    );
+    act(() => hook.current(null));
 
     expect(onSaved).not.toHaveBeenCalled();
-    expect(hook.current.waiting).toBeNull();
+    expect(screen.queryByText(/Saved to the list relay/)).toBeNull();
   });
 });

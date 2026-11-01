@@ -1,25 +1,36 @@
 "use client";
 
 import type { NostrEvent } from "nostr-tools";
-import { useState } from "react";
+import { useToast } from "@/components/toast";
 import type { PublishResult } from "@/services/publish";
 
+/** A relay as the person knows it: its host, "relay.example.com". */
+const hostOf = (relay: string): string => {
+  try {
+    return new URL(relay).host;
+  } catch {
+    return relay;
+  }
+};
+
+/** What the person is told of a write the list relay took that some of their own relays missed. */
+function missedNote(result: PublishResult): string {
+  const missed = result.failed.map((outcome) => hostOf(outcome.from));
+  return `Saved to the list relay. Not saved to ${missed.length} of your own relays: ${missed.join(", ")}.`;
+}
+
 /**
- * What happens once a write has been answered. A write the list relay took
- * is handed on at once (`onSaved`), unless one of the author's own relays
- * missed it: then it waits in `waiting`, so the person reads which one, and
- * the caller hands it on when they are done. A write the list relay refused,
- * or one that never went out (null), is neither: the outcome line says why.
+ * What happens once a write has been answered: the function to hand the
+ * answer to. A write the list relay took is handed on at once (`onSaved`), so
+ * the form or the question can go; when some of the author's own relays
+ * missed it, a toast says which. A write the list relay refused, or one that
+ * never went out (null), is neither: the outcome line says why.
  */
-export function useSettled(onSaved: (event: NostrEvent) => void): {
-  waiting: NostrEvent | null;
-  settled: (result: PublishResult | null) => void;
-} {
-  const [waiting, setWaiting] = useState<NostrEvent | null>(null);
-  const settled = (result: PublishResult | null) => {
+export function useSettled(onSaved: (event: NostrEvent) => void): (result: PublishResult | null) => void {
+  const { toast } = useToast();
+  return (result) => {
     if (!result?.onHub) return;
-    if (result.failed.length === 0) onSaved(result.event);
-    else setWaiting(result.event);
+    if (result.failed.length > 0) toast(missedNote(result));
+    onSaved(result.event);
   };
-  return { waiting, settled };
 }

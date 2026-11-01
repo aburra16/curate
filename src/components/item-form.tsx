@@ -49,14 +49,13 @@ const REQUIREMENT_WORDS = { required: "Required", recommended: "Recommended", op
  * the form opened, so a newer version of the item that arrives meanwhile keeps
  * its own changes.
  *
- * A save the list relay took closes the form at once (`onSaved`), unless one
- * of the author's own relays missed it: then the form stays, says which, and
- * hands the event on when the person is done.
+ * A save the list relay took closes the form at once (`onSaved`), and a
+ * toast names any of the author's own relays that missed it.
  */
 export function ItemForm({ definition, templates, item, onSaved, onCancel }: Props) {
   const { pubkey } = useReader();
   const { state, busy, write, retry } = useWrite();
-  const { waiting, settled } = useSettled(onSaved);
+  const settled = useSettled(onSaved);
   const headingId = useId();
   const singular = namesOf(definition.event).singular || "item";
 
@@ -98,7 +97,7 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
   const aboutTheItem = problems.filter((problem) => problem.field === null || !declared.has(problem.field));
 
   const stopped = itemProblems(definition, values).length > 0 || hasBlocking(problems);
-  const canPublish = pubkey !== null && !stopped && !busy && waiting === null;
+  const canPublish = pubkey !== null && !stopped && !busy;
 
   const publish = async () => {
     if (!canPublish) return;
@@ -123,16 +122,14 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
         <h3 id={headingId} className="font-serif text-[18px] text-ink">
           {item ? "Edit" : "Add"} {singular}
         </h3>
-        {waiting ? null : (
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={busy}
-            className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
-          >
-            Cancel
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="text-[12px] text-mute hover:text-ink-soft transition-colors disabled:opacity-40"
+        >
+          Cancel
+        </button>
       </div>
 
       {definition.fields.map((field, i) => (
@@ -143,7 +140,6 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
           onChange={(value) => setValues((prev) => ({ ...prev, [field.name]: value }))}
           problems={touched ? problemsFor(problems, field.name) : []}
           first={i === 0}
-          disabled={waiting !== null}
         />
       ))}
       {touched ? <CheckProblems problems={aboutTheItem} /> : null}
@@ -151,25 +147,14 @@ export function ItemForm({ definition, templates, item, onSaved, onCancel }: Pro
       <div className="flex flex-col gap-3">
         <PublishOutcome state={state} busy={busy} onRetry={() => void retryWrite()} />
         <div className="flex items-center justify-end gap-3">
-          {waiting ? (
-            <button
-              type="button"
-              onClick={() => onSaved(waiting)}
-              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
-              style={inputStyle}
-            >
-              Done
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!canPublish}
-              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={inputStyle}
-            >
-              {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={!canPublish}
+            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={inputStyle}
+          >
+            {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
+          </button>
         </div>
       </div>
     </form>
@@ -183,14 +168,12 @@ function FieldInput({
   onChange,
   problems,
   first,
-  disabled,
 }: {
   field: FieldDecl;
   value: string;
   onChange: (value: string) => void;
   problems: Problem[];
   first: boolean;
-  disabled: boolean;
 }) {
   const id = useId();
   const hintId = `${id}-hint`;
@@ -204,7 +187,6 @@ function FieldInput({
         type={INPUT_TYPES.get(field.type) ?? "text"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
         aria-describedby={hintId}
         aria-invalid={hasBlocking(problems) || undefined}
         className={inputClass}

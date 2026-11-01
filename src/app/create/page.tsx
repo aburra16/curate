@@ -57,9 +57,8 @@ const blockingProblem = (message: string, field: string | null): Problem => ({
  * list relay answered that read, Publish holds and offers to read again. When
  * a shared concept already goes by the same name, publishing offers a choice
  * first: make a version of that one, or offer a new one anyway. A list the
- * list relay took opens at once, unless one
- * of the person's own relays missed it: then the page says which, and the
- * person opens the list when ready.
+ * list relay took opens at once, and a toast names any of the person's own
+ * relays that missed it.
  */
 export default function CreateListPage() {
   const router = useRouter();
@@ -90,11 +89,9 @@ export default function CreateListPage() {
   const [offeredAnywayFor, setOfferedAnywayFor] = useState<string | null>(null);
   /** The address of the list last sent, for opening it once the list relay has it. */
   const sent = useRef<string | null>(null);
-  /** Opens the list. It runs at once when the list relay has the list, unless an own relay missed it: then the person is told first. */
-  const openList = () => {
+  const settled = useSettled(() => {
     if (sent.current) router.push(listHref(sent.current));
-  };
-  const { waiting, settled } = useSettled(openList);
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -151,15 +148,10 @@ export default function CreateListPage() {
   const mustChoose = sharedConcept !== null && offeredAnywayFor !== namesKey;
   const choosing = mustChoose && offered;
 
-  /** The list relay has the list, and one of the person's own relays doesn't: the page says which and waits. */
-  const savedWithMisses = waiting !== null;
+  /** The list relay has the list, and the page is on its way to it. */
+  const saved = state.phase === "done" && state.result.onHub;
   const canPublish =
-    pubkey !== null &&
-    headers !== null &&
-    ownRead?.answered === true &&
-    !hasBlocking(problems) &&
-    !busy &&
-    !savedWithMisses;
+    pubkey !== null && headers !== null && ownRead?.answered === true && !hasBlocking(problems) && !busy && !saved;
 
   const rename = (set: (name: string) => void, name: string) => {
     set(name);
@@ -445,25 +437,14 @@ export default function CreateListPage() {
                 </button>
               </div>
             ) : null}
-            {savedWithMisses ? (
-              <button
-                type="button"
-                onClick={openList}
-                className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all"
-                style={inputStyle}
-              >
-                Open the list
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={!canPublish}
-                className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={inputStyle}
-              >
-                {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={!canPublish}
+              className="text-[13px] font-medium px-6 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={inputStyle}
+            >
+              {!pubkey ? "Connect to publish" : busy ? "Publishing…" : "Publish"}
+            </button>
           </div>
         </div>
       </form>

@@ -3,23 +3,14 @@ import type { WriteState } from "@/hooks/use-write";
 import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
 
-/** A relay as the person knows it: its host, "relay.example.com". */
-const hostOf = (relay: string): string => {
-  try {
-    return new URL(relay).host;
-  } catch {
-    return relay;
-  }
-};
-
 /**
- * What the list relay said about the last write. Saved says so, and names any
- * of the author's own relays that didn't take it; not saved gives the list
- * relay's words and a Retry that resends the same event, disabled while a
- * write is in flight; a write that stopped before any relay was asked shows
- * why. A remote signer that stopped answering or refused (it may have been
- * revoked) also offers Connect again. Nothing shows before a write or while
- * one is in flight.
+ * What the list relay said about the last write. Saved says so (the write
+ * completes at once, and a toast names any of the author's own relays that
+ * missed it); not saved gives the list relay's words and a Retry that resends
+ * the same event, disabled while a write is in flight; a write that stopped
+ * before any relay was asked shows why. A remote signer that stopped
+ * answering or refused (it may have been revoked) also offers Connect again.
+ * Nothing shows before a write or while one is in flight.
  */
 export function PublishOutcome({
   state,
@@ -77,16 +68,9 @@ export function PublishOutcome({
     );
   }
 
-  const missed = result.failed.map((outcome) => hostOf(outcome.from));
   return (
     <p role="status" className="text-[12px] leading-[1.5] text-ink-soft">
       Saved to the list relay.
-      {missed.length > 0 ? (
-        <span className="text-mute">
-          {" "}
-          Not saved to {missed.length} of your own relays: {missed.join(", ")}.
-        </span>
-      ) : null}
     </p>
   );
 }

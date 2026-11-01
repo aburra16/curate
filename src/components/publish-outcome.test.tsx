@@ -57,13 +57,11 @@ describe("PublishOutcome", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("notes the hosts of your own relays that didn't take it", () => {
+  it("says only saved when some of your own relays didn't take it: a toast names them as the write completes", () => {
     const failed = [missed(OWN_A, "rate-limited: slow down"), missed(OWN_B, "timed out")];
     render(<PublishOutcome state={done({ accepted: [DCOSL], failed })} busy={false} onRetry={() => {}} />);
 
-    expect(screen.getByRole("status").textContent).toBe(
-      "Saved to the list relay. Not saved to 2 of your own relays: own-a.example.test, own-b.example.test.",
-    );
+    expect(screen.getByRole("status").textContent).toBe("Saved to the list relay.");
     expect(screen.queryByRole("button")).toBeNull();
   });
 

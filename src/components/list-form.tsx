@@ -27,12 +27,6 @@ interface Props {
   onCancel?: () => void;
   /** Beside the button: how the last write went. */
   outcome?: ReactNode;
-  /**
-   * The list relay has the list and one of the author's own relays hasn't:
-   * the fields lock and Done replaces Publish, so the person reads which
-   * relay missed it before the form goes.
-   */
-  onDone?: () => void;
 }
 
 const REQUIREMENTS: { value: FieldRequirement; label: string }[] = [
@@ -120,7 +114,6 @@ export function ListForm({
   heading,
   onCancel,
   outcome,
-  onDone,
 }: Props) {
   const headingId = useId();
   const nextRow = useRef(draft.fields.length);
@@ -132,8 +125,7 @@ export function ListForm({
       rows: draft.fields.map((field, id) => ({ id, was: field.name, field })),
     }),
   );
-  const locked = onDone !== undefined;
-  const canPublish = !busy && !holding && !locked && !hasBlocking(problems);
+  const canPublish = !busy && !holding && !hasBlocking(problems);
 
   const edit = (next: Values) => {
     setValues(next);
@@ -175,7 +167,7 @@ export function ListForm({
               {heading}
             </h3>
           ) : null}
-          {onCancel && !locked ? (
+          {onCancel ? (
             <button
               type="button"
               onClick={onCancel}
@@ -197,7 +189,6 @@ export function ListForm({
               type="text"
               value={values.singular}
               onChange={(e) => edit({ ...values, singular: e.target.value })}
-              disabled={locked}
               className={inputClass}
               style={inputStyle}
               autoFocus
@@ -212,7 +203,6 @@ export function ListForm({
               type="text"
               value={values.plural}
               onChange={(e) => edit({ ...values, plural: e.target.value })}
-              disabled={locked}
               className={inputClass}
               style={inputStyle}
             />
@@ -225,7 +215,6 @@ export function ListForm({
               aria-describedby={hint}
               value={values.description}
               onChange={(e) => edit({ ...values, description: e.target.value })}
-              disabled={locked}
               rows={3}
               className={cn(inputClass, "resize-none")}
               style={inputStyle}
@@ -251,8 +240,7 @@ export function ListForm({
                     aria-label={`Field ${n} name`}
                     value={field.name}
                     onChange={(e) => changeRow(id, { name: e.target.value })}
-                    disabled={locked}
-                    placeholder="Field name"
+                          placeholder="Field name"
                     className={cn(inputClass, "min-w-[10rem] flex-1 text-[13px]")}
                     style={inputStyle}
                   />
@@ -260,8 +248,7 @@ export function ListForm({
                     aria-label={`Field ${n} type`}
                     value={field.type ?? "text"}
                     onChange={(e) => changeRow(id, { type: e.target.value })}
-                    disabled={locked}
-                    className={selectClass}
+                          className={selectClass}
                     style={inputStyle}
                   >
                     {typeOptions(field.type ?? "text").map((type) => (
@@ -274,8 +261,7 @@ export function ListForm({
                     aria-label={`Field ${n} requirement`}
                     value={field.requirement}
                     onChange={(e) => changeRow(id, { requirement: e.target.value as FieldRequirement })}
-                    disabled={locked}
-                    className={selectClass}
+                          className={selectClass}
                     style={inputStyle}
                   >
                     {REQUIREMENTS.map((requirement) => (
@@ -288,8 +274,7 @@ export function ListForm({
                     type="button"
                     aria-label={`Remove field ${n}`}
                     onClick={() => removeRow(id)}
-                    disabled={locked}
-                    className="px-1 text-[18px] leading-none text-mute hover:text-accent transition-colors disabled:opacity-40"
+                          className="px-1 text-[18px] leading-none text-mute hover:text-accent transition-colors"
                   >
                     &times;
                   </button>
@@ -299,8 +284,7 @@ export function ListForm({
                   aria-label={`Field ${n} description`}
                   value={field.description ?? ""}
                   onChange={(e) => changeRow(id, { description: e.target.value })}
-                  disabled={locked}
-                  placeholder="Short description (optional)"
+                      placeholder="Short description (optional)"
                   className={cn(inputClass, "text-[12px]")}
                   style={inputStyle}
                 />
@@ -311,8 +295,7 @@ export function ListForm({
         <button
           type="button"
           onClick={addRow}
-          disabled={locked}
-          className="self-start py-1 text-[13px] text-accent hover:text-ink transition-colors disabled:opacity-40"
+          className="self-start py-1 text-[13px] text-accent hover:text-ink transition-colors"
         >
           Add a field
         </button>
@@ -322,25 +305,14 @@ export function ListForm({
       <div className="flex flex-col gap-3">
         {outcome}
         <div className="flex items-center justify-end gap-3">
-          {locked ? (
-            <button
-              type="button"
-              onClick={onDone}
-              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all"
-              style={inputStyle}
-            >
-              Done
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!canPublish}
-              className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={inputStyle}
-            >
-              {busy ? "Publishing…" : "Publish"}
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={!canPublish}
+            className="text-[13px] font-medium px-5 py-2 bg-accent text-ink hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={inputStyle}
+          >
+            {busy ? "Publishing…" : "Publish"}
+          </button>
         </div>
       </div>
     </form>

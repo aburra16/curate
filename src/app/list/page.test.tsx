@@ -29,6 +29,7 @@ import { useSettings } from "@/stores/settings";
 import { useSigner } from "@/stores/signer";
 import { useView } from "@/stores/view";
 import { relayCorpus, type HeldRelay } from "@/test/relayCorpus";
+import { ToastProvider } from "@/components/toast";
 import foodCopies from "@/test/fixtures/food.copies.json";
 import foodHeader from "@/test/fixtures/food.header.json";
 import foodItems from "@/test/fixtures/food.items.json";
@@ -85,6 +86,12 @@ function relays(events: NostrEvent[], index: HeldRelay = events) {
 function open(c: string, version?: string, edit?: string) {
   nav.params = new URLSearchParams({ c, ...(version ? { version } : {}), ...(edit ? { edit } : {}) });
   return render(<ListPage />);
+}
+
+/** `open`, with the toasts the site's layout draws. */
+function openWithToasts(c: string) {
+  nav.params = new URLSearchParams({ c });
+  return render(<ListPage />, { wrapper: ToastProvider });
 }
 
 const title = () => screen.findByRole("heading", { level: 1 });
@@ -721,26 +728,19 @@ describe("changing a list", () => {
       expect(screen.queryByRole("form")).toBeNull();
     });
 
-    it("waits for the reader to say Done when an own relay missed it, and shows the change then", async () => {
+    it("shows the change at once when an own relay missed it, and a toast says which", async () => {
       vi.mocked(signAndPublish).mockImplementation(async (template) => signedBy(COPIER, template, OWN_RELAY_MISSED));
       signIn(COPIER);
-      open(FOOD);
+      openWithToasts(FOOD);
       await title();
       click("Edit list");
       type("Plural name", "Eats");
 
       click("Publish");
 
-      await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/);
-      expect(screen.getByRole("form", { name: "Edit list" })).toBeTruthy();
-      expect((screen.getByLabelText("Plural name") as HTMLInputElement).disabled).toBe(true);
-      expect(maybe("Publish")).toBeNull();
-      expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Food and Drink Places");
-
-      click("Done");
-
       await vi.waitFor(() => expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Eats"));
       expect(screen.queryByRole("form")).toBeNull();
+      expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
       expect(signAndPublish).toHaveBeenCalledTimes(1);
     });
 
@@ -856,22 +856,17 @@ describe("changing a list", () => {
       expect(screen.getByText(WITHDRAW_ASKED)).toBeTruthy();
     });
 
-    it("waits for the reader to say Done when an own relay missed it", async () => {
+    it("withdraws at once when an own relay missed it, and a toast says which", async () => {
       vi.mocked(signAndPublish).mockImplementation(async (template) => signedBy(COPIER, template, OWN_RELAY_MISSED));
       signIn(COPIER);
-      open(FOOD);
+      openWithToasts(FOOD);
       await title();
 
       click("Withdraw my version");
       click("Withdraw");
 
-      await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/);
-      expect(screen.getByText("Your version")).toBeTruthy();
-      expect(maybe("Withdraw")).toBeNull();
-
-      click("Done");
-
       await vi.waitFor(() => expect(screen.getByText("Brainstorm’s version")).toBeTruthy());
+      expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
       expect(signAndPublish).toHaveBeenCalledTimes(1);
     });
 

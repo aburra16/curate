@@ -3,12 +3,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { NostrEvent } from "nostr-tools";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { applyVote, voteTemplate, type ReactionCount } from "@/lib/curate/writeTemplates";
+import { voteTemplate, type ReactionCount } from "@/lib/curate/writeTemplates";
 import type { ItemEvent } from "@/services/concepts";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
 import { SignerError } from "@/services/signer";
 import { useSigner } from "@/stores/signer";
+import { ToastProvider } from "@/components/toast";
 
 vi.mock("@/services/publish", () => ({ signAndPublish: vi.fn(), retryPublish: vi.fn() }));
 
@@ -59,8 +60,10 @@ const FRESH: ReactionCount = { up: 4, down: 2, mine: null };
 function show(over: { item?: ItemEvent; count?: ReactionCount; readerCounts?: boolean } = {}) {
   const onVoted = vi.fn();
   const props = { item: CAFE, count: FRESH, readerCounts: true, onVoted, ...over };
-  const view = render(<VoteButtons {...props} />);
-  return { onVoted, props, view };
+  const view = render(<VoteButtons {...props} />, { wrapper: ToastProvider });
+  /** The buttons and what is said beneath them; toasts are drawn beside, not in here. */
+  const votes = () => view.container.firstElementChild as HTMLElement;
+  return { onVoted, props, view, votes };
 }
 
 const up = () => screen.getByRole("button", { name: /Upvote/ }) as HTMLButtonElement;
@@ -187,13 +190,14 @@ describe("VoteButtons", () => {
 
   it("says nothing of a vote every relay took", async () => {
     vi.mocked(signAndPublish).mockResolvedValue(saved);
-    const { onVoted, view } = show();
+    const { onVoted, votes } = show();
 
     fireEvent.click(up());
 
     await waitFor(() => expect(onVoted).toHaveBeenCalled());
     expect(up().disabled).toBe(false);
-    expect(view.container.querySelector("[role=status], [role=alert]")).toBeNull();
+    expect(votes().querySelector("[role=status], [role=alert]")).toBeNull();
+    expect(screen.queryByText(/Saved to the list relay/)).toBeNull();
   });
 
   it("a vote the list relay refused changes nothing, says so, and Retry sends the same event again", async () => {
@@ -214,30 +218,28 @@ describe("VoteButtons", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("a vote the list relay took but one of the reader's own relays missed counts, with a note", async () => {
+  it("a vote the list relay took but one of the reader's own relays missed counts, and a toast says which", async () => {
     vi.mocked(signAndPublish).mockResolvedValue(savedButOwn);
-    const { onVoted } = show();
+    const { onVoted, votes } = show();
 
     fireEvent.click(up());
 
     await waitFor(() => expect(onVoted).toHaveBeenCalledWith({ up: 5, down: 2, mine: "+" }));
-    expect((await screen.findByRole("status")).textContent).toContain("Not saved to 1 of your own relays: own.example.test");
+    expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
+    // Nothing stays beneath the buttons.
+    expect(votes().querySelector("[role=status], [role=alert]")).toBeNull();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
-  it("clears the note on the next vote", async () => {
-    vi.mocked(signAndPublish).mockResolvedValueOnce(savedButOwn).mockReturnValueOnce(new Promise(() => {}));
-    const view = show();
+  it("clears a refusal's note on the next vote", async () => {
+    vi.mocked(signAndPublish).mockResolvedValueOnce(refused).mockReturnValueOnce(new Promise(() => {}));
+    show();
 
     fireEvent.click(up());
-    await screen.findByRole("status");
-    // The page hands back the new count, and the reader votes again.
-    view.view.rerender(
-      <VoteButtons {...view.props} count={applyVote(FRESH, "+", true)} />,
-    );
+    await screen.findByRole("alert");
     fireEvent.click(down());
 
-    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     expect(signAndPublish).toHaveBeenCalledTimes(2);
   });
 

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-/** A question that is answered with one write: Cancel, the confirm button, what the relays said, and Done. */
+/** A question that is answered with one write: Cancel, the confirm button, and what the relays said. */
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { EventTemplate, NostrEvent } from "nostr-tools";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
+import { ToastProvider } from "@/components/toast";
 
 vi.mock("@/services/publish", () => ({ signAndPublish: vi.fn(), retryPublish: vi.fn() }));
 
@@ -29,13 +30,15 @@ function ask(over: { onDone?: (event: NostrEvent) => void; onCancel?: () => void
   const props = { onDone: vi.fn(), onCancel: vi.fn(), ...over };
   const template = vi.fn(() => TEMPLATE);
   render(
-    <ConfirmWrite
-      question="Remove this? It can't be undone."
-      confirmLabel="Remove"
-      busyLabel="Removing…"
-      template={template}
-      {...props}
-    />,
+    <ToastProvider>
+      <ConfirmWrite
+        question="Remove this? It can't be undone."
+        confirmLabel="Remove"
+        busyLabel="Removing…"
+        template={template}
+        {...props}
+      />
+    </ToastProvider>,
   );
   return { ...props, template };
 }
@@ -98,7 +101,7 @@ describe("ConfirmWrite", () => {
     expect(signAndPublish).toHaveBeenCalledOnce();
   });
 
-  it("holds on the note when an own relay missed it, with Done in place of Cancel and the confirm button", async () => {
+  it("hands on at once when an own relay missed it, and a toast says which", async () => {
     vi.mocked(signAndPublish).mockResolvedValue({
       ...saved,
       failed: [{ ok: false, from: "wss://own.example.test", message: "timed out" }],
@@ -107,14 +110,9 @@ describe("ConfirmWrite", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
 
-    expect(await screen.findByText(/Not saved to 1 of your own relays: own\.example\.test/)).toBeTruthy();
-    expect(onDone).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Remove" })).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-
+    await waitFor(() => expect(onDone).toHaveBeenCalledWith(EVENT));
     expect(onDone).toHaveBeenCalledTimes(1);
-    expect(onDone).toHaveBeenCalledWith(EVENT);
+    expect(screen.getByText("Saved to the list relay. Not saved to 1 of your own relays: own.example.test.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
   });
 });

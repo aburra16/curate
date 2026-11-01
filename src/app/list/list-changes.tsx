@@ -62,7 +62,7 @@ function ListEditor({
   const { state, busy, write, retry } = useWrite();
   const [opened] = useState(() => listEditDraft(edit));
   const [draft, setDraft] = useState(opened);
-  const { waiting, settled } = useSettled(onSaved);
+  const settled = useSettled(onSaved);
 
   /** The reader's own list headers, read to choose a version's short name; null until then. */
   const [own, setOwn] = useState<OwnHeaders | null>(null);
@@ -121,7 +121,6 @@ function ListEditor({
           <PublishOutcome state={state} busy={busy} onRetry={() => void retry().then(settled)} />
         </>
       }
-      onDone={waiting ? () => onSaved(waiting) : undefined}
     />
   );
 }
