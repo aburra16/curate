@@ -25,6 +25,8 @@ export function useConnectSigner() {
   const disconnect = useCallback(async () => {
     try {
       await disconnectSigner();
+    } catch {
+      // The signer is forgotten before anything can fail; closing it is all that went wrong.
     } finally {
       setDisconnected();
     }

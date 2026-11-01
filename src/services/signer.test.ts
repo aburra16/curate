@@ -3,6 +3,7 @@ import { PrivateKeySigner, type ISigner } from "applesauce-signers";
 import type { EventTemplate } from "nostr-tools";
 import { generateSecretKey, verifyEvent } from "nostr-tools/pure";
 import { afterEach, describe, expect, it } from "vitest";
+import { SESSION_KEY } from "./remoteSigner";
 import {
   activate,
   activeSigner,
@@ -42,9 +43,36 @@ async function failure(call: Promise<unknown>): Promise<SignerError> {
   throw new Error("expected the call to fail");
 }
 
+/** A signer whose signing waits until the test lets it finish. */
+function waitingSigner(behind: ISigner): { signer: ISigner; finish: () => void } {
+  let finish = () => {};
+  const signer: ISigner = {
+    getPublicKey: () => behind.getPublicKey(),
+    signEvent: (template) =>
+      new Promise((resolve) => {
+        finish = () => resolve(behind.signEvent(template));
+      }),
+  };
+  return { signer, finish: () => finish() };
+}
+
+/** A remote signer stand-in that counts how often it was closed. */
+function closableSigner(behind: ISigner): ISigner & { close: () => Promise<void>; closed: number } {
+  const signer = {
+    closed: 0,
+    getPublicKey: () => behind.getPublicKey(),
+    signEvent: (template: EventTemplate) => behind.signEvent(template),
+    close: async () => {
+      signer.closed += 1;
+    },
+  };
+  return signer;
+}
+
 afterEach(async () => {
   delete (window as unknown as Page).nostr;
   await disconnect();
+  sessionStorage.clear();
 });
 
 describe("connectExtension", () => {
@@ -193,6 +221,46 @@ describe("signTemplate", () => {
     expect(err.message).toBe("The signer didn't answer in time.");
   });
 
+  it("returns nothing when the signer is disconnected while it signs", async () => {
+    const { signer, finish } = waitingSigner(CURATOR);
+    activate(signer, "extension", await CURATOR.getPublicKey());
+
+    const signing = signTemplate(NOTE);
+    await disconnect();
+    finish();
+
+    const err = await failure(signing);
+    expect(err.reason).toBe("not-connected");
+  });
+
+  it("returns nothing when another signer takes over while it signs", async () => {
+    const { signer, finish } = waitingSigner(CURATOR);
+    activate(signer, "extension", await CURATOR.getPublicKey());
+
+    const signing = signTemplate(NOTE);
+    activate(OTHER, "extension", await OTHER.getPublicKey());
+    finish();
+
+    expect((await failure(signing)).reason).toBe("not-connected");
+  });
+
+  it.each([
+    ["drops the client tag", (tags: string[][]) => tags.filter((tag) => tag[0] !== "client")],
+    ["repeats the client tag", (tags: string[][]) => [...tags, ["client", "Curate"]]],
+    ["adds a client tag of its own", (tags: string[][]) => [...tags, ["client", "Other"]]],
+  ])("refuses an event from a signer that %s", async (_, retag) => {
+    const meddler: ISigner = {
+      getPublicKey: () => CURATOR.getPublicKey(),
+      signEvent: (template) => CURATOR.signEvent({ ...template, tags: retag(template.tags) }),
+    };
+    activate(meddler, "extension", await CURATOR.getPublicKey());
+
+    const err = await failure(signTemplate(NOTE));
+
+    expect(err.reason).toBe("refused");
+    expect(err.message).toBe("The signer changed the event it was asked to sign.");
+  });
+
   it("reports not connected when no signer is active", async () => {
     installExtension(CURATOR);
 
@@ -203,6 +271,17 @@ describe("signTemplate", () => {
 });
 
 describe("activate", () => {
+  it("closes a remote signer it replaces, and forgets its session", async () => {
+    const remote = closableSigner(CURATOR);
+    activate(remote, "remote", await CURATOR.getPublicKey());
+    sessionStorage.setItem(SESSION_KEY, "{}");
+
+    activate(OTHER, "extension", await OTHER.getPublicKey());
+
+    expect(remote.closed).toBe(1);
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+  });
+
   it("makes a signer of another kind the active one", async () => {
     const pubkey = await OTHER.getPublicKey();
 
@@ -223,5 +302,16 @@ describe("disconnect", () => {
 
     expect(activeSigner()).toBeNull();
     expect((await failure(signTemplate(NOTE))).reason).toBe("not-connected");
+  });
+
+  it("closes a remote signer and forgets its session", async () => {
+    const remote = closableSigner(CURATOR);
+    activate(remote, "remote", await CURATOR.getPublicKey());
+    sessionStorage.setItem(SESSION_KEY, "{}");
+
+    await disconnect();
+
+    expect(remote.closed).toBe(1);
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
   });
 });
