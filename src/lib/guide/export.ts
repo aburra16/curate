@@ -19,12 +19,21 @@ const SOURCE_URL = "https://github.com/aburra16/curate";
 const WHAT_IT_IS =
   "Curate is a website for finding, reading and adding to DLists. A DList is a list that anyone can add to: one person starts it and says what it is about, and everyone else adds entries.";
 
+/** A link to another page of the guide, as the Markdown writes it: `](/guide/<slug>)`, with any `#part` kept. */
+const GUIDE_LINK = /\]\(\/guide\/([a-z0-9-]+)(#[^)\s]*)?\)/g;
+
 /**
  * A page as a Markdown file that stands alone: its title, its summary as a
- * quote, then the page. The site draws the title itself, so the source has none.
+ * quote, where the page lives on the site, then the page. The site draws the
+ * title itself, so the source has none. Links to the guide's other pages are
+ * written for the site (`/guide/<slug>`); here they name the other page's
+ * Markdown copy in full, so they lead somewhere wherever the text is read.
  */
 export function pageMarkdown(page: GuidePage): string {
-  return `# ${page.title}\n\n> ${page.summary}\n\n${page.markdown.trimEnd()}\n`;
+  const body = page.markdown
+    .trimEnd()
+    .replace(GUIDE_LINK, (_link, slug: string, part = "") => `](${SITE_URL}/guide/${slug}.md${part})`);
+  return `# ${page.title}\n\n> ${page.summary}\n\nSource: ${SITE_URL}/guide/${page.slug}\n\n${body}\n`;
 }
 
 /** The guide in the shape llmstxt.org describes: a title, a summary, and links to each page. */
@@ -35,7 +44,7 @@ export function llmsTxt(pages: GuidePage[]): string {
     "",
     `> ${WHAT_IT_IS}`,
     "",
-    "DLists live on nostr, an open network, so no one company owns them and any app can read them. Curate has no accounts and charges nothing. Reading needs nothing at all. To add to a list or make one, you connect a signer, a small program that holds your key and signs for you. The guide explains each part in plain words, one page for each.",
+    `DLists live on nostr, an open network, so no one company owns them and any app can read them. Curate has no accounts and charges nothing. Reading needs nothing at all. To add to a list or make one, you connect a signer, a small program that holds your key and signs for you. The guide explains each part in plain words, one page for each. All of it is also in one file: ${SITE_URL}/llms-full.txt.`,
     "",
     "## Guide",
     "",

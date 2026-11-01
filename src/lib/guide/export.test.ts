@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SITE_URL, type GuidePage } from "@/lib/guide/content";
+import { guidePages, SITE_URL, type GuidePage } from "@/lib/guide/content";
 import { llmsFullTxt, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from "@/lib/guide/export";
 
 const NIP = "https://nostrhub.io/naddr1qvzqqqrcvypzpef89h53f0fsza2ugwdc3e54nfpun5nxfqclpy79r6w8nxsk5yp0qythwumn8ghj7erpwe5kgtnwdaehgu339e3k7mf0qqfkgetrv4h8gunpd35h5ety94kxjum5wv4px7v6";
@@ -32,9 +32,9 @@ function section(text: string, heading: string): string[] {
 }
 
 describe("pageMarkdown", () => {
-  it("puts the title above the summary and the Markdown, with no front matter", () => {
+  it("puts the title above the summary, the page's address and the Markdown, with no front matter", () => {
     expect(pageMarkdown(PAGES[0])).toBe(
-      "# Coffee shops\n\n> A list of good places for coffee.\n\nFirst body.\n\n## A heading\n\nMore of the first body.\n",
+      `# Coffee shops\n\n> A list of good places for coffee.\n\nSource: ${SITE_URL}/guide/coffee-shops\n\nFirst body.\n\n## A heading\n\nMore of the first body.\n`,
     );
   });
 
@@ -44,6 +44,45 @@ describe("pageMarkdown", () => {
 
     expect(bare.endsWith("Text.\n")).toBe(true);
     expect(spaced.endsWith("Text.\n")).toBe(true);
+  });
+
+  it("points a link to another page of the guide at that page's Markdown copy", () => {
+    const text = pageMarkdown({
+      ...PAGES[0],
+      markdown: "See [the tea page](/guide/tea-houses) and [signing in](/guide/signing-in), then [tea again](/guide/tea-houses).\n",
+    });
+
+    expect(text).toContain(
+      `See [the tea page](${SITE_URL}/guide/tea-houses.md) and [signing in](${SITE_URL}/guide/signing-in.md), then [tea again](${SITE_URL}/guide/tea-houses.md).`,
+    );
+    expect(text).not.toContain("](/");
+  });
+
+  it("keeps the part of a link after # and leaves other links as they are", () => {
+    const text = pageMarkdown({
+      ...PAGES[0],
+      markdown: "[a part](/guide/tea-houses#steeping), [the NIP](https://nostrhub.io/naddr1abc), [a path](/guide-notes/tea).\n",
+    });
+
+    expect(text).toContain(`[a part](${SITE_URL}/guide/tea-houses.md#steeping)`);
+    expect(text).toContain("[the NIP](https://nostrhub.io/naddr1abc)");
+    expect(text).toContain("[a path](/guide-notes/tea)");
+  });
+
+  it("leaves no link of the guide's own pages pointing anywhere but at an existing Markdown copy", () => {
+    const pages = guidePages();
+    const slugs = new Set(pages.map((page) => page.slug));
+    let checked = 0;
+
+    for (const page of pages) {
+      const text = pageMarkdown(page);
+      expect(text, page.slug).not.toContain("](/");
+      for (const [, slug] of text.matchAll(new RegExp(`\\]\\(${SITE_URL}/guide/([a-z0-9-]+)\\.md(?:#[^)\\s]*)?\\)`, "g"))) {
+        expect(slugs.has(slug), `${page.slug} links to ${slug}`).toBe(true);
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 });
 
@@ -62,6 +101,10 @@ describe("llmsTxt", () => {
     expect(lines[2]).toMatch(/^> \S/);
     expect(lines[3]).toBe("");
     expect(lines[4]).toMatch(/^[A-Z]/);
+  });
+
+  it("says the whole guide is also in one file, and where", () => {
+    expect(text.split("\n")[4]).toContain(`All of it is also in one file: ${SITE_URL}/llms-full.txt.`);
   });
 
   it("lists every page under ## Guide, in order, with its absolute Markdown address and its summary", () => {
@@ -106,7 +149,9 @@ describe("llmsFullTxt", () => {
     expect(at.every((index) => index > 0)).toBe(true);
     expect(at).toEqual([...at].sort((a, b) => a - b));
     for (const page of PAGES) {
-      expect(text).toContain(`# ${page.title}\n\n> ${page.summary}\n\n${page.markdown}`);
+      expect(text).toContain(
+        `# ${page.title}\n\n> ${page.summary}\n\nSource: ${SITE_URL}/guide/${page.slug}\n\n${page.markdown}`,
+      );
     }
   });
 

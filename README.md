@@ -66,10 +66,13 @@ npm run dev      # http://localhost:3000
 Other scripts:
 
 ```bash
-npm run build    # static export into out/
+npm run build         # static export into out/
+npm run guide:export  # the guide's files for AI assistants, into public/
 npm run lint
 npx tsc --noEmit
 ```
+
+`npm run dev` and `npm run build` first run `npm run guide:export`, which writes `llms.txt`, `llms-full.txt`, the guide's `.md` copies, `robots.txt` and `sitemap.xml` into `public/` from the pages in `src/content/guide`. Git doesn't keep those files. Run it again after you edit a guide page while `npm run dev` is running.
 
 ## Test it
 

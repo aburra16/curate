@@ -1,0 +1,9 @@
+# The guide has curly quotes, arrows and other characters outside ASCII, so say which text encoding these files use.
+/guide/*.md
+  Content-Type: text/markdown; charset=utf-8
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+
+/llms-full.txt
+  Content-Type: text/plain; charset=utf-8
