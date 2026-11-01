@@ -14,7 +14,9 @@ import type { NostrEvent } from "nostr-tools/pure";
 import { UNTITLED_LIST } from "@/app/discover-model";
 import { singularOf } from "@/app/list/items-model";
 import { listHref, type VersionLabel } from "@/app/list/list-model";
+import { CopyButton } from "@/components/copy-button";
 import { ItemHero } from "@/components/item-hero";
+import { RelationshipsTab } from "@/components/relationships-tab";
 import { UserIdentity } from "@/components/user-identity";
 import { useDialog } from "@/hooks/use-dialog";
 import { useTemplates } from "@/hooks/use-templates";
@@ -36,7 +38,7 @@ import { namesOf, presentCurateItem } from "@/services/jsonData";
 import { seenOn } from "@/services/nostr";
 import { fetchTemplates } from "@/services/templates";
 
-export type PanelTab = "item" | "pretty" | "raw";
+export type PanelTab = "item" | "pretty" | "raw" | "relationships";
 
 /** One copy of the list's concept, for the header's Raw to switch between. */
 export interface PanelCopy {
@@ -49,7 +51,7 @@ export interface EventPanelProps {
   /** The event to show; null while it is being read or when it can't be, and `notice` says which. */
   event: NostrEvent | null;
   notice?: string | null;
-  /** This is the list's own header: it has Pretty and Raw only, and the extras only a header has. */
+  /** This is the list's own header: it has no Item tab, and the extras only a header has. */
   header: boolean;
   /** The event isn't one of this list's items (a link led here from another list): the list's definition doesn't describe it. */
   foreign?: boolean;
@@ -66,7 +68,16 @@ export interface EventPanelProps {
   returnFocus?: () => HTMLElement | null;
 }
 
-const TAB_NAMES: Record<PanelTab, string> = { item: "Item", pretty: "Pretty", raw: "Raw" };
+const TAB_NAMES: Record<PanelTab, string> = { item: "Item", pretty: "Pretty", raw: "Raw", relationships: "Relationships" };
+
+/**
+ * What the Relationships tab is handed of the page's ranks: none. The page
+ * ranks its items' authors, who are rarely the people a tab turns up (those
+ * who tagged, copied or mentioned an event), so the tab asks the reader's
+ * scorer for them itself, once per event.
+ */
+const NO_RANKS = new Map<string, number>();
+const NOBODY: ReadonlySet<string> = new Set();
 
 /** A link out of Curate: a new tab, no referrer, no endorsement. Only http(s) URLs reach here. */
 const OUT = { target: "_blank", rel: "noopener noreferrer nofollow" } as const;
@@ -76,40 +87,6 @@ const chip = "shrink-0 border border-rule px-1.5 py-px text-[10px] tracking-[0.0
 const link = "text-accent underline underline-offset-2 break-all";
 
 // -- small parts -------------------------------------------------------------------
-
-/** A copy button: the text goes to the clipboard, and the button says so. */
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
-  useEffect(() => {
-    if (state === "idle") return;
-    const timer = setTimeout(() => setState("idle"), 1800);
-    return () => clearTimeout(timer);
-  }, [state]);
-
-  return (
-    <span className="shrink-0">
-      <button
-        type="button"
-        aria-label={`Copy ${label}`}
-        onClick={async () => {
-          try {
-            await navigator.clipboard.writeText(text);
-            setState("copied");
-          } catch {
-            setState("failed");
-          }
-        }}
-        className="border border-rule px-2 py-0.5 text-[11px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
-        style={{ borderRadius: "var(--radius-input)" }}
-      >
-        {state === "copied" ? "Copied" : "Copy"}
-      </button>
-      <span role="status" className="sr-only">
-        {state === "copied" ? `Copied ${label}` : state === "failed" ? `Could not copy ${label}` : ""}
-      </span>
-    </span>
-  );
-}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -555,8 +532,9 @@ function titleOf(event: NostrEvent, role: Role, definition: ConceptDefinition | 
  * and shareable by its URL. A side sheet from 768 px up, the whole screen
  * below. Tabs: Item (a list's items only: its fields as the header declares
  * them), Pretty (every tag, labelled, with its identity and where it came
- * from) and Raw (the event exactly as signed). Nothing here shows anyone's
- * rank.
+ * from), Raw (the event exactly as signed) and Relationships (what it is
+ * connected to, read when that tab is first chosen). Nothing here shows
+ * anyone's rank.
  */
 export function EventPanel({
   event,
@@ -576,12 +554,14 @@ export function EventPanel({
   const panelId = useId();
 
   const hasItemTab = !!event && !header && !foreign;
-  const tabs: PanelTab[] = hasItemTab ? ["item", "pretty", "raw"] : ["pretty", "raw"];
+  const tabs: PanelTab[] = hasItemTab ? ["item", "pretty", "raw", "relationships"] : ["pretty", "raw", "relationships"];
   // A tab the reader chose belongs to the event they chose it on; another event opens on the first.
   const [chosen, setChosen] = useState<{ id: string; tab: PanelTab } | null>(null);
   const picked = chosen && chosen.id === event?.id && tabs.includes(chosen.tab) ? chosen.tab : null;
   const current = picked ?? (tab && tabs.includes(tab) ? tab : tabs[0]);
   const tabRefs = useRef(new Map<PanelTab, HTMLButtonElement>());
+  // The event whose Relationships the reader has left for another tab: it stays drawn, hidden, so coming back reads nothing again.
+  const [leftRelationships, setLeftRelationships] = useState<string | null>(null);
 
   const role: Role = header ? "header" : foreign ? "foreign" : "item";
   const title = event ? titleOf(event, role, definition) : "Event";
@@ -596,7 +576,9 @@ export function EventPanel({
   const classifiedBy = hasItemTab ? definition : null;
 
   const choose = (t: PanelTab) => {
-    if (event) setChosen({ id: event.id, tab: t });
+    if (!event) return;
+    if (current === "relationships") setLeftRelationships(event.id);
+    setChosen({ id: event.id, tab: t });
   };
   const moveTab = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
     const at = tabs.indexOf(current);
@@ -690,6 +672,11 @@ export function EventPanel({
                   <Pretty event={event} definition={classifiedBy} header={header} eventHref={eventHref} />
                 ) : null}
                 {current === "raw" ? <Raw event={event} copies={header ? copies : []} /> : null}
+                {current === "relationships" || leftRelationships === event.id ? (
+                  <div hidden={current !== "relationships"}>
+                    <RelationshipsTab event={event} ranks={NO_RANKS} answered={NOBODY} eventHref={eventHref} />
+                  </div>
+                ) : null}
               </div>
             </div>
           </>

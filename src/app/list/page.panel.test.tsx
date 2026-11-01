@@ -170,7 +170,7 @@ describe("opening the panel", () => {
 
     const d = await dialog();
     expect(await within(d).findByRole("heading", { level: 2, name: "Steak 'n Shake" })).toBeTruthy();
-    expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Item", "Pretty", "Raw"]);
+    expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Item", "Pretty", "Raw", "Relationships"]);
     expect(within(d).getByRole("tab", { name: "Item" }).getAttribute("aria-selected")).toBe("true");
     // Read through the list's definition: its title, its link, and the rest folded away.
     const item = within(within(d).getByRole("tabpanel"));
@@ -200,13 +200,13 @@ describe("opening the panel", () => {
     expect(container.querySelector("pre")!.textContent).toBe(JSON.stringify(steak, null, 2));
   });
 
-  it("?event=header opens the header the page shows: Pretty and Raw, and a copy's b is a link to the concept", async () => {
+  it("?event=header opens the header the page shows: no Item tab, and a copy's b is a link to the concept", async () => {
     relays(food);
     // Signed out, Brainstorm's copy governs: its b points at the community header.
     open({ event: "header" }, null);
     const d = await dialog();
     expect(within(d).getByRole("heading", { name: "Food and Drink Places" })).toBeTruthy();
-    expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw"]);
+    expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw", "Relationships"]);
     expect(within(d).queryByText("Itself (canonical)")).toBeNull();
     const concept = within(d).getAllByRole("link", { name: FOOD }).find((l) => l.closest("section")?.querySelector("h3")?.textContent === "Concept");
     expect(concept?.getAttribute("href")).toBe(`/list?c=${encodeURIComponent(FOOD)}`);
@@ -246,13 +246,13 @@ describe("an event the page doesn't hold", () => {
     expect(await within(await dialog()).findByRole("heading", { level: 2, name: "Mi-Sant Banh Mi Co." })).toBeTruthy();
   });
 
-  it("an event of another list is shown by Pretty and Raw alone", async () => {
+  it("an event of another list has no Item tab", async () => {
     const stranger = { ...foodHeader[0] } as NostrEvent;
     relays([...food, ...rows]);
     open({ item: stranger.id });
     const d = await dialog();
     expect(await within(d).findByRole("heading", { name: "Food and Drink Places" })).toBeTruthy();
-    expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw"]);
+    expect(within(d).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw", "Relationships"]);
   });
 
   it("says no relay returned an event nobody has", async () => {
@@ -437,7 +437,79 @@ describe("following a link inside the panel", () => {
     follow(rerender, nav.router.replace);
     const next = await screen.findByRole("heading", { name: "Food and Drink Places" });
     expect(next).toBeTruthy();
-    expect(within(screen.getByRole("dialog")).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw"]);
+    expect(within(screen.getByRole("dialog")).getAllByRole("tab").map((t) => t.textContent)).toEqual([
+      "Pretty",
+      "Raw",
+      "Relationships",
+    ]);
     expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+  });
+});
+
+describe("the Relationships tab", () => {
+  const sk = generateSecretKey();
+  const WALKER = getPublicKey(sk);
+  const WALKS = `39998:${WALKER}:walks`;
+  const signed = (kind: number, created_at: number, tags: string[][]) =>
+    finalizeEvent({ kind, created_at, content: "", tags }, sk) as NostrEvent;
+  // Another list, with an item in it that points at the steak house.
+  const walks = signed(39998, 1_792_000_000, [["d", "walks"], ["names", "Walk", "Walks"]]);
+  const stop = signed(39999, 1_792_000_100, [["d", "stop-1"], ["z", WALKS], ["a", STEAK], ["name", "Best burger"]]);
+  const STOP = `39999:${WALKER}:stop-1`;
+
+  /** Whether any request was a read for events that name something by `q`: a copy search, which only this tab makes. */
+  const askedForCopies = (corpus: ReturnType<typeof relays>) =>
+    corpus.calls.some((call) => call.filters.some((f) => "#q" in f));
+
+  it("is read from the relays when it is chosen, not before", async () => {
+    const corpus = relays([...food, ...rows, walks, stop]);
+    open({ item: STEAK });
+    const d = await dialog();
+    await within(d).findByRole("heading", { level: 2, name: "Steak 'n Shake" });
+    expect(askedForCopies(corpus)).toBe(false);
+
+    fireEvent.click(within(d).getByRole("tab", { name: "Relationships" }));
+    await within(d).findByRole("heading", { name: "Mentioned by 1" });
+    expect(askedForCopies(corpus)).toBe(true);
+  });
+
+  it("names the list the item is on, and the lists whose items mention it, each a link", async () => {
+    relays([...food, ...rows, walks, stop]);
+    open({ item: STEAK });
+    const d = await dialog();
+    fireEvent.click(await within(d).findByRole("tab", { name: "Relationships" }));
+
+    const lists = (await within(d).findByRole("heading", { name: "On these lists 1" })).closest("section")!;
+    expect(within(lists).getByRole("link", { name: "Food and Drink Places" }).getAttribute("href")).toBe(
+      `/list?c=${encodeURIComponent(FOOD)}`,
+    );
+
+    const mentions = (await within(d).findByRole("heading", { name: "Mentioned by 1" })).closest("section")!;
+    expect(within(mentions).getByRole("link", { name: "Walks" }).getAttribute("href")).toBe(`/list?c=${encodeURIComponent(WALKS)}`);
+    // An item opens in the list it is on, with its panel open.
+    fireEvent.click(within(mentions).getByRole("link", { name: "Best burger" }));
+    const [href] = nav.router.push.mock.calls.at(-1)!;
+    expect(queryOf(href).get("c")).toBe(WALKS);
+    expect(queryOf(href).get("item")).toBe(STOP);
+  });
+
+  it("shows the sections an item has and hides the ones it has nothing for", async () => {
+    relays([...food, ...rows]);
+    open({ item: rows[1].id });
+    const d = await dialog();
+    fireEvent.click(await within(d).findByRole("tab", { name: "Relationships" }));
+    await within(d).findByRole("heading", { name: /^On these lists/ });
+    expect(within(d).queryByRole("heading", { name: /^Mentioned by/ })).toBeNull();
+    expect(within(d).queryByRole("heading", { name: /^Copies/ })).toBeNull();
+  });
+
+  it("is on a list header too, without On these lists or Copies", async () => {
+    relays([...food, walks, signed(39999, 1_792_000_200, [["d", "lists-i-follow"], ["z", WALKS], ["a", FOOD], ["name", "Food"]])]);
+    open({ event: "header" });
+    const d = await dialog();
+    fireEvent.click(await within(d).findByRole("tab", { name: "Relationships" }));
+    await within(d).findByRole("heading", { name: "Mentioned by 1" });
+    expect(within(d).queryByRole("heading", { name: /^On these lists/ })).toBeNull();
+    expect(within(d).queryByRole("heading", { name: /^Copies/ })).toBeNull();
   });
 });

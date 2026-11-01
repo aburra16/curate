@@ -24,6 +24,8 @@ const templates = vi.hoisted(() => ({ fetchTemplates: vi.fn() }));
 vi.mock("@/services/templates", () => templates);
 const relays = vi.hoisted(() => ({ seenOn: vi.fn() }));
 vi.mock("@/services/nostr", () => relays);
+const relationships = vi.hoisted(() => ({ loadRelationships: vi.fn() }));
+vi.mock("@/services/relationships", () => relationships);
 
 import { EventPanel, type EventPanelProps } from "./event-panel";
 
@@ -51,6 +53,9 @@ const event = (over: Partial<NostrEvent> & { tags: string[][] }): NostrEvent => 
 
 const eventHref = (value: string) => `/list?c=x&item=${encodeURIComponent(value)}`;
 
+/** What the service reads when nothing is connected. */
+const NOTHING = { lists: [], copies: [], tags: [], mentions: [], names: [], folded: { copies: [], mentions: [] }, unread: [] };
+
 function panel(props: Partial<EventPanelProps> = {}) {
   const onClose = vi.fn();
   const view = render(
@@ -75,6 +80,8 @@ beforeEach(() => {
   relays.seenOn.mockReturnValue([]);
   templates.fetchTemplates.mockReset();
   templates.fetchTemplates.mockResolvedValue(new Map());
+  relationships.loadRelationships.mockReset();
+  relationships.loadRelationships.mockResolvedValue(NOTHING);
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -180,9 +187,9 @@ describe("the dialog", () => {
 });
 
 describe("the tabs", () => {
-  it("an item opens on Item, with Pretty and Raw beside it", () => {
+  it("an item opens on Item, with Pretty, Raw and Relationships beside it", () => {
     panel();
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Item", "Pretty", "Raw"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Item", "Pretty", "Raw", "Relationships"]);
     expect(tab("Item").getAttribute("aria-selected")).toBe("true");
     openTab("Raw");
     expect(tab("Raw").getAttribute("aria-selected")).toBe("true");
@@ -194,18 +201,28 @@ describe("the tabs", () => {
     fireEvent.keyDown(tab("Item"), { key: "ArrowRight" });
     expect(tab("Pretty").getAttribute("aria-selected")).toBe("true");
     expect(document.activeElement).toBe(tab("Pretty"));
-    fireEvent.keyDown(tab("Pretty"), { key: "End" });
+    fireEvent.keyDown(tab("Pretty"), { key: "ArrowRight" });
     expect(tab("Raw").getAttribute("aria-selected")).toBe("true");
     fireEvent.keyDown(tab("Raw"), { key: "ArrowRight" });
+    expect(tab("Relationships").getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(tab("Relationships"));
+    // Past the last tab is the first, and Home and End go to the ends.
+    fireEvent.keyDown(tab("Relationships"), { key: "ArrowRight" });
     expect(tab("Item").getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(tab("Item"), { key: "ArrowLeft" });
+    expect(tab("Relationships").getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(tab("Relationships"), { key: "Home" });
+    expect(tab("Item").getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(tab("Item"), { key: "End" });
+    expect(tab("Relationships").getAttribute("aria-selected")).toBe("true");
   });
 
-  it("a header has Pretty and Raw only; so does an event of another list", () => {
+  it("a header has no Item tab; nor does an event of another list", () => {
     const { unmount } = panel({ event: foodHeader, header: true });
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw", "Relationships"]);
     unmount();
     panel({ foreign: true, definition: null });
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Pretty", "Raw", "Relationships"]);
     expect(tab("Pretty").getAttribute("aria-selected")).toBe("true");
   });
 
@@ -301,6 +318,70 @@ describe("Item", () => {
   it("says what is missing from a list that keeps its data in JSON, when the JSON can't be read", () => {
     panel({ event: event({ content: "{not json", tags: [["d", "x"], ["z", tags.coordinate]] }), definition: tags });
     expect(screen.getByRole("note").textContent).toMatch(/JSON could not be read/);
+  });
+});
+
+describe("Relationships", () => {
+  it("reads nothing until the tab is chosen", async () => {
+    panel();
+    openTab("Pretty");
+    openTab("Raw");
+    await act(async () => {});
+    expect(relationships.loadRelationships).not.toHaveBeenCalled();
+
+    openTab("Relationships");
+    expect(tab("Relationships").getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(tab("Relationships").id);
+    expect(await screen.findByText("Nothing links here yet")).toBeTruthy();
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(1);
+    expect(relationships.loadRelationships.mock.calls[0][0]).toBe(steak);
+  });
+
+  it("reads a header too, and says it names what the list names", async () => {
+    relationships.loadRelationships.mockResolvedValue({ ...NOTHING, names: [{ tag: "t", value: "food" }] });
+    panel({ event: foodHeader, header: true, tab: "relationships" });
+    expect(await screen.findByRole("heading", { name: "This list names 1" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /^On these lists/ })).toBeNull();
+  });
+
+  it("is kept when the reader moves to another tab and back, and not read again", async () => {
+    panel();
+    openTab("Relationships");
+    await screen.findByText("Nothing links here yet");
+    openTab("Raw");
+    // Hidden, not gone: the tab's page isn't what the Raw tab shows.
+    expect(screen.getByText("Nothing links here yet").closest("[hidden]")).toBeTruthy();
+    openTab("Relationships");
+    expect(screen.getByText("Nothing links here yet").closest("[hidden]")).toBeNull();
+    await act(async () => {});
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(1);
+  });
+
+  it("is read afresh for another event, and only once the reader chooses it there", async () => {
+    const props = { header: false, definition: food, eventHref, onClose: vi.fn() };
+    const { rerender } = render(<EventPanel event={steak} {...props} />);
+    openTab("Relationships");
+    await screen.findByText("Nothing links here yet");
+
+    const next = event({ id: "22".repeat(32), tags: [["d", "next"], ["z", FOOD], ["name", "Next"]] });
+    rerender(<EventPanel event={next} {...props} />);
+    // The next event opens on its own first tab, and nothing is read for it yet.
+    expect(tab("Item").getAttribute("aria-selected")).toBe("true");
+    expect(screen.queryByText("Nothing links here yet")).toBeNull();
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(1);
+
+    openTab("Relationships");
+    await screen.findByText("Nothing links here yet");
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(2);
+    expect(relationships.loadRelationships.mock.calls[1][0]).toBe(next);
+  });
+
+  it("opens a link to an event in the panel's own link format", async () => {
+    const OTHER = `39999:${CURATOR}:other`;
+    relationships.loadRelationships.mockResolvedValue({ ...NOTHING, names: [{ tag: "a", value: OTHER }] });
+    panel();
+    openTab("Relationships");
+    expect((await screen.findByRole("link", { name: OTHER })).getAttribute("href")).toBe(eventHref(OTHER));
   });
 });
 
