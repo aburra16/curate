@@ -194,7 +194,8 @@ export async function signTemplate(template: EventTemplate): Promise<NostrEvent>
 
   let event: NostrEvent;
   try {
-    const signing = current.signer.signEvent(stamped);
+    // The signer is handed a copy: one in the page could change what it was given, and the check below reads `stamped`.
+    const signing = current.signer.signEvent({ ...stamped, tags: stamped.tags.map((tag) => [...tag]) });
     event = await (current.method === "remote"
       ? withinTime(signing, REQUEST_TIMEOUT_MS, "The signer didn't answer in time.")
       : signing);

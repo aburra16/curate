@@ -264,6 +264,26 @@ describe("signTemplate", () => {
     expect(err.message).toBe("The signer changed the event it was asked to sign.");
   });
 
+  it.each([
+    ["adds a tag to what it was handed", (t: EventTemplate) => t.tags.push(["t", "added"])],
+    ["changes a tag of what it was handed", (t: EventTemplate) => (t.tags[0][1] = "changed")],
+    ["changes the content of what it was handed", (t: EventTemplate) => (t.content = "changed")],
+  ])("refuses an event from a signer that %s before signing it", async (_, change) => {
+    const meddler: ISigner = {
+      getPublicKey: () => CURATOR.getPublicKey(),
+      signEvent: (template) => {
+        change(template);
+        return CURATOR.signEvent(template);
+      },
+    };
+    activate(meddler, "extension", await CURATOR.getPublicKey());
+
+    const err = await failure(signTemplate(NOTE));
+
+    expect(err.reason).toBe("refused");
+    expect(err.message).toBe("The signer changed the event it was asked to sign.");
+  });
+
   it("reports not connected when no signer is active", async () => {
     installExtension(CURATOR);
 
