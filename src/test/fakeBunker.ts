@@ -29,11 +29,16 @@ export interface FakeBunker {
    * scans it: with the code's secret, or with `answer` when one is given.
    */
   pair(nostrconnectUri: string, answer?: string): void;
+  /**
+   * Answer the next request first with `url` as an approval link (NIP-46
+   * `auth_url`), then, as if its owner approved at once, with the result.
+   */
+  askApproval(url: string): void;
   /** Stop answering. Requests are still received and logged. */
   silence(): void;
 }
 
-type Answer = { result: string } | { error: string };
+type Answer = { result: string } | { error: string } | { result: "auth_url"; error: string };
 
 /**
  * A remote signer (NIP-46) for tests, holding `userSigner` as the person's
@@ -49,6 +54,7 @@ export function fakeBunker(userSigner: PrivateKeySigner): FakeBunker {
   const sent: NostrEvent[] = [];
   const listeners = new Set<{ filters: Filter[]; subscriber: Subscriber<NostrEvent> }>();
   let silent = false;
+  let approval: string | null = null;
 
   function deliver(event: NostrEvent): void {
     sent.push(event);
@@ -84,6 +90,10 @@ export function fakeBunker(userSigner: PrivateKeySigner): FakeBunker {
     const { id, method, params } = JSON.parse(plaintext) as { id: string; method: string; params: string[] };
     requests.push(method);
     if (silent) return;
+    if (approval !== null) {
+      reply(request.pubkey, { id, result: "auth_url", error: approval });
+      approval = null;
+    }
     reply(request.pubkey, { id, ...(await answerOf(method, params)) });
   }
 
@@ -107,6 +117,9 @@ export function fakeBunker(userSigner: PrivateKeySigner): FakeBunker {
     pair(nostrconnectUri, answer) {
       const { client, secret } = parseNostrConnectURI(nostrconnectUri);
       reply(client, { id: "pairing", result: answer ?? secret });
+    },
+    askApproval(url) {
+      approval = url;
     },
     silence() {
       silent = true;

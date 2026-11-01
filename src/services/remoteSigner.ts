@@ -7,6 +7,11 @@
  * key it talks to the signer with, kept in `sessionStorage` with the rest of
  * the session, so the pairing lasts across a reload until the person
  * disconnects or closes the tab.
+ *
+ * A connect that finishes after the signer in use has changed (the person
+ * disconnected, or connected another signer meanwhile) is let go rather than
+ * put in use. A signer's approval links are handed to the page through
+ * `onRemoteAuth`; nothing here opens them.
  */
 
 import { isHexKey } from "applesauce-core/helpers/string";
@@ -15,7 +20,8 @@ import { isNIP04 } from "applesauce-signers/helpers/encryption";
 import type { NostrEvent } from "nostr-tools";
 import { bytesToHex } from "nostr-tools/utils";
 import { getPool } from "@/lib/nostr/ndk";
-import { activate, failureOf, SignerError, withinTime } from "@/services/signer";
+import { publishUntilEnough } from "@/lib/publishQuorum";
+import { activate, failureOf, SignerError, signerGeneration, withinTime } from "@/services/signer";
 
 /** The relays a pairing code asks the signer to answer on. nsec.app answers on its own relay only. */
 export const NIP46_RELAYS = ["wss://relay.nsec.app", "wss://relay.primal.net"];
@@ -47,38 +53,93 @@ export interface RemoteSession {
 /** How a remote signer reaches the relays. Tests pass a fake bunker's; the page uses the relay pool. */
 type Methods = Pick<NostrConnectSignerOptions, "subscriptionMethod" | "publishMethod">;
 
+/** What every remote signer Curate builds is given: how it reaches the relays, and where approval links go. */
+type SharedOptions = Methods & Pick<NostrConnectSignerOptions, "onAuth">;
+
 const PERMISSIONS = NostrConnectSigner.buildSigningPermissions(SIGNED_KINDS);
 
 const NO_ANSWER = "The signer didn't answer in time.";
+
+const approvalListeners = new Set<(url: string) => void>();
+
+/**
+ * Hear the approval links remote signers send (NIP-46 `auth_url`: the signer
+ * wants its owner to approve a request on a web page). Only `https:` links are
+ * passed on, and Curate never opens one itself: the page shows it for the
+ * person to click. Returns the function that stops listening.
+ */
+export function onRemoteAuth(listener: (url: string) => void): () => void {
+  approvalListeners.add(listener);
+  return () => {
+    approvalListeners.delete(listener);
+  };
+}
+
+/** A signer's approval link, passed to the listeners when it is an `https:` link, and otherwise dropped. */
+async function passOnApproval(url: string): Promise<void> {
+  let link: URL;
+  try {
+    link = new URL(url);
+  } catch {
+    return;
+  }
+  if (link.protocol !== "https:") return;
+  for (const listener of approvalListeners) {
+    try {
+      listener(link.href);
+    } catch {
+      // One listener's failure doesn't stop the others, or the request waiting on approval.
+    }
+  }
+}
 
 /**
  * A signer for a pairing Curate starts. NIP-46 makes the code's secret the
  * proof that an answer comes from the signer the code was shown to: the code
  * is on screen, and anyone watching the relays can see who waits for it. The
- * library also takes a bare "ack" as that proof; this one turns it away.
+ * library also takes a bare "ack" as that proof. Until it has paired, this one
+ * hears only an answer it can read and that carries the secret.
  */
 class PairingSigner extends NostrConnectSigner {
   async handleEvent(event: NostrEvent): Promise<void> {
-    if (!this.remote && (await this.resultIn(event)) === "ack") return;
+    if (!this.remote && !(await this.carriesSecret(event))) return;
     return super.handleEvent(event);
   }
 
-  /** The `result` an answer carries, or undefined when it can't be read. */
-  private async resultIn(event: NostrEvent): Promise<unknown> {
+  /** Whether the answer reads as the code's secret. One that can't be read doesn't. */
+  private async carriesSecret(event: NostrEvent): Promise<boolean> {
     try {
-      const decrypt = isNIP04(event.content) ? this.signer.nip04.decrypt : this.signer.nip44.decrypt;
-      return (JSON.parse(await decrypt(event.pubkey, event.content)) as { result?: unknown } | null)?.result;
+      const plaintext = isNIP04(event.content)
+        ? await this.signer.nip04.decrypt(event.pubkey, event.content)
+        : await this.signer.nip44.decrypt(event.pubkey, event.content);
+      return (JSON.parse(plaintext) as { result?: unknown } | null)?.result === this.secret;
     } catch {
-      return undefined;
+      return false;
     }
   }
 }
 
-/** The methods to build a signer with; without test methods, the shared relay pool, set once. */
-function connection(methods?: Methods): Methods {
-  if (methods) return methods;
-  NostrConnectSigner.pool ??= getPool();
-  return {};
+/**
+ * The relay pool as a remote signer's methods. A request goes on as soon as
+ * one relay has taken it, or every relay has failed or run out of time: the
+ * pool's own publish waits for all of them, so one relay that never answers
+ * would hold up every request.
+ */
+function poolMethods(): Methods {
+  const pool = getPool();
+  return {
+    subscriptionMethod: (relays, filters) => pool.subscription(relays, filters),
+    publishMethod: (relays, event) =>
+      publishUntilEnough(relays, async (relay) => pool.relay(relay).publish(event, { timeout: REQUEST_TIMEOUT_MS }), {
+        need: 1,
+        timeoutMs: REQUEST_TIMEOUT_MS,
+      }),
+  };
+}
+
+/** What every signer is built with: the test's methods or the relay pool, and approval links to the page. */
+function shared(methods?: Methods): SharedOptions {
+  return { ...(methods ?? poolMethods()), onAuth: passOnApproval };
 }
 
 function keep(session: RemoteSession): void {
@@ -115,8 +176,16 @@ function keptSession(): RemoteSession | null {
   return null;
 }
 
-/** Make `signer` the one in use for `pubkey`, and keep its session. */
-function adopt(signer: NostrConnectSigner, pubkey: string): void {
+/**
+ * Make `signer` the one in use for `pubkey`, and keep its session, unless the
+ * signer in use has changed since the connect began (`started`, from
+ * `signerGeneration`). Then it is closed instead, and the connect fails.
+ */
+async function adopt(signer: NostrConnectSigner, pubkey: string, started: number): Promise<void> {
+  if (signerGeneration() !== started) {
+    await signer.close();
+    throw new SignerError("not-connected", "The signer in use changed before this one connected.");
+  }
   // `activate` forgets the session of the signer it replaces, so this one is kept after it.
   activate(signer, "remote", pubkey);
   const { remote, relays } = signer;
@@ -129,11 +198,12 @@ function adopt(signer: NostrConnectSigner, pubkey: string): void {
  * Curate will ask to sign. `done` resolves to the account's pubkey once a
  * signer has answered with the code's secret, with that signer in use and its
  * session kept. It rejects with a `SignerError`: `timeout` when no signer has
- * paired within `PAIRING_TIMEOUT_MS`, `not-connected` after `cancel`. A
- * `cancel` once paired does nothing.
+ * paired within `PAIRING_TIMEOUT_MS`, `not-connected` after `cancel` or when
+ * the signer in use changed meanwhile. A `cancel` once paired does nothing.
  */
 export function startPairing(methods?: Methods): { uri: string; done: Promise<string>; cancel: () => void } {
-  const signer = new PairingSigner({ relays: NIP46_RELAYS, signer: new PrivateKeySigner(), ...connection(methods) });
+  const started = signerGeneration();
+  const signer = new PairingSigner({ relays: NIP46_RELAYS, signer: new PrivateKeySigner(), ...shared(methods) });
   const uri = signer.getNostrConnectURI({ name: "Curate", url: location.origin, permissions: PERMISSIONS });
 
   const stop = new AbortController();
@@ -153,9 +223,9 @@ export function startPairing(methods?: Methods): { uri: string; done: Promise<st
 
   const done = Promise.race([paired, stopped])
     .then(
-      (pubkey) => {
+      async (pubkey) => {
         settled = true;
-        adopt(signer, pubkey);
+        await adopt(signer, pubkey, started);
         return pubkey;
       },
       async (err: unknown) => {
@@ -178,10 +248,12 @@ export function startPairing(methods?: Methods): { uri: string; done: Promise<st
  * Connect the bunker a pasted `bunker://` link names, and make it the signer in
  * use with its session kept. Returns the account's pubkey. Rejects with a
  * `SignerError` for anything that isn't a `bunker://` link, when the bunker
- * refuses, or when it hasn't answered within `PAIRING_TIMEOUT_MS` (it may be
- * waiting for its owner to approve).
+ * refuses, when it hasn't answered within `PAIRING_TIMEOUT_MS` (it may be
+ * waiting for its owner to approve), or when the signer in use changed while
+ * it waited.
  */
 export async function connectBunker(uri: string, methods?: Methods): Promise<string> {
+  const started = signerGeneration();
   const link = uri.trim();
   const notABunker = new SignerError("not-connected", "That isn't a bunker:// link.");
   if (!link.startsWith("bunker://")) throw notABunker;
@@ -194,7 +266,7 @@ export async function connectBunker(uri: string, methods?: Methods): Promise<str
   const connecting = NostrConnectSigner.fromBunkerURI(link, {
     signer: new PrivateKeySigner(),
     permissions: PERMISSIONS,
-    ...connection(methods),
+    ...shared(methods),
   });
   let signer: NostrConnectSigner;
   try {
@@ -207,7 +279,7 @@ export async function connectBunker(uri: string, methods?: Methods): Promise<str
 
   try {
     const pubkey = await withinTime(signer.getPublicKey(), REQUEST_TIMEOUT_MS, NO_ANSWER);
-    adopt(signer, pubkey);
+    await adopt(signer, pubkey, started);
     return pubkey;
   } catch (err) {
     await signer.close();
@@ -219,9 +291,11 @@ export async function connectBunker(uri: string, methods?: Methods): Promise<str
  * Put the kept remote signer back in use after a reload. Returns its account's
  * pubkey, or null when no session is kept. The signer was paired already, so
  * nothing is sent to it until the first signature: a bunker's secret works
- * once, and connecting again would be refused.
+ * once, and connecting again would be refused. Rejects with a `SignerError`
+ * when the signer in use changed while it reopened.
  */
 export async function restoreRemote(methods?: Methods): Promise<string | null> {
+  const started = signerGeneration();
   const session = keptSession();
   if (!session) return null;
   const signer = new NostrConnectSigner({
@@ -229,11 +303,11 @@ export async function restoreRemote(methods?: Methods): Promise<string | null> {
     remote: session.remote,
     pubkey: session.pubkey,
     signer: PrivateKeySigner.fromKey(session.clientKey),
-    ...connection(methods),
+    ...shared(methods),
   });
   await signer.open();
   signer.isConnected = true;
-  adopt(signer, session.pubkey);
+  await adopt(signer, session.pubkey, started);
   return session.pubkey;
 }
 

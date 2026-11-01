@@ -245,13 +245,16 @@ describe("signTemplate", () => {
   });
 
   it.each([
-    ["drops the client tag", (tags: string[][]) => tags.filter((tag) => tag[0] !== "client")],
-    ["repeats the client tag", (tags: string[][]) => [...tags, ["client", "Curate"]]],
-    ["adds a client tag of its own", (tags: string[][]) => [...tags, ["client", "Other"]]],
-  ])("refuses an event from a signer that %s", async (_, retag) => {
+    ["drops the client tag", (t: EventTemplate) => ({ ...t, tags: t.tags.filter((tag) => tag[0] !== "client") })],
+    ["repeats the client tag", (t: EventTemplate) => ({ ...t, tags: [...t.tags, ["client", "Curate"]] })],
+    ["adds a client tag of its own", (t: EventTemplate) => ({ ...t, tags: [...t.tags, ["client", "Other"]] })],
+    ["changes the content", (t: EventTemplate) => ({ ...t, content: "something else" })],
+    ["changes the kind", (t: EventTemplate) => ({ ...t, kind: t.kind + 1 })],
+    ["changes another tag", (t: EventTemplate) => ({ ...t, tags: t.tags.map((tag) => (tag[0] === "t" ? ["t", "x"] : tag)) })],
+  ])("refuses an event from a signer that %s", async (_, change) => {
     const meddler: ISigner = {
       getPublicKey: () => CURATOR.getPublicKey(),
-      signEvent: (template) => CURATOR.signEvent({ ...template, tags: retag(template.tags) }),
+      signEvent: (template) => CURATOR.signEvent(change(template)),
     };
     activate(meddler, "extension", await CURATOR.getPublicKey());
 

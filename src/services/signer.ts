@@ -37,6 +37,9 @@ type Active = { signer: ISigner; method: SignerMethod; pubkey: string };
 
 let active: Active | null = null;
 
+/** How many times the signer in use has changed. */
+let generation = 0;
+
 /** A remote signer listens on relays until it is closed. */
 type Closable = ISigner & { close(): Promise<void> };
 
@@ -78,10 +81,20 @@ export function withinTime<T>(work: Promise<T>, ms: number, message: string): Pr
   return Promise.race([work, late]).finally(() => clearTimeout(timer));
 }
 
-/** Whether the event carries Curate's client tag once, and no other client tag. */
-function taggedOnce(event: NostrEvent): boolean {
-  const clients = event.tags.filter((tag) => tag[0] === "client");
-  return clients.length === 1 && clients[0].length === CLIENT_TAG.length && clients[0][1] === CLIENT_TAG[1];
+const sameTag = (a: string[], b: string[]): boolean => a.length === b.length && a.every((value, i) => value === b[i]);
+
+/**
+ * Whether the signer signed what it was given: the same kind, content and
+ * tags, in order. What it was given carries Curate's client tag once, so a
+ * signer that dropped, repeated or replaced it changed the event.
+ */
+function signedAsGiven(event: NostrEvent, given: StampedTemplate): boolean {
+  return (
+    event.kind === given.kind &&
+    event.content === given.content &&
+    event.tags.length === given.tags.length &&
+    event.tags.every((tag, i) => sameTag(tag, given.tags[i]))
+  );
 }
 
 /** Stop listening to a remote signer that is no longer in use. */
@@ -120,6 +133,15 @@ export async function connectExtension(): Promise<string> {
   return pubkey;
 }
 
+/**
+ * A number that changes whenever the signer in use does (connected, replaced
+ * or disconnected). A connect that takes a while notes it when it starts, and
+ * isn't wanted any more if it has changed by the time it finishes.
+ */
+export function signerGeneration(): number {
+  return generation;
+}
+
 /** The signer in use, or null when none is connected. */
 export function activeSigner(): { method: SignerMethod; pubkey: string } | null {
   return active ? { method: active.method, pubkey: active.pubkey } : null;
@@ -132,6 +154,7 @@ export function activeSigner(): { method: SignerMethod; pubkey: string } | null 
 export function activate(signer: ISigner, method: SignerMethod, pubkey: string): void {
   const outgoing = active;
   active = { signer, method, pubkey };
+  generation += 1;
   // Only the signer in use has a session kept; a remote signer keeps its own after this.
   forgetRemote();
   // The outgoing signer is no longer used, so a failure to close it changes nothing.
@@ -142,6 +165,7 @@ export function activate(signer: ISigner, method: SignerMethod, pubkey: string):
 export async function disconnect(): Promise<void> {
   const outgoing = active;
   active = null;
+  generation += 1;
   forgetRemote();
   await closeRemote(outgoing);
 }
@@ -151,10 +175,11 @@ export async function disconnect(): Promise<void> {
  * connected account. The event carries one `["client","Curate"]` tag in place
  * of any other `client` tag, is stamped with the time of signing, and is
  * refused unless its signature checks out, it is from the account that
- * connected (an extension can switch accounts under an open page), and the
- * signer left that tag as it was. A remote signer that hasn't answered within
- * `REQUEST_TIMEOUT_MS` is given up on. Nothing is returned when the signer was
- * disconnected or replaced while it was signing.
+ * connected (an extension can switch accounts under an open page), and its
+ * kind, content and tags are exactly what the signer was given. A remote
+ * signer that hasn't answered within `REQUEST_TIMEOUT_MS` is given up on.
+ * Nothing is returned when the signer was disconnected or replaced while it
+ * was signing.
  */
 export async function signTemplate(template: EventTemplate): Promise<NostrEvent> {
   const current = active;
@@ -187,7 +212,7 @@ export async function signTemplate(template: EventTemplate): Promise<NostrEvent>
       "Your signer is now signing as a different account. Connect again to write.",
     );
   }
-  if (!taggedOnce(event)) {
+  if (!signedAsGiven(event, stamped)) {
     throw new SignerError("refused", "The signer changed the event it was asked to sign.");
   }
   return event;
