@@ -20,6 +20,13 @@
 # production
 /build
 
+# the guide's files for AI assistants and search engines, made from src/content/guide
+/public/llms.txt
+/public/llms-full.txt
+/public/guide/
+/public/robots.txt
+/public/sitemap.xml
+
 # misc
 .DS_Store
 *.pem
