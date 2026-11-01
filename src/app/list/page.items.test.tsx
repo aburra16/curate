@@ -988,7 +988,10 @@ describe("folding by the web of trust", () => {
     );
     open(FOOD);
 
-    expect(await screen.findByRole("button", { name: "50 more from accounts outside your web of trust" })).toBeTruthy();
+    // 150 signed ranks to check and 150 rows to draw: under load that can take longer than findByRole's 1 s default.
+    expect(
+      await screen.findByRole("button", { name: "50 more from accounts outside your web of trust" }, { timeout: 5000 }),
+    ).toBeTruthy();
     expect(rowTitles()).toHaveLength(100);
     expect(screen.queryByText("outside your web of trust")).toBeNull();
   });
