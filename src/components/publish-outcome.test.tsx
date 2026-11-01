@@ -1,12 +1,24 @@
 // @vitest-environment jsdom
 /** What a write says when it lands: saved, not saved with Retry, or the signer's words. */
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { NostrEvent } from "nostr-tools";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WriteState } from "@/hooks/use-write";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL } from "@/services/relays";
+
+vi.mock("@/services/remoteSigner", () => ({ forgetRemote: vi.fn(), REQUEST_TIMEOUT_MS: 30_000 }));
+vi.mock("@/services/signer", async () => ({
+  ...(await vi.importActual<typeof import("@/services/signer")>("@/services/signer")),
+  disconnect: vi.fn(),
+}));
+
+import { disconnect, type SignerFailure } from "@/services/signer";
+import { useConnectDialog } from "@/stores/connect-dialog";
+import { useSigner } from "@/stores/signer";
 import { PublishOutcome } from "./publish-outcome";
+
+const CURATOR = "c".repeat(64);
 
 const OWN_A = "wss://own-a.example.test";
 const OWN_B = "wss://own-b.example.test";
@@ -89,5 +101,65 @@ describe("PublishOutcome", () => {
 
     expect(screen.getByRole("alert").textContent).toBe("The signer didn't sign: User rejected the request");
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  describe("when a remote signer has stopped answering", () => {
+    const failed = (reason?: SignerFailure): WriteState => ({
+      phase: "error",
+      message: "The signer didn't answer in time.",
+      reason,
+    });
+    const connectAgain = () => screen.queryByRole("button", { name: "Connect again" });
+
+    beforeEach(() => {
+      vi.mocked(disconnect).mockReset();
+      vi.mocked(disconnect).mockResolvedValue();
+      useConnectDialog.getState().hide();
+      useSigner.getState().setConnected(CURATOR, "remote");
+    });
+
+    it.each<SignerFailure>(["timeout", "refused"])("offers Connect again after %s, beside the signer's words", (reason) => {
+      render(<PublishOutcome state={failed(reason)} busy={false} onRetry={() => {}} />);
+
+      expect(screen.getByRole("alert").textContent).toContain("The signer didn't answer in time.");
+      expect(connectAgain()).toBeTruthy();
+    });
+
+    it("lets go of the signer, then opens the chooser", async () => {
+      let letGo: () => void = () => {};
+      vi.mocked(disconnect).mockReturnValue(new Promise<void>((resolve) => (letGo = resolve)));
+      render(<PublishOutcome state={failed("timeout")} busy={false} onRetry={() => {}} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Connect again" }));
+
+      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect(useConnectDialog.getState().open).toBe(false);
+      await act(async () => letGo());
+      await waitFor(() => expect(useConnectDialog.getState().open).toBe(true));
+      expect(useSigner.getState()).toMatchObject({ status: "disconnected", pubkey: null, method: null });
+    });
+
+    it.each<SignerFailure | undefined>(["not-connected", "account-changed", "no-extension", undefined])(
+      "does not offer it after %s",
+      (reason) => {
+        render(<PublishOutcome state={failed(reason)} busy={false} onRetry={() => {}} />);
+
+        expect(connectAgain()).toBeNull();
+      },
+    );
+
+    it("does not offer it when the signer is the browser extension", () => {
+      useSigner.getState().setConnected(CURATOR, "extension");
+      render(<PublishOutcome state={failed("timeout")} busy={false} onRetry={() => {}} />);
+
+      expect(connectAgain()).toBeNull();
+    });
+
+    it("does not offer it when no signer is connected", () => {
+      useSigner.getState().setDisconnected();
+      render(<PublishOutcome state={failed("timeout")} busy={false} onRetry={() => {}} />);
+
+      expect(connectAgain()).toBeNull();
+    });
   });
 });

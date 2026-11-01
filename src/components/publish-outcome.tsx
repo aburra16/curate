@@ -1,4 +1,7 @@
+import { useConnectSigner } from "@/hooks/use-connect-signer";
 import type { WriteState } from "@/hooks/use-write";
+import { useConnectDialog } from "@/stores/connect-dialog";
+import { useSigner } from "@/stores/signer";
 
 /** A relay as the person knows it: its host, "relay.example.com". */
 const hostOf = (relay: string): string => {
@@ -14,7 +17,9 @@ const hostOf = (relay: string): string => {
  * of the author's own relays that didn't take it; not saved gives the list
  * relay's words and a Retry that resends the same event, disabled while a
  * write is in flight; a write that stopped before any relay was asked shows
- * why. Nothing shows before a write or while one is in flight.
+ * why. A remote signer that stopped answering or refused (it may have been
+ * revoked) also offers Connect again. Nothing shows before a write or while
+ * one is in flight.
  */
 export function PublishOutcome({
   state,
@@ -25,11 +30,31 @@ export function PublishOutcome({
   busy: boolean;
   onRetry: () => void;
 }) {
+  const signing = useSigner((s) => s.method);
+  const { disconnect } = useConnectSigner();
+  const showChooser = useConnectDialog((s) => s.show);
+
   if (state.phase === "error") {
+    const reconnectable = (state.reason === "timeout" || state.reason === "refused") && signing === "remote";
+    if (!reconnectable) {
+      return (
+        <p role="alert" className="text-[12px] leading-[1.5] text-red-400">
+          {state.message}
+        </p>
+      );
+    }
     return (
-      <p role="alert" className="text-[12px] leading-[1.5] text-red-400">
-        {state.message}
-      </p>
+      <div role="alert" className="flex items-center gap-3 text-[12px] leading-[1.5] text-red-400">
+        <p>{state.message}</p>
+        <button
+          type="button"
+          onClick={() => void disconnect().then(showChooser)}
+          className="shrink-0 px-3 py-1 text-[12px] bg-surface-raised border border-rule text-ink-soft hover:text-ink transition-colors"
+          style={{ borderRadius: "var(--radius-input)" }}
+        >
+          Connect again
+        </button>
+      </div>
     );
   }
   if (state.phase !== "done") return null;

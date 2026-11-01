@@ -3,20 +3,26 @@
 import { useCallback, useRef, useState } from "react";
 import type { EventTemplate } from "@/lib/conceptCopy";
 import { retryPublish, signAndPublish, type PublishResult } from "@/services/publish";
-import { SignerError } from "@/services/signer";
+import { SignerError, type SignerFailure } from "@/services/signer";
 
-/** Where a write is: not started, in flight, answered by the relays, or stopped before any relay was asked. */
+/**
+ * Where a write is: not started, in flight, answered by the relays, or stopped
+ * before any relay was asked. A write stopped by the signer says why in `reason`.
+ */
 export type WriteState =
   | { phase: "idle" }
   | { phase: "working" }
   | { phase: "done"; result: PublishResult }
-  | { phase: "error"; message: string };
+  | { phase: "error"; message: string; reason?: SignerFailure };
 
 /** What the person is told when something other than the signer went wrong. */
 const UNKNOWN_FAILURE = "Something went wrong, and the write may not have been saved.";
 
-/** A failure as words for the person: a signer's own are plain already. */
-const wordsOf = (err: unknown): string => (err instanceof SignerError ? err.message : UNKNOWN_FAILURE);
+/** A failure as the person sees it: a signer's own words are plain already, and it says why. */
+const stoppedBy = (err: unknown): WriteState =>
+  err instanceof SignerError
+    ? { phase: "error", message: err.message, reason: err.reason }
+    : { phase: "error", message: UNKNOWN_FAILURE };
 
 /**
  * One write at a time. `write` signs and publishes a template; a call made
@@ -57,7 +63,7 @@ export function useWrite(): {
       setState({ phase: "done", result });
       return result;
     } catch (err) {
-      setState({ phase: "error", message: wordsOf(err) });
+      setState(stoppedBy(err));
       return null;
     } finally {
       busyRef.current = false;

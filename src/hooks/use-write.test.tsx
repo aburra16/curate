@@ -114,6 +114,7 @@ describe("useWrite", () => {
     expect(result.current.state).toEqual({
       phase: "error",
       message: "The signer didn't sign: User rejected the request",
+      reason: "refused",
     });
     expect(result.current.busy).toBe(false);
 
@@ -131,7 +132,7 @@ describe("useWrite", () => {
       await result.current.write(TEMPLATE);
     });
 
-    expect(result.current.state).toEqual({
+    expect(result.current.state).toStrictEqual({
       phase: "error",
       message: "Something went wrong, and the write may not have been saved.",
     });
