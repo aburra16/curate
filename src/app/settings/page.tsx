@@ -61,7 +61,7 @@ export default function SettingsPage() {
         <h2 className="text-[14px] font-medium text-ink mb-1">Extra relays to read lists from</h2>
         <p className="text-[12px] text-mute mb-4">
           Lists are always read from dcosl.brainstorm.world and Brainstorm&apos;s search index. Relays you add here are read too.
-          What you publish goes to every relay below.
+          What you write goes to the list relay and to up to four of your own write relays, from your relay list.
         </p>
 
         <div className="flex flex-col gap-2 mb-4">
@@ -148,11 +148,11 @@ export default function SettingsPage() {
         <p className="text-[12px] text-mute leading-[1.6]">
           Curate is a collaborative list tool built on the{" "}
           <span className="text-ink-soft">Decentralized Lists</span> nostr protocol.
-          Events are signed by your browser extension and published to nostr relays.
+          Events are signed by your own signer, a browser extension or a remote one, and published to nostr relays.
           Your data is portable, take it anywhere the protocol is supported.
         </p>
         <p className="mt-3 text-[11px] text-mute/50">
-          Event kinds 9998/39998 for headers, 9999/39999 for items, 7 for reactions
+          Event kinds 9998/39998 for headers, 9999/39999 for items, 7 for reactions, 5 for deletions
         </p>
       </section>
     </div>

@@ -30,7 +30,7 @@ in its kind 10040. A rank only decides what is shown and what is counted; Curate
 Reading never signs. To write, connect a signer with Connect in the header. Use a browser extension (nos2x,
 Alby and the like), or a remote signer: scan the QR code with a signer app on your phone, or paste a
 `bunker://` link. Curate asks the signer to sign each change and never sees your private key; the key stays
-in the signer. A remote connection lasts until you disconnect or close the browser. If the signer switches
+in the signer. A remote connection lasts until you disconnect or close the tab. If the signer switches
 to another account while the page is open, Curate stops and asks you to connect again.
 
 - **Create a list** (`/create`): a quick form for the list's names, a description, the fields each item
@@ -41,17 +41,18 @@ to another account while the page is open, Curate stops and asks you to connect 
   list's own fields. Edit on an item you added opens the same form, and keeps every tag the item has. An
   item that cannot be replaced (kind 9999) has Delete only.
 - **Your own version of a list**: on the page of a list someone else wrote, "Make my own version" copies
-  it to your account, at a free short name. "Edit my version" changes your copy, and "Withdraw my version"
-  takes it back, so it stops counting as a version of that concept. A list you wrote yourself has
-  "Edit list".
+  it to your account. Your version keeps the original's short name, unless a list of yours already uses
+  it: then it takes the next free one (`name-2`, `name-3`, and so on). "Edit my version" changes your copy,
+  and "Withdraw my version" takes it back, so it stops counting as a version of that concept. A list you
+  wrote yourself has "Edit list".
 - **Delete your own items**: Delete asks first, then removes every version of the item that you made.
   Relays that honour deletions drop it. Items other people added are not touched.
 - **Votes**: each row has an up and a down vote. Your own vote shows pressed; to change it, vote the other
   way.
-- **Saved**: a change is saved when the list relay accepted it. Curate also sends it to the relays your own
-  relay list (kind 10002) marks for writing, and says which of them missed it. If the list relay did not
-  take it, Curate shows the relay's words and a Retry that sends the same event again. Nothing is written
-  to the search index.
+- **Saved**: a change is saved when the list relay accepted it. Curate also sends it to at most four of
+  the relays your own relay list (kind 10002) marks for writing, and a note says which of them missed it.
+  If the list relay did not take it, Curate shows the relay's words and a Retry that sends the same event
+  again. Nothing is written to the search index or the tag hub.
 
 ## Run it
 

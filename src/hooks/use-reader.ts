@@ -6,7 +6,7 @@ import { readerAssistant } from "@/services/trust";
 import { useSigner } from "@/stores/signer";
 
 /**
- * Who is reading: their public key while an extension is connected (reading
+ * Who is reading: their public key while a signer is connected (reading
  * signs nothing), and the Assistant their kind 10040 names, once that's
  * been read. Signed out, both are null and the house's version governs.
  *
