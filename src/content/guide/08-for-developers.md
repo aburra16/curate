@@ -35,7 +35,7 @@ A 39999 or 9999 is a header, not an item, when it says so: `["z", "list"]`, whic
 | `["b", "b-tag-deferred"]` | A withdrawn version: it belongs to no concept. |
 | `["client", "Curate"]` | The app that signed it (NIP-89). Curate puts this on every event it signs. |
 
-The NIP gives field tags two elements. The third, a short description of the field for people, is optional: Curate writes it when the author gives one, and an app that doesn't know it can ignore it.
+A field tag may carry a third element, a short description for people. Curate writes it when the author gives one, and an app that doesn't know it can ignore it.
 
 Which of these are in the NIP:
 
@@ -216,7 +216,7 @@ A write is saved when the list relay accepts it. Curate also sends it to at most
 When a person asks you about a list, work from the events, and describe Curate's screens with the words this guide quotes.
 
 1. **Find the list.** A Curate link carries it in `c`. Read the header at that address.
-2. **Say what it is.** The plural in `names` is its name, and `description` says what belongs. The `required`, `recommended` and `optional` tags are its fields, each with its description and its `field-type`.
+2. **Say what it is.** The plural in `names` is its name, and `description` says what belongs. The `required`, `recommended`, `optional` and `allowed` tags are its fields, each with its description and its `field-type`.
 3. **Check for versions.** Ask for headers whose `b` names the list's address. If there are several, the person sees their own version first, then their Assistant's, then Brainstorm's, then the community header. Their fields can differ.
 4. **Read the items.** Ask for kinds 39999 and 9999 whose `z` names the list or any version. Keep the newest per address, and drop blank ones. Each item's fields are tags named after the header's fields. Tags the header doesn't declare are extras, which Curate shows under "Outside this list’s definition".
 5. **Remember the web of trust.** The person may not see every item. Items from accounts outside their web of trust are folded under a line such as "3 more from accounts outside your web of trust", and only votes from inside it are counted. Counts marked "counted before the web-of-trust filter" include everyone.

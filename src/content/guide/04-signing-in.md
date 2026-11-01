@@ -5,7 +5,7 @@ summary: Reading needs nothing, and to write you connect a signer, a browser ext
 
 ## Reading needs nothing
 
-You can browse every list, open every item and read every event without connecting. Curate has no accounts and no passwords.
+You can browse every list, open every item and read every event without connecting. An event is one signed message on nostr, the open network DLists live on. Curate has no accounts and no passwords.
 
 ## Writing needs a signer
 
@@ -16,7 +16,7 @@ A signer is a small program that holds your key and signs for you. Curate asks y
 Curate works with two kinds of signer:
 
 - a **browser extension**, which lives in your web browser (NIP-07 is the public description of how these work);
-- a **remote signer**, which lives somewhere else, such as an app on your phone, and talks to Curate through relays (NIP-46).
+- a **remote signer**, which lives somewhere else, such as an app on your phone, and talks to Curate through relays, the servers that store nostr events and pass them between apps (NIP-46).
 
 ## Connecting
 

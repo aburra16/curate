@@ -3,7 +3,7 @@ title: Adding, editing and deleting items
 summary: Add an item to any list that declares fields, change the items you added, and delete them, including what deleting means on nostr.
 ---
 
-Anyone can add an item to a DList, including lists other people made. You need to be connected to write. The page [Connecting to write](/guide/signing-in) shows how.
+Anyone can add an item to a DList, including lists other people made. An item is an event, one signed message on nostr, the open network DLists live on. Curate saves it to relays, the servers that store nostr events. You need to be connected to write. The page [Connecting to write](/guide/signing-in) shows how.
 
 ## Adding an item
 

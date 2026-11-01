@@ -45,7 +45,7 @@ Each item has two vote buttons: an up arrow, "↑", and a down arrow, "↓". Scr
 - Curate has no way to take a vote back. You can only switch it.
 - Your own vote moves the numbers only if you are inside your own web of trust. Either way, it is highlighted for you.
 
-A vote is a small public event, called a reaction, that points at the item. An up vote says "+" and a down vote says "-". Anyone can see who voted and how.
+A vote is a small public event, called a reaction, that points at the item. An event is one signed message on nostr. An up vote says "+" and a down vote says "-". Anyone can see who voted and how.
 
 To vote you need to be connected. If you are not, a vote button opens the Connect chooser.
 

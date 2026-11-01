@@ -10,7 +10,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { Marked, Renderer, type Tokens } from "marked";
+import { Marked, Renderer, type Token, type Tokens } from "marked";
 
 /** Where the site is published. */
 export const SITE_URL = "https://curate.brainstorm.world";
@@ -82,21 +82,46 @@ export function guidePage(slug: string): GuidePage | null {
 const escapeHtml = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
+/** A table, with the name its box is given (`guideHtml` sets it). */
+type NamedTable = Tokens.Table & { label?: string };
+
 const markdown = new Marked({
   gfm: true,
   renderer: {
     // The guide's text is Curate's own and uses no raw HTML: should any slip in, it shows as the text it is.
     html: ({ text }) => escapeHtml(text),
     // A wide table scrolls inside a box of its own, and stays a table, which a screen reader reads as one.
-    // The box takes focus, so a keyboard can scroll it too.
-    table(this: Renderer, token: Tokens.Table) {
+    // The box takes focus, so a keyboard can scroll it too, and is named, so a page's boxes can be told apart.
+    table(this: Renderer, token: NamedTable) {
       const table = Renderer.prototype.table.call(this, token);
-      return `<div class="guide-table" tabindex="0" role="region" aria-label="Table, scrolls sideways">${table}</div>\n`;
+      const label = escapeHtml(token.label ?? "Table");
+      return `<div class="guide-table" tabindex="0" role="region" aria-label="${label}">${table}</div>\n`;
     },
   },
 });
 
-/** A page's Markdown as HTML. */
+/** A heading's words without their Markdown: code, emphasis and links read as their text. */
+function plainText(tokens: Token[]): string {
+  return tokens
+    .map((token) => ("tokens" in token && token.tokens ? plainText(token.tokens) : "text" in token ? token.text : ""))
+    .join("");
+}
+
+/**
+ * A page's Markdown as HTML. Each table's box is named by the heading above it,
+ * or by the page's title before any heading, as "<heading>, table", and
+ * numbered when one heading has several, so no two on a page share a name.
+ */
 export function guideHtml(page: GuidePage): string {
-  return markdown.parse(page.markdown, { async: false });
+  const tokens = markdown.lexer(page.markdown);
+  let heading = page.title;
+  const named = new Map<string, number>();
+  for (const token of tokens) {
+    if (token.type === "heading") heading = plainText((token as Tokens.Heading).tokens).trim();
+    if (token.type !== "table") continue;
+    const count = (named.get(heading) ?? 0) + 1;
+    named.set(heading, count);
+    (token as NamedTable).label = count === 1 ? `${heading}, table` : `${heading}, table ${count}`;
+  }
+  return markdown.parser(tokens);
 }

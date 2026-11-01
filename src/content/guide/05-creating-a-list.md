@@ -3,7 +3,7 @@ title: Creating a list
 summary: Make your own DList in Curate: name it, say what each item holds, pick its short name, check the preview, and publish it as a shared concept.
 ---
 
-This page walks through making the coffee shops list from [What is a DList?](/guide/what-is-a-dlist). You need to be connected to publish. The page [Connecting to write](/guide/signing-in) shows how.
+This page walks through making the coffee shops list from [What is a DList?](/guide/what-is-a-dlist). A list is a signed message, called an event, on nostr, the open network DLists live on. Events are kept on relays, servers that hand them to any app that asks. You need to be connected to publish. The page [Connecting to write](/guide/signing-in) shows how.
 
 Press "Create" in the top bar. The page is called "Create a new list", and it says: "Name what you are collecting and say what each item holds. You add the items once the list is published."
 
@@ -72,7 +72,7 @@ Curate never picks a short name you already use. Publishing a list at the same a
 
 > You already have a list with the short name "coffee-shops". Publishing would replace it.
 
-To choose a short name, Curate reads your lists from the list relay first. While it does, it says "Looking for lists that already exist…". If it can't reach the list relay, it holds "Publish" and says "Couldn't check your lists. Try again." Press "Try again" to ask again.
+To choose a short name, Curate first reads your lists from the relays it reads lists from: the list relay, dcosl.brainstorm.world, which Curate saves every change to, and any extra relays you added in Settings. While it reads, it says "Looking for lists that already exist…". If none of those relays answers, it holds "Publish" and says "Couldn't check your lists. Try again." Press "Try again" to ask again.
 
 ## The preview and the checks
 
@@ -102,7 +102,7 @@ Changing either name puts the choice away until you press "Publish" again.
 
 Press "Publish". Your signer asks you to approve, and the button says "Publishing…".
 
-Curate sends the list to the list relay, dcosl.brainstorm.world. It also sends it to your own relays: the relays your nostr account lists for writing, up to four of them.
+Curate sends the list to the list relay, dcosl.brainstorm.world. It also sends it to your own relays: the relays your nostr account, the account your key signs for, lists for writing, up to four of them.
 
 - **Saved.** The list relay accepted the list. Curate opens your new list at once. If some of your own relays missed it, a short notice names them, such as "Saved to the list relay. Not saved to 1 of your own relays: relay.example.com." The list is saved all the same.
 - **Not saved.** The list relay refused it. Curate shows "Not saved to the list relay:" followed by the relay's reason, and a "Retry" button that sends the same signed list again. If you change anything in the form first, "Retry" goes away, and the next "Publish" signs the list as you see it now.

@@ -223,14 +223,38 @@ describe("guideHtml", () => {
     expect(html).toContain("a&lt;b");
   });
 
+  const TABLE = "| Name | Type |\n| --- | --- |\n| Website | Link |\n";
+  /** The names a page's table boxes are given, in order. */
+  const tableLabels = (html: string) => [...html.matchAll(/<div class="guide-table"[^>]*aria-label="([^"]*)"/g)].map((m) => m[1]);
+
   it("renders a table, still a table, inside a box that scrolls it sideways and that a keyboard can reach", () => {
-    const html = guideHtml(page("| Name | Type |\n| --- | --- |\n| Website | Link |\n"));
+    const html = guideHtml(page(`## Fields\n\n${TABLE}`));
 
     expect(html).toMatch(
-      /^<div class="guide-table" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>[\s\S]*<\/table>\s*<\/div>\s*$/,
+      /<div class="guide-table" tabindex="0" role="region" aria-label="Fields, table"><table>[\s\S]*<\/table>\s*<\/div>\s*$/,
     );
     expect(html).toContain("<th>Name</th>");
     expect(html).toContain("<td>Website</td>");
+  });
+
+  it("names each table's box by the heading above it, or the page's title before any heading", () => {
+    const html = guideHtml(page(`${TABLE}\n## The \`d\` tag & more\n\nText.\n\n${TABLE}\n### Types\n\n${TABLE}`));
+
+    expect(tableLabels(html)).toEqual(["Coffee shops, table", "The d tag &amp; more, table", "Types, table"]);
+  });
+
+  it("numbers the tables under one heading, so no two boxes on a page share a name", () => {
+    const html = guideHtml(page(`## Fields\n\n${TABLE}\nBetween.\n\n${TABLE}\nAnd.\n\n${TABLE}`));
+
+    expect(tableLabels(html)).toEqual(["Fields, table", "Fields, table 2", "Fields, table 3"]);
+  });
+
+  it("gives every table in the guide a name of its own within its page", () => {
+    for (const p of guidePages()) {
+      const labels = tableLabels(guideHtml(p));
+      expect(new Set(labels).size).toBe(labels.length);
+      for (const label of labels) expect(label).toMatch(/^\S.*, table( \d+)?$/);
+    }
   });
 
   it("keeps a table's cells as Markdown renders them, links and code included", () => {

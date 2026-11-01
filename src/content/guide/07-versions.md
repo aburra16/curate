@@ -18,7 +18,7 @@ The header that started the concept is called the community header. Every list m
 When you open a list, Curate picks one version to show, in this order:
 
 1. **Your own version**, if you have made one.
-2. **Your Assistant's version**, if you have an Assistant and it has made one. An Assistant is a service your nostr account names to act on your behalf, often the same service that works out your web of trust.
+2. **Your Assistant's version**, if you have an Assistant and it has made one. An Assistant is a service your nostr account names to act on your behalf, often the same service that works out your web of trust. Your nostr account is your identity on nostr, the open network DLists live on.
 3. **Brainstorm's version**, if Brainstorm has made one. Brainstorm is the service Curate is built on.
 4. **The community header** itself.
 
@@ -48,7 +48,7 @@ When you are connected, the buttons under a list's name depend on whose list it 
 
 This appears on a list someone else made, when you have no version of it yet. It opens a form headed "Make my own version", filled in with the list as it stands: "Singular name", "Plural name", "Description" and "Fields". Change what you like, then press "Publish". If you change nothing, your version is an exact copy, and the page says it agrees with the community header.
 
-Curate saves your version at the same short name as the community header. A short name is the part of a list's address that its author chooses. If you already have a list with that short name, Curate picks a free one instead, so your list isn't replaced, and tells you, for example: "You already have a list with the short name “coffee-shops”, so your version is saved as “coffee-shops-2”." While it checks your lists, it says "Looking at your lists to choose a short name…". If it can't reach the list relay, it holds "Publish" and says "Couldn't check your lists. Try again." with a "Try again" button.
+Curate saves your version at the same short name as the community header. A short name is the part of a list's address that its author chooses. If you already have a list with that short name, Curate picks a free one instead, so your list isn't replaced, and tells you, for example: "You already have a list with the short name “coffee-shops”, so your version is saved as “coffee-shops-2”." While it checks your lists, it says "Looking at your lists to choose a short name…". It reads them from relays, the servers that store nostr events: the list relay, dcosl.brainstorm.world, and any extra relays you added in Settings. If none of them answers, it holds "Publish" and says "Couldn't check your lists. Try again." with a "Try again" button.
 
 Once saved, Curate shows your version.
 
@@ -60,9 +60,9 @@ This appears when you have a version of the list, but another version is on show
 
 This appears when the list on show is one you wrote: your own list, or your own version. It opens a form headed "Edit list".
 
-It also appears when you wrote the community header but your Assistant's version or Brainstorm's version is on show. Then it edits your own header, the community header, not the version on show.
+It also appears when you wrote the community header but another version is on show, such as your Assistant's, Brainstorm's, or one you picked from the versions menu. Then it edits your own header, the community header, not the version on show.
 
-- You can change the names, the description and the fields. A list needs at least one field, and the form says "Add at least one field." until it has one.
+- You can change the names, the description and the fields. If the list has fields, it keeps at least one: the form says "Add at least one field." if you take them all away. A list that never declared a field can be saved as it stands.
 - The short name stays as it is.
 - Anything the form doesn't show, such as a picture or links set up in another app, is kept.
 - Renaming a field doesn't change items already added. They keep the old name, and their value then shows under "Outside this list’s definition" in the item panel.
