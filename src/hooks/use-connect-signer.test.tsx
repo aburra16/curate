@@ -91,21 +91,36 @@ describe("useConnectSigner", () => {
   });
 
   describe("by bunker link", () => {
-    beforeEach(() => useSigner.getState().setDisconnected());
+    beforeEach(() => {
+      useSigner.getState().setDisconnected();
+      vi.mocked(disconnect).mockResolvedValue();
+    });
+
+    /** A bunker that stays pending until the test answers or refuses for it. */
+    function pending() {
+      let answer: (pubkey: string) => void = () => {};
+      let refuse: (err: unknown) => void = () => {};
+      vi.mocked(connectBunker).mockReturnValue(
+        new Promise((resolve, reject) => {
+          answer = resolve;
+          refuse = reject;
+        }),
+      );
+      return { answer: (pubkey: string) => answer(pubkey), refuse: (err: unknown) => refuse(err) };
+    }
 
     it("is connecting while the bunker is asked, then connected as a remote signer", async () => {
-      let answer: (pubkey: string) => void = () => {};
-      vi.mocked(connectBunker).mockReturnValue(new Promise((resolve) => (answer = resolve)));
+      const bunker = pending();
       const { result } = renderHook(() => useConnectSigner());
 
-      let connecting: Promise<void> = Promise.resolve();
+      let attempt: ReturnType<typeof result.current.connectBunker> | undefined;
       act(() => {
-        connecting = result.current.connectBunker("bunker://link");
+        attempt = result.current.connectBunker("bunker://link");
       });
       expect(useSigner.getState().status).toBe("connecting");
       await act(async () => {
-        answer(CURATOR);
-        await connecting;
+        bunker.answer(CURATOR);
+        await attempt?.done;
       });
 
       expect(connectBunker).toHaveBeenCalledWith("bunker://link");
@@ -116,9 +131,89 @@ describe("useConnectSigner", () => {
       vi.mocked(connectBunker).mockRejectedValue(new SignerError("not-connected", "That isn't a bunker:// link."));
       const { result } = renderHook(() => useConnectSigner());
 
-      await act(() => result.current.connectBunker("nope"));
+      await act(() => result.current.connectBunker("nope").done);
 
       expect(useSigner.getState()).toMatchObject({ status: "error", error: "That isn't a bunker:// link." });
+    });
+
+    it("giving up lets go of the signer in use and puts the store back", () => {
+      pending();
+      const { result } = renderHook(() => useConnectSigner());
+      let attempt: ReturnType<typeof result.current.connectBunker> | undefined;
+      act(() => {
+        attempt = result.current.connectBunker("bunker://link");
+      });
+
+      act(() => attempt?.cancel());
+
+      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect(useSigner.getState()).toMatchObject({ status: "disconnected", pubkey: null, method: null });
+    });
+
+    it("ignores what a bunker says after it was given up on", async () => {
+      const late = pending();
+      const { result } = renderHook(() => useConnectSigner());
+      let attempt: ReturnType<typeof result.current.connectBunker> | undefined;
+      act(() => {
+        attempt = result.current.connectBunker("bunker://link");
+      });
+      act(() => attempt?.cancel());
+
+      await act(async () => {
+        late.refuse(new SignerError("not-connected", "The signer in use changed before this one connected."));
+        await attempt?.done;
+      });
+
+      expect(useSigner.getState()).toMatchObject({ status: "disconnected", error: null });
+    });
+
+    it("ignores a bunker that connects after it was given up on", async () => {
+      const late = pending();
+      const { result } = renderHook(() => useConnectSigner());
+      let attempt: ReturnType<typeof result.current.connectBunker> | undefined;
+      act(() => {
+        attempt = result.current.connectBunker("bunker://link");
+      });
+      act(() => attempt?.cancel());
+
+      await act(async () => {
+        late.answer(CURATOR);
+        await attempt?.done;
+      });
+
+      expect(useSigner.getState()).toMatchObject({ status: "disconnected", pubkey: null, method: null });
+    });
+
+    it("does not let go of anything when the bunker has already answered", async () => {
+      const bunker = pending();
+      const { result } = renderHook(() => useConnectSigner());
+      let attempt: ReturnType<typeof result.current.connectBunker> | undefined;
+      act(() => {
+        attempt = result.current.connectBunker("bunker://link");
+      });
+      await act(async () => {
+        bunker.answer(CURATOR);
+        await attempt?.done;
+      });
+
+      act(() => attempt?.cancel());
+
+      expect(disconnect).not.toHaveBeenCalled();
+      expect(useSigner.getState()).toMatchObject({ status: "connected", pubkey: CURATOR, method: "remote" });
+    });
+
+    it("gives up once however often it is asked", () => {
+      pending();
+      const { result } = renderHook(() => useConnectSigner());
+      let attempt: ReturnType<typeof result.current.connectBunker> | undefined;
+      act(() => {
+        attempt = result.current.connectBunker("bunker://link");
+      });
+
+      act(() => attempt?.cancel());
+      act(() => attempt?.cancel());
+
+      expect(disconnect).toHaveBeenCalledTimes(1);
     });
   });
 

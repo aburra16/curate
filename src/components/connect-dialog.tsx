@@ -1,22 +1,11 @@
 "use client";
 
 import { QRCodeSVG } from "qrcode.react";
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ApprovalNotice } from "@/components/approval-notice";
-import { useConnectSigner, type Pairing } from "@/hooks/use-connect-signer";
+import { useConnectSigner, type BunkerAttempt, type Pairing } from "@/hooks/use-connect-signer";
+import { useDialog } from "@/hooks/use-dialog";
 import { cn } from "@/lib/utils";
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const inputStyle = { borderRadius: "var(--radius-input)" as const };
 
@@ -31,57 +20,6 @@ type Way = "extension" | "pairing" | "bunker";
 
 /** Whether the browser has a Nostr signer extension (`window.nostr`). */
 const hasExtension = (): boolean => typeof window !== "undefined" && Boolean((window as { nostr?: unknown }).nostr);
-
-/**
- * A modal dialog's behaviour: focus moves into it when it opens and returns
- * to what had it when it closes; Tab stays inside it; Escape closes it; the
- * page behind it doesn't scroll. Returns the dialog's key handler (Tab).
- */
-function useModal(dialog: RefObject<HTMLDivElement | null>, onClose: () => void) {
-  const latest = useRef(onClose);
-  useEffect(() => {
-    latest.current = onClose;
-  });
-
-  useEffect(() => {
-    const node = dialog.current;
-    if (!node) return;
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    node.focus();
-    const escape = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
-      e.stopPropagation();
-      latest.current();
-    };
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("keydown", escape);
-      document.body.style.overflow = overflow;
-      if (opener?.isConnected) opener.focus();
-    };
-  }, [dialog]);
-
-  return (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Tab" || !dialog.current) return;
-    const focusable = [...dialog.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
-    if (!focusable.length) {
-      e.preventDefault();
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-    if (e.shiftKey && (active === first || active === dialog.current)) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && active === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
-}
 
 /** What a failed connect said, in place beside the way that failed. */
 function Problem({ children }: { children: ReactNode }) {
@@ -104,7 +42,7 @@ function PairingCode({ uri, onCancel }: { uri: string; onCancel: () => void }) {
   return (
     <div className="flex flex-col items-start gap-3">
       <div className="bg-white p-3" style={{ borderRadius: "var(--radius-card)" }}>
-        <QRCodeSVG value={uri} size={176} title="Code for your signer to scan" />
+        <QRCodeSVG value={uri} size={240} title="Code for your signer to scan" className="h-auto max-w-full" />
       </div>
       <p className="text-[12px] leading-[1.5] text-ink-soft">Scan this code with your signer app.</p>
       <p role="status" className="text-[12px] text-mute">
@@ -138,23 +76,37 @@ function PairingCode({ uri, onCancel }: { uri: string; onCancel: () => void }) {
 function Chooser({ onClose }: { onClose: () => void }) {
   const { status, error, connectExtension, connectBunker, startPairing } = useConnectSigner();
   const [way, setWay] = useState<Way | null>(null);
-  const [pairing, setPairing] = useState<Pairing | null>(null);
+  // What is waiting for a signer: a pairing, or a bunker. One that has ended (connected, failed or cancelled) is left here, and isn't shown.
+  const [attempt, setAttempt] = useState<Pairing | BunkerAttempt | null>(null);
   const [link, setLink] = useState("");
   const dialog = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const extensionNoteId = useId();
   const linkId = useId();
   const remoteId = useId();
-  const onKeyDown = useModal(dialog, onClose);
 
   const busy = status === "connecting";
-  // A pairing that has ended (paired, failed or cancelled) is left in state; it isn't shown.
-  const waiting = busy && way === "pairing" ? pairing : null;
+  const code = busy && way === "pairing" && attempt && "uri" in attempt ? attempt.uri : null;
   const problem = status === "error" && error ? error : null;
   const extension = hasExtension();
 
-  // Closing the dialog, or starting another pairing, stops one still waiting. One that has ended does nothing when stopped.
-  useEffect(() => () => pairing?.cancel(), [pairing]);
+  // Focus goes back to what opened the chooser. It is noted before the dialog takes focus.
+  useEffect(() => {
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }, []);
+  // The control that had focus can go with a change of view (the button that was pressed is replaced or disabled): focus comes back into the dialog.
+  const view = [way, busy, code !== null, problem].join("|");
+
+  // An attempt still waiting is stopped before the chooser goes, so what opened it is usable again when focus goes back to it.
+  const close = () => {
+    attempt?.cancel();
+    onClose();
+  };
+  const onKeyDown = useDialog(dialog, close, () => opener.current, view);
+
+  // Closing the dialog, or starting another attempt, stops one still waiting. One that has ended does nothing when stopped.
+  useEffect(() => () => attempt?.cancel(), [attempt]);
 
   // Once a signer is connected, by whichever way, the chooser has done its job.
   const latestClose = useRef(onClose);
@@ -167,12 +119,12 @@ function Chooser({ onClose }: { onClose: () => void }) {
 
   const scan = () => {
     setWay("pairing");
-    setPairing(startPairing());
+    setAttempt(startPairing());
   };
 
-  const stopScanning = () => {
-    pairing?.cancel();
-    setPairing(null);
+  const stopWaiting = () => {
+    attempt?.cancel();
+    setAttempt(null);
   };
 
   const submitLink = (e: FormEvent) => {
@@ -180,12 +132,12 @@ function Chooser({ onClose }: { onClose: () => void }) {
     const pasted = link.trim();
     if (!pasted || busy) return;
     setWay("bunker");
-    void connectBunker(pasted);
+    setAttempt(connectBunker(pasted));
   };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div aria-hidden className="absolute inset-0 bg-black/55" onClick={onClose} />
+      <div aria-hidden className="absolute inset-0 bg-black/55" onClick={close} />
       <div
         ref={dialog}
         role="dialog"
@@ -207,7 +159,7 @@ function Chooser({ onClose }: { onClose: () => void }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             className="shrink-0 border border-rule px-2.5 py-1 text-[12px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
             style={inputStyle}
           >
@@ -248,8 +200,8 @@ function Chooser({ onClose }: { onClose: () => void }) {
           </h3>
 
           <div className="flex flex-col gap-1.5">
-            {waiting ? (
-              <PairingCode uri={waiting.uri} onCancel={stopScanning} />
+            {code ? (
+              <PairingCode uri={code} onCancel={stopWaiting} />
             ) : (
               <>
                 <button type="button" onClick={scan} disabled={busy} className={optionClass} style={inputStyle}>
@@ -258,7 +210,7 @@ function Chooser({ onClose }: { onClose: () => void }) {
                 <p className="text-[12px] leading-[1.5] text-mute">Shows a code for your signer app to scan</p>
               </>
             )}
-            {way === "pairing" && !waiting && problem ? <Problem>{problem}</Problem> : null}
+            {way === "pairing" && !code && problem ? <Problem>{problem}</Problem> : null}
           </div>
 
           <form onSubmit={submitLink} className="flex flex-col gap-1.5">
@@ -292,9 +244,18 @@ function Chooser({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             {busy && way === "bunker" ? (
-              <p role="status" className="text-[12px] text-mute">
-                Waiting for your signer…
-              </p>
+              <div className="flex items-center gap-3">
+                <p role="status" className="text-[12px] text-mute">
+                  Waiting for your signer…
+                </p>
+                <button
+                  type="button"
+                  onClick={stopWaiting}
+                  className="text-[12px] text-mute hover:text-ink-soft transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             ) : null}
             {way === "bunker" && problem ? <Problem>{problem}</Problem> : null}
           </form>
@@ -307,9 +268,9 @@ function Chooser({ onClose }: { onClose: () => void }) {
 /**
  * The Connect chooser: connect the browser's signer extension, or a remote
  * signer, by scanning a code with a phone or by pasting a `bunker://` link.
- * While one is connecting the others are held. Closing it stops a pairing
- * still waiting for a signer, and it closes itself once a signer is connected.
- * A failure is shown beside the way that failed.
+ * While one is connecting the others are held; a pairing or a bunker that
+ * waits can be cancelled. Closing it cancels them too, and it closes itself
+ * once a signer is connected. A failure is shown beside the way that failed.
  */
 export function ConnectDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return open ? <Chooser onClose={onClose} /> : null;

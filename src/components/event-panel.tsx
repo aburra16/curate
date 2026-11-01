@@ -9,7 +9,6 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
-  type RefObject,
 } from "react";
 import type { NostrEvent } from "nostr-tools/pure";
 import { UNTITLED_LIST } from "@/app/discover-model";
@@ -17,6 +16,7 @@ import { singularOf } from "@/app/list/items-model";
 import { listHref, type VersionLabel } from "@/app/list/list-model";
 import { ItemHero } from "@/components/item-hero";
 import { UserIdentity } from "@/components/user-identity";
+import { useDialog } from "@/hooks/use-dialog";
 import { useTemplates } from "@/hooks/use-templates";
 import { B_DEFERRED, bLinksOf, type ConceptDefinition } from "@/lib/conceptResolution";
 import {
@@ -74,85 +74,6 @@ const OUT = { target: "_blank", rel: "noopener noreferrer nofollow" } as const;
 const chip = "shrink-0 border border-rule px-1.5 py-px text-[10px] tracking-[0.04em] text-mute";
 // A link says so with more than its colour: it is underlined too.
 const link = "text-accent underline underline-offset-2 break-all";
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-// -- the dialog ------------------------------------------------------------------
-
-/**
- * A modal dialog's behaviour: focus moves into it when it opens and returns
- * to what opened it when it closes; Tab stays inside it; Escape closes it,
- * wherever focus has fallen; the page behind it doesn't scroll. Returns the
- * dialog's key handler (Tab).
- *
- * `shown` is what the dialog shows now (an event's id, or null while there
- * is none). When it changes, what was focused may be gone with the old
- * content (a link followed in the panel unmounts the link): focus is
- * brought back into the dialog, or Escape and the Tab wrap would have
- * nothing to hear them.
- */
-function useDialog(
-  dialog: RefObject<HTMLDivElement | null>,
-  onClose: () => void,
-  returnFocus: (() => HTMLElement | null) | undefined,
-  shown: string | null,
-) {
-  const latest = useRef({ onClose, returnFocus });
-  useEffect(() => {
-    latest.current = { onClose, returnFocus };
-  });
-
-  useEffect(() => {
-    const node = dialog.current;
-    if (!node) return;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    node.focus();
-    // Focus that lands outside (a screen reader's virtual cursor, a stray Tab) comes back.
-    const keepIn = (e: FocusEvent) => {
-      if (e.target instanceof Node && !node.contains(e.target)) node.focus();
-    };
-    document.addEventListener("focusin", keepIn);
-    // Escape closes the dialog wherever focus is: on the page's body, once what had it has been unmounted.
-    const escape = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
-      e.stopPropagation();
-      latest.current.onClose();
-    };
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("focusin", keepIn);
-      document.removeEventListener("keydown", escape);
-      document.body.style.overflow = overflow;
-      const back = latest.current.returnFocus?.();
-      if (back?.isConnected) back.focus();
-    };
-  }, [dialog]);
-
-  useEffect(() => {
-    const node = dialog.current;
-    if (node && !node.contains(document.activeElement)) node.focus();
-  }, [dialog, shown]);
-
-  return (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Tab" || !dialog.current) return;
-    const focusable = [...dialog.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
-    if (!focusable.length) {
-      e.preventDefault();
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-    if (e.shiftKey && (active === first || active === dialog.current)) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && active === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
-}
 
 // -- small parts -------------------------------------------------------------------
 

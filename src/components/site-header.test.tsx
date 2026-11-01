@@ -2,7 +2,7 @@
 /** The header's Connect and identity, the session it brings back on load, and a signer's approval link. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { StrictMode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/services/remoteSigner", () => ({
   startPairing: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock("@/services/signer", async () => ({
 vi.mock("@/hooks/use-profile", () => ({ useProfile: () => null }));
 
 import { SiteHeader } from "@/components/site-header";
-import { onRemoteAuth, restoreRemote } from "@/services/remoteSigner";
+import { connectBunker, onRemoteAuth, restoreRemote, startPairing } from "@/services/remoteSigner";
 import { disconnect, SignerError } from "@/services/signer";
 import { useApprovalLink } from "@/stores/approval-link";
 import { useConnectDialog } from "@/stores/connect-dialog";
@@ -28,6 +28,7 @@ import { useSigner } from "@/stores/signer";
 
 const CURATOR = "c".repeat(64);
 const APPROVAL = "https://signer.example.test/approve?request=1";
+const BUNKER = `bunker://${"b".repeat(64)}?relay=wss%3A%2F%2Frelay.example.test&secret=s`;
 
 /** Where the page hears the signer's approval links, once the header is listening. */
 let hear: (url: string) => void;
@@ -38,6 +39,8 @@ beforeEach(() => {
   vi.mocked(restoreRemote).mockResolvedValue(null);
   vi.mocked(disconnect).mockReset();
   vi.mocked(disconnect).mockResolvedValue();
+  vi.mocked(connectBunker).mockReset();
+  vi.mocked(startPairing).mockReset();
   stopListening.mockReset();
   vi.mocked(onRemoteAuth).mockReset();
   vi.mocked(onRemoteAuth).mockImplementation((listener) => {
@@ -48,6 +51,15 @@ beforeEach(() => {
   useConnectDialog.getState().hide();
   useApprovalLink.getState().dismiss();
 });
+
+/** Watches `window.open`, and puts it back after the test. */
+let popups: { mockRestore: () => void } | null = null;
+const watchPopups = () => {
+  const spy = vi.spyOn(window, "open").mockReturnValue(null);
+  popups = spy;
+  return spy;
+};
+afterEach(() => popups?.mockRestore());
 
 describe("SiteHeader", () => {
   it("offers Connect, which opens the chooser", () => {
@@ -66,6 +78,22 @@ describe("SiteHeader", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("gives focus back to Connect when the chooser closes, even from a pairing that was waiting", () => {
+    vi.mocked(startPairing).mockReturnValue({ uri: "nostrconnect://x", done: new Promise(() => {}), cancel: vi.fn() });
+    render(<SiteHeader />);
+    const connect = screen.getByRole("button", { name: "Connect" });
+    connect.focus();
+    fireEvent.click(connect);
+    fireEvent.click(screen.getByRole("button", { name: "Scan with your phone" }));
+    expect((connect as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect((connect as HTMLButtonElement).disabled).toBe(false);
+    expect(document.activeElement).toBe(connect);
   });
 
   it("opens the chooser when something else asks for it", () => {
@@ -153,6 +181,113 @@ describe("SiteHeader", () => {
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
 
     expect(screen.queryByText("Your signer asks you to approve Curate.")).toBeNull();
+  });
+
+  describe("a bunker that is slow to answer", () => {
+    /** The header's own button, not the chooser's. */
+    const inHeader = (role: "button", name: string) => within(screen.getByRole("banner")).getByRole(role, { name });
+
+    /** A bunker link sent from the chooser, and a bunker the test answers or refuses late. */
+    function send() {
+      let answer: (pubkey: string) => void = () => {};
+      let refuse: (err: unknown) => void = () => {};
+      vi.mocked(connectBunker).mockReturnValue(
+        new Promise((resolve, reject) => {
+          answer = resolve;
+          refuse = reject;
+        }),
+      );
+      render(<SiteHeader />);
+      fireEvent.click(inHeader("button", "Connect"));
+      fireEvent.change(screen.getByLabelText("Paste a bunker link"), { target: { value: BUNKER } });
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Connect" }));
+      return { answer: (pubkey: string) => answer(pubkey), refuse: (err: unknown) => refuse(err) };
+    }
+
+    it("waits behind a header that says so, until it is cancelled", () => {
+      send();
+
+      expect(screen.getByText("Waiting for your signer…")).toBeTruthy();
+      expect((inHeader("button", "Connecting...") as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it("cancelling puts the header back on Connect, and a late answer changes nothing", async () => {
+      const bunker = send();
+
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect((inHeader("button", "Connect") as HTMLButtonElement).disabled).toBe(false);
+      expect(screen.queryByRole("button", { name: "Connecting..." })).toBeNull();
+
+      await act(async () => bunker.answer(CURATOR));
+
+      expect(screen.queryByRole("button", { name: "Disconnect" })).toBeNull();
+      expect(useSigner.getState()).toMatchObject({ status: "disconnected", pubkey: null, method: null });
+    });
+
+    it("cancelling hides a refusal that comes late, too", async () => {
+      const bunker = send();
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      await act(async () =>
+        bunker.refuse(new SignerError("not-connected", "The signer in use changed before this one connected.")),
+      );
+
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(useSigner.getState()).toMatchObject({ status: "disconnected", error: null });
+    });
+
+    it("closing the chooser cancels it, so the header is not left on Connecting", async () => {
+      const bunker = send();
+
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect((screen.getByRole("button", { name: "Connect" }) as HTMLButtonElement).disabled).toBe(false);
+
+      await act(async () => bunker.answer(CURATOR));
+
+      expect(screen.queryByRole("button", { name: "Disconnect" })).toBeNull();
+      expect(useSigner.getState().status).toBe("disconnected");
+    });
+  });
+
+  it("says which site the approval link goes to", () => {
+    render(<SiteHeader />);
+
+    act(() => hear("https://Signer.Example.test:8443/approve?request=1"));
+
+    const notice = screen.getByRole("status");
+    expect(within(notice).getByText("signer.example.test:8443")).toBeTruthy();
+    expect(within(notice).getByRole("link", { name: "Open the approval page" })).toBeTruthy();
+  });
+
+  it.each([
+    ["http://signer.example.test/approve"],
+    ["javascript:alert(1)"],
+    ["data:text/html,<p>approve</p>"],
+    ["not a link"],
+  ])("never shows, or opens, an approval link that isn't https: %s", (url) => {
+    const open = watchPopups();
+    render(<SiteHeader />);
+
+    act(() => hear(url));
+
+    expect(screen.queryByRole("link", { name: "Open the approval page" })).toBeNull();
+    expect(screen.queryByText("Your signer asks you to approve Curate.")).toBeNull();
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("never opens an approval link by itself, even a good one", () => {
+    const open = watchPopups();
+    render(<SiteHeader />);
+
+    act(() => hear(APPROVAL));
+
+    expect(screen.getByRole("link", { name: "Open the approval page" })).toBeTruthy();
+    expect(open).not.toHaveBeenCalled();
   });
 
   it("shows an approval link that arrives while connected, during a later signature", () => {

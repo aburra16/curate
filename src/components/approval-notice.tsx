@@ -3,12 +3,16 @@
 import { cn } from "@/lib/utils";
 import { useApprovalLink } from "@/stores/approval-link";
 
+/** Where a link goes, as the address bar would say it. The store holds only valid `https:` links. */
+const hostOf = (url: string): string => new URL(url).host;
+
 /**
  * A remote signer's request to approve Curate on its own web page: the link,
- * for the person to open, and a way to put the notice away. Nothing opens by
- * itself. Shows nothing until a signer has asked. `floating` pins it to the
- * corner of the page; otherwise it sits where it is placed (inside the
- * Connect chooser, so it is within reach while that is open).
+ * for the person to open, with the site it goes to, and a way to put the
+ * notice away. Nothing opens by itself. Shows nothing until a signer has
+ * asked. `floating` pins it to the corner of the page; otherwise it sits
+ * where it is placed (inside the Connect chooser, so it is within reach while
+ * that is open).
  */
 export function ApprovalNotice({ floating = false }: { floating?: boolean }) {
   const url = useApprovalLink((s) => s.url);
@@ -25,7 +29,7 @@ export function ApprovalNotice({ floating = false }: { floating?: boolean }) {
       style={{ borderRadius: "var(--radius-card)" }}
     >
       <p>Your signer asks you to approve Curate.</p>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <a
           href={url}
           target="_blank"
@@ -34,6 +38,7 @@ export function ApprovalNotice({ floating = false }: { floating?: boolean }) {
         >
           Open the approval page
         </a>
+        <span className="text-[12px] text-mute break-all">{hostOf(url)}</span>
         <button type="button" onClick={dismiss} className="text-[12px] text-mute hover:text-ink-soft transition-colors">
           Dismiss
         </button>

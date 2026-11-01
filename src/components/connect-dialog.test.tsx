@@ -21,13 +21,14 @@ vi.mock("@/services/signer", async () => ({
 vi.mock("qrcode.react", async () => {
   const { createElement } = await import("react");
   return {
-    QRCodeSVG: ({ value }: { value: string }) => createElement("svg", { "data-testid": "pairing-code", "data-value": value }),
+    QRCodeSVG: ({ value, size }: { value: string; size: number }) =>
+      createElement("svg", { "data-testid": "pairing-code", "data-value": value, "data-size": size }),
   };
 });
 
 import { ConnectDialog } from "@/components/connect-dialog";
 import { connectBunker, startPairing } from "@/services/remoteSigner";
-import { connectExtension, SignerError } from "@/services/signer";
+import { connectExtension, disconnect, SignerError } from "@/services/signer";
 import { useApprovalLink } from "@/stores/approval-link";
 import { useSigner } from "@/stores/signer";
 
@@ -74,6 +75,8 @@ function Page({ onClose = () => {} }: { onClose?: () => void }) {
 const button = (name: string | RegExp) => screen.getByRole("button", { name }) as HTMLButtonElement;
 
 beforeEach(() => {
+  vi.mocked(disconnect).mockReset();
+  vi.mocked(disconnect).mockResolvedValue();
   vi.mocked(connectExtension).mockReset();
   vi.mocked(connectBunker).mockReset();
   vi.mocked(startPairing).mockReset();
@@ -177,6 +180,7 @@ describe("ConnectDialog", () => {
     const code = screen.getByTestId("pairing-code");
     expect(code.getAttribute("data-value")).toBe(CODE);
     expect(code.getAttribute("data-value")).toMatch(/^nostrconnect:\/\//);
+    expect(code.getAttribute("data-size")).toBe("240");
     expect(screen.getByText("Waiting for your signer…")).toBeTruthy();
     expect(button("Copy link")).toBeTruthy();
     expect(button("Cancel")).toBeTruthy();
@@ -356,5 +360,166 @@ describe("ConnectDialog", () => {
     expect(link.getAttribute("href")).toBe(APPROVAL);
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  describe("keyboard focus", () => {
+    const dialog = () => screen.getByRole("dialog");
+    const typeLink = () =>
+      fireEvent.change(screen.getByLabelText("Paste a bunker link"), { target: { value: BUNKER } });
+
+    it("starts on the dialog", () => {
+      render(<ConnectDialog open onClose={() => {}} />);
+
+      expect(document.activeElement).toBe(dialog());
+    });
+
+    it("comes back to the dialog when the code replaces the button that was pressed", () => {
+      pairing();
+      render(<ConnectDialog open onClose={() => {}} />);
+      button("Scan with your phone").focus();
+
+      fireEvent.click(button("Scan with your phone"));
+
+      expect(screen.queryByRole("button", { name: "Scan with your phone" })).toBeNull();
+      expect(document.activeElement).toBe(dialog());
+    });
+
+    it("comes back to the dialog when Cancel takes itself away", () => {
+      pairing();
+      render(<ConnectDialog open onClose={() => {}} />);
+      fireEvent.click(button("Scan with your phone"));
+      button("Cancel").focus();
+
+      fireEvent.click(button("Cancel"));
+
+      expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+      expect(document.activeElement).toBe(dialog());
+    });
+
+    it("comes back to the dialog when a bunker link is sent and its field and button are held", () => {
+      vi.mocked(connectBunker).mockReturnValue(new Promise(() => {}));
+      render(<ConnectDialog open onClose={() => {}} />);
+      typeLink();
+      screen.getByLabelText("Paste a bunker link").focus();
+
+      fireEvent.submit(screen.getByLabelText("Paste a bunker link"));
+
+      expect((screen.getByLabelText("Paste a bunker link") as HTMLInputElement).disabled).toBe(true);
+      expect(document.activeElement).toBe(dialog());
+    });
+
+    it("comes back to the dialog when the extension button is pressed and held", () => {
+      nostr(true);
+      vi.mocked(connectExtension).mockReturnValue(new Promise(() => {}));
+      render(<ConnectDialog open onClose={() => {}} />);
+      button("Browser extension").focus();
+
+      fireEvent.click(button("Browser extension"));
+
+      expect(button("Browser extension").disabled).toBe(true);
+      expect(document.activeElement).toBe(dialog());
+    });
+
+    it("leaves focus where it is when the view changes and the focused control is still there", async () => {
+      vi.mocked(connectBunker).mockRejectedValue(new SignerError("timeout", "The signer didn't answer in time."));
+      render(<ConnectDialog open onClose={() => {}} />);
+      typeLink();
+      button("Close").focus();
+
+      fireEvent.click(button("Connect"));
+      await screen.findByRole("alert");
+
+      expect(document.activeElement).toBe(button("Close"));
+    });
+
+    it("keeps Tab inside, at both ends", () => {
+      render(<ConnectDialog open onClose={() => {}} />);
+      typeLink();
+      const focusable = [...dialog().querySelectorAll<HTMLElement>("button:not([disabled]), input:not([disabled])")];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      expect(first).toBe(button("Close"));
+      expect(last).toBe(button("Connect"));
+
+      last.focus();
+      fireEvent.keyDown(last, { key: "Tab" });
+      expect(document.activeElement).toBe(first);
+
+      first.focus();
+      fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+      expect(document.activeElement).toBe(last);
+    });
+
+    it("keeps Tab inside after the code has replaced the button that had focus", () => {
+      pairing();
+      render(<ConnectDialog open onClose={() => {}} />);
+      button("Scan with your phone").focus();
+      fireEvent.click(button("Scan with your phone"));
+
+      // Focus is on the dialog, so the key reaches its handler and wraps from the front to the last control.
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Tab", shiftKey: true });
+
+      expect(document.activeElement).toBe(button("Cancel"));
+    });
+
+    it("gives focus back to what opened it", () => {
+      const opener = document.createElement("button");
+      document.body.append(opener);
+      opener.focus();
+      const { unmount } = render(<ConnectDialog open onClose={() => {}} />);
+      expect(document.activeElement).toBe(dialog());
+
+      unmount();
+
+      expect(document.activeElement).toBe(opener);
+      opener.remove();
+    });
+  });
+
+  describe("a bunker that is slow to answer", () => {
+    const typeLink = () =>
+      fireEvent.change(screen.getByLabelText("Paste a bunker link"), { target: { value: BUNKER } });
+
+    it("can be cancelled: the signer in use is let go and the choices are back", () => {
+      vi.mocked(connectBunker).mockReturnValue(new Promise(() => {}));
+      render(<ConnectDialog open onClose={() => {}} />);
+      typeLink();
+      fireEvent.click(button("Connect"));
+      expect(screen.getByText("Waiting for your signer…")).toBeTruthy();
+
+      fireEvent.click(button("Cancel"));
+
+      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect(useSigner.getState().status).toBe("disconnected");
+      expect(screen.queryByText("Waiting for your signer…")).toBeNull();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(button("Connect").disabled).toBe(false);
+      expect(button("Scan with your phone").disabled).toBe(false);
+    });
+
+    it("is cancelled by closing the dialog", () => {
+      vi.mocked(connectBunker).mockReturnValue(new Promise(() => {}));
+      render(<Page />);
+      typeLink();
+      fireEvent.click(button("Connect"));
+
+      fireEvent.click(button("Close"));
+
+      expect(screen.getByText("dialog closed")).toBeTruthy();
+      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect(useSigner.getState().status).toBe("disconnected");
+    });
+
+    it("is not cancelled by the dialog closing once it has connected", async () => {
+      vi.mocked(connectBunker).mockResolvedValue(CURATOR);
+      render(<Page />);
+      typeLink();
+
+      fireEvent.click(button("Connect"));
+
+      await waitFor(() => expect(screen.getByText("dialog closed")).toBeTruthy());
+      expect(disconnect).not.toHaveBeenCalled();
+      expect(useSigner.getState()).toMatchObject({ status: "connected", pubkey: CURATOR, method: "remote" });
+    });
   });
 });

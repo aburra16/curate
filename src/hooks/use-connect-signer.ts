@@ -5,12 +5,22 @@ import { connectBunker as connectRemoteBunker, restoreRemote, startPairing as st
 import { connectExtension as connectExtensionSigner, disconnect as disconnectSigner, SignerError } from "@/services/signer";
 import { useSigner } from "@/stores/signer";
 
+/** A connect that can still be stopped. */
+interface Attempt {
+  /** Stop waiting. Does nothing once the attempt has ended. */
+  cancel: () => void;
+}
+
 /** A pairing in progress: the code to show, and how to stop waiting for a signer to scan it. */
-export interface Pairing {
+export interface Pairing extends Attempt {
   /** The `nostrconnect://` code, to show as a picture or to copy. */
   uri: string;
-  /** Stop waiting. Does nothing once a signer has paired or the pairing has ended. */
-  cancel: () => void;
+}
+
+/** A bunker being asked to connect. */
+export interface BunkerAttempt extends Attempt {
+  /** Settles once the attempt has ended, however it ended; never rejects. */
+  done: Promise<void>;
 }
 
 const failureWords = (err: unknown): string => (err instanceof Error ? err.message : String(err));
@@ -39,17 +49,38 @@ export function useConnectSigner() {
     }
   }, [setConnecting, setConnected, setError]);
 
-  /** Connect the bunker a pasted `bunker://` link names. */
+  /**
+   * Connect the bunker a pasted `bunker://` link names, and be connected once
+   * it answers. A bunker may be waiting for its owner to approve, so this can
+   * take minutes: `cancel` gives up on it. The signer in use is let go, so a
+   * bunker that answers late is closed and never put in use, and what it says
+   * after that changes nothing.
+   */
   const connectBunker = useCallback(
-    async (link: string) => {
+    (link: string): BunkerAttempt => {
       setConnecting();
-      try {
-        setConnected(await connectRemoteBunker(link), "remote");
-      } catch (err) {
-        setError(failureWords(err));
-      }
+      let over = false;
+      const done = connectRemoteBunker(link).then(
+        (connected) => {
+          if (over) return;
+          over = true;
+          setConnected(connected, "remote");
+        },
+        (err: unknown) => {
+          if (over) return;
+          over = true;
+          setError(failureWords(err));
+        },
+      );
+      const cancel = () => {
+        if (over) return;
+        over = true;
+        void disconnectSigner().catch(() => {});
+        setDisconnected();
+      };
+      return { done, cancel };
     },
-    [setConnecting, setConnected, setError],
+    [setConnecting, setConnected, setError, setDisconnected],
   );
 
   /**
