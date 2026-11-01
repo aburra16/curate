@@ -9,7 +9,14 @@ import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearSeenOn } from "@/services/nostr";
 import { clearOutboxCache } from "@/services/outbox";
-import { PUBLISH_TIMEOUT_MS, publishEvent, publishRelays, retryPublish, signAndPublish } from "@/services/publish";
+import {
+  OWN_RELAY_GRACE_MS,
+  PUBLISH_TIMEOUT_MS,
+  publishEvent,
+  publishRelays,
+  retryPublish,
+  signAndPublish,
+} from "@/services/publish";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB } from "@/services/relays";
 import * as signerModule from "@/services/signer";
 import { activate, disconnect, SignerError } from "@/services/signer";
@@ -222,6 +229,78 @@ describe("publishEvent", () => {
     expect(useRelayStatus.getState().statuses[OWN_A]).toBe("ok");
   });
 
+  it("answers once dcosl has answered and the author's own relays have had their grace: a silent one is a miss", async () => {
+    vi.useFakeTimers();
+    watching({
+      [DCOSL]: accepts,
+      [OWN_A]: accepts,
+      [OWN_B]: { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: PUBLISH_TIMEOUT_MS * 4 },
+    });
+    let result: Awaited<ReturnType<typeof publishEvent>> | undefined;
+    const pending = publishEvent(signed(), [OWN_A, OWN_B]).then((r) => (result = r));
+
+    await vi.advanceTimersByTimeAsync(OWN_RELAY_GRACE_MS - 1);
+    expect(result).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+
+    expect(result?.onHub).toBe(true);
+    expect([...result!.accepted].sort()).toEqual([DCOSL, OWN_A].sort());
+    expect(result?.failed).toEqual([{ ok: false, from: OWN_B, message: "timed out" }]);
+  });
+
+  it("still reports an own relay's late answer to the relay status line", async () => {
+    vi.useFakeTimers();
+    watching({
+      [DCOSL]: accepts,
+      [OWN_A]: { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: OWN_RELAY_GRACE_MS * 2 },
+    });
+
+    const pending = publishEvent(signed(), [OWN_A]);
+    await vi.advanceTimersByTimeAsync(OWN_RELAY_GRACE_MS);
+    const result = await pending;
+
+    expect(result.failed).toEqual([{ ok: false, from: OWN_A, message: "timed out" }]);
+    expect(useRelayStatus.getState().statuses[DCOSL]).toBe("ok");
+    expect(useRelayStatus.getState().statuses[OWN_A]).toBeUndefined();
+
+    await vi.advanceTimersByTimeAsync(OWN_RELAY_GRACE_MS);
+
+    expect(useRelayStatus.getState().statuses[OWN_A]).toBe("ok");
+  });
+
+  it("gives the author's own relays their grace from when dcosl answered", async () => {
+    vi.useFakeTimers();
+    const hubTakes = 3_000;
+    watching({
+      [DCOSL]: { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: hubTakes },
+      [OWN_A]: { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: PUBLISH_TIMEOUT_MS * 4 },
+    });
+    let result: Awaited<ReturnType<typeof publishEvent>> | undefined;
+    const pending = publishEvent(signed(), [OWN_A]).then((r) => (result = r));
+
+    await vi.advanceTimersByTimeAsync(hubTakes + OWN_RELAY_GRACE_MS - 1);
+    expect(result).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+
+    expect(result?.onHub).toBe(true);
+    expect(result?.failed).toEqual([{ ok: false, from: OWN_A, message: "timed out" }]);
+  });
+
+  it("answers as soon as every relay has, without waiting out the grace", async () => {
+    vi.useFakeTimers();
+    watching({ [DCOSL]: accepts, [OWN_A]: { ...accepts, delayMs: 200 } });
+    let result: Awaited<ReturnType<typeof publishEvent>> | undefined;
+    const pending = publishEvent(signed(), [OWN_A]).then((r) => (result = r));
+
+    await vi.advanceTimersByTimeAsync(200);
+    await pending;
+
+    expect([...result!.accepted].sort()).toEqual([DCOSL, OWN_A].sort());
+    expect(result?.failed).toEqual([]);
+  });
+
   it("sends to the list relay alone when the author has no relays of their own", async () => {
     const { transport } = watching({ [DCOSL]: accepts });
     const event = signed();
@@ -299,6 +378,28 @@ describe("retryPublish", () => {
     expect(second.onHub).toBe(false);
     expect(second.hubMessage).toBe("rate-limited: slow down");
     expect(second.failed).toEqual([{ ok: false, from: DCOSL, message: "rate-limited: slow down" }]);
+  });
+
+  it("waits for the author's own relays only for their grace once dcosl has answered", async () => {
+    vi.useFakeTimers();
+    const silent: FakeRelay = { events: [], end: { state: "eose" }, accept: { ok: true }, delayMs: PUBLISH_TIMEOUT_MS * 4 };
+    const script: Record<string, FakeRelay> = { [DCOSL]: refuses("blocked: not allowed"), [OWN_A]: silent };
+    watching(script);
+    const firstPending = publishEvent(signed(), [OWN_A]);
+    await vi.advanceTimersByTimeAsync(OWN_RELAY_GRACE_MS);
+    const first = await firstPending;
+    expect(first.failed.map((outcome) => outcome.from).sort()).toEqual([DCOSL, OWN_A].sort());
+    script[DCOSL] = accepts;
+
+    let second: Awaited<ReturnType<typeof retryPublish>> | undefined;
+    const pending = retryPublish(first).then((r) => (second = r));
+    await vi.advanceTimersByTimeAsync(OWN_RELAY_GRACE_MS - 1);
+    expect(second).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+
+    expect(second?.onHub).toBe(true);
+    expect(second?.failed).toEqual([{ ok: false, from: OWN_A, message: "timed out" }]);
   });
 
   it("sends nothing when every relay already took the event", async () => {

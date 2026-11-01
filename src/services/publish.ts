@@ -11,7 +11,7 @@
 import type { NostrEvent } from "nostr-tools";
 import type { EventTemplate } from "@/lib/conceptCopy";
 import { normalizeRelayUrl } from "@/lib/curate/relayUrls";
-import { publishUntilEnough, type PublishOutcome } from "@/lib/publishQuorum";
+import type { PublishOutcome } from "@/lib/publishQuorum";
 import { writeRelaysOf } from "@/services/outbox";
 import { DCOSL, INDEX, relayKey, TAG_HUB } from "@/services/relays";
 import { activeSigner, signTemplate } from "@/services/signer";
@@ -20,6 +20,9 @@ import { useRelayStatus } from "@/stores/relay-status";
 
 /** How long a relay has to answer a publish before it is counted as silent. */
 export const PUBLISH_TIMEOUT_MS = 8_000;
+
+/** How long the author's own relays have to answer once the list relay has. */
+export const OWN_RELAY_GRACE_MS = 1_500;
 
 /** What the person is told when a relay refused without saying why. */
 const NO_REASON = "no reason given";
@@ -62,50 +65,85 @@ export function publishRelays(writeRelays: string[]): string[] {
 /** What a relay said when it didn't accept, in its own words. */
 const wordsOf = (outcome: PublishOutcome): string => outcome.message || NO_REASON;
 
-/** Tell the relay status line how each relay answered. */
-function reportAnswers(accepted: string[], failed: PublishOutcome[]): void {
+/** Tell the relay status line how one relay answered: `refusal` is null when it accepted. */
+function reportAnswer(relay: string, refusal: PublishOutcome | null): void {
   const { report } = useRelayStatus.getState();
-  for (const relay of accepted) report(relay, { state: "eose" });
-  for (const outcome of failed) {
-    report(
-      outcome.from,
-      outcome.message === PUBLISH_TIMED_OUT
-        ? { state: "timeout" }
-        : { state: "closed", reason: wordsOf(outcome) },
-    );
-  }
+  if (!refusal) report(relay, { state: "eose" });
+  else if (refusal.message === PUBLISH_TIMED_OUT) report(relay, { state: "timeout" });
+  else report(relay, { state: "closed", reason: wordsOf(refusal) });
 }
 
-/** The result of a write once every relay has answered or run out of time. */
+/** The result of a write from what the relays said by the time it was answered. */
 function resultOf(event: NostrEvent, accepted: string[], failed: PublishOutcome[]): PublishResult {
   const onHub = accepted.some(isHub);
   const refusal = failed.find((outcome) => isHub(outcome.from));
   return { event, onHub, hubMessage: onHub ? null : refusal ? wordsOf(refusal) : NO_REASON, accepted, failed };
 }
 
+/** A relay's failure to publish in words, from a transport that threw instead of answering. */
+const thrownBy = (relay: string, err: unknown): PublishOutcome => ({
+  ok: false,
+  from: relay,
+  message: err instanceof Error ? err.message : String(err),
+});
+
 /**
- * Send the event to each relay and wait until all have answered or `PUBLISH_TIMEOUT_MS` has passed.
- * Every refusal comes back with words, so the status line and the result read the same.
+ * Send the event to each relay and answer once the list relay has answered and
+ * the others have had `OWN_RELAY_GRACE_MS` more, or every relay has answered,
+ * or `PUBLISH_TIMEOUT_MS` has passed. When the list relay isn't asked, the
+ * grace starts at once. A relay still silent then is in `failed` as timed out,
+ * and its answer, whenever it comes, still goes to the relay status line.
+ * Every refusal comes back with words, so the status line and the result read
+ * the same.
  */
-async function sendTo(
-  event: NostrEvent,
-  relays: string[],
-): Promise<{ accepted: string[]; failed: PublishOutcome[] }> {
-  const answered = await publishUntilEnough(
-    relays,
-    async (relay) => transport().publish(relay, event, PUBLISH_TIMEOUT_MS),
-    { need: relays.length, timeoutMs: PUBLISH_TIMEOUT_MS },
-  );
-  const failed = answered.failed.map((outcome) => ({ ...outcome, message: wordsOf(outcome) }));
-  reportAnswers(answered.accepted, failed);
-  return { accepted: answered.accepted, failed };
+function sendTo(event: NostrEvent, relays: string[]): Promise<{ accepted: string[]; failed: PublishOutcome[] }> {
+  return new Promise((resolve) => {
+    const accepted: string[] = [];
+    const failed: PublishOutcome[] = [];
+    const silent = new Set(relays);
+    let done = false;
+    let grace: ReturnType<typeof setTimeout> | undefined;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(cap);
+      clearTimeout(grace);
+      const timedOut = [...silent].map((from): PublishOutcome => ({ ok: false, from, message: PUBLISH_TIMED_OUT }));
+      resolve({ accepted, failed: [...failed, ...timedOut] });
+    };
+    const startGrace = () => {
+      grace ??= setTimeout(finish, OWN_RELAY_GRACE_MS);
+    };
+    const cap = setTimeout(finish, PUBLISH_TIMEOUT_MS);
+
+    if (silent.size === 0) finish();
+    else if (!relays.some(isHub)) startGrace();
+
+    for (const relay of relays) {
+      transport()
+        .publish(relay, event, PUBLISH_TIMEOUT_MS)
+        .catch((err: unknown) => thrownBy(relay, err))
+        .then((outcome) => {
+          const refusal = outcome.ok ? null : { ...outcome, from: relay, message: wordsOf(outcome) };
+          reportAnswer(relay, refusal);
+          if (done) return;
+          silent.delete(relay);
+          if (refusal) failed.push(refusal);
+          else accepted.push(relay);
+          if (silent.size === 0) finish();
+          else if (isHub(relay)) startGrace();
+        });
+    }
+  });
 }
 
 /**
  * Send an event that is already signed to the list relay and the author's own
- * `writeRelays`, and report what each said. Resolves when every relay has
- * answered or `PUBLISH_TIMEOUT_MS` has passed. Never rejects: a relay that
- * fails is in `failed`.
+ * `writeRelays`, and report what each said. Resolves once the list relay has
+ * answered and the author's relays have had `OWN_RELAY_GRACE_MS` more (at once
+ * when every relay has answered), or when `PUBLISH_TIMEOUT_MS` has passed.
+ * Never rejects: a relay that fails or is still silent is in `failed`.
  */
 export async function publishEvent(event: NostrEvent, writeRelays: string[]): Promise<PublishResult> {
   const { accepted, failed } = await sendTo(event, publishRelays(writeRelays));
@@ -126,9 +164,10 @@ export async function signAndPublish(template: EventTemplate): Promise<PublishRe
 }
 
 /**
- * Send the same signed event again to the relays that didn't take it, and
- * report the whole write: relays that accepted it before keep their place in
- * `accepted` and are not asked again. The event is never signed again.
+ * Send the same signed event again to the relays that didn't take it, waiting
+ * as `publishEvent` does, and report the whole write: relays that accepted it
+ * before keep their place in `accepted` and are not asked again. The event is
+ * never signed again.
  */
 export async function retryPublish(result: PublishResult): Promise<PublishResult> {
   if (result.failed.length === 0) return result;
