@@ -18,6 +18,8 @@
  * pinned on relays that match filters as a relay does (src/test/relayCorpus).
  */
 import type { Filter, NostrEvent } from "nostr-tools";
+import { finalizeEvent } from "nostr-tools/pure";
+import { hexToBytes } from "nostr-tools/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { coordinateOf } from "@/lib/dlistFields";
@@ -479,5 +481,40 @@ describe("loadRelationships, for a list header", () => {
     expect(req.mock.calls.some(([, filters]) => filters.some((f) => "#q" in f))).toBe(false);
     // The corner shop is filed under the list by `e`: one of its items, not a mention.
     expect(r.mentions).toEqual([{ event: fx.listOfLists, listRef: `39998:${MENTIONER}:lists-i-follow`, listName: null }]);
+  });
+});
+
+describe("loadRelationships, for items filed under a list by its id", () => {
+  /** What the mentioner signs: the fixture's roles keep their keys as one byte repeated. */
+  const signed = (tags: string[][], kind = 9999) =>
+    finalizeEvent({ kind, created_at: 1_792_000_500, content: "", tags }, hexToBytes("66".repeat(32)));
+
+  /** A 9999 item filed under the 9998 list by its id (no `z`), that also names the item. */
+  const filedById = signed([["e", fx.smallList.id], ["e", fx.item.id], ["name", "Corner pick"]]);
+  /** A 9999 that names the item and no list at all: its `e` is the item, not a list. */
+  const quotingOnly = signed([["e", fx.item.id], ["name", "Quoted alone"]]);
+
+  const withHub = (...more: NostrEvent[]) =>
+    relays({ [DCOSL]: { events: [...HUB_EVENTS, ...more], end: EOSE }, [TAG_HUB]: TAGS });
+
+  it("names the list an item is filed under by its `e`, as one of the lists it is on", async () => {
+    withHub();
+    const r = await loadRelationships(fx.cornerItem, ranks, answered, null);
+    expect(r.lists).toEqual([{ ref: fx.smallList.id, name: "Corner shops" }]);
+  });
+
+  it("names the list a mention is filed under by its `e`", async () => {
+    withHub(filedById);
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    expect(r.mentions).toContainEqual({ event: filedById, listRef: fx.smallList.id, listName: "Corner shops" });
+  });
+
+  it("takes an `e` for a list only when what it names is a list header", async () => {
+    withHub(quotingOnly);
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    // The `e` names the item itself, not a list: the mention is on no list, and takes no name from the item.
+    expect(r.mentions).toContainEqual({ event: quotingOnly, listRef: null, listName: null });
+    // An item with a `z` is filed by it, whatever its `e` names.
+    expect(r.mentions.find((m) => m.event.id === fx.mention.id)?.listRef).toBe(coordinateOf(fx.mentionList));
   });
 });

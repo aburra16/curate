@@ -447,16 +447,19 @@ describe("relays that didn't answer", () => {
     expect(screen.getByRole("link", { name: "Coffee places" })).toBeTruthy();
   });
 
-  it("are named when nothing else was found too", async () => {
+  it("are named when nothing else was found too, and the page says only what it read", async () => {
     service.loadRelationships.mockResolvedValue(found({ unread: ["wss://one.example"] }));
     tab();
-    expect(await screen.findByText("Nothing links here yet")).toBeTruthy();
+    expect(await screen.findByText("Nothing found on the relays that answered")).toBeTruthy();
     expect(screen.getByRole("note").textContent).toMatch(/wss:\/\/one\.example/);
+    // A relay that was quiet is no proof that nothing links here.
+    expect(screen.queryByText("Nothing links here yet")).toBeNull();
   });
 
-  it("add no note when every relay answered", async () => {
+  it("add no note when every relay answered, and then nothing linking here is what was found", async () => {
     tab();
     await screen.findByText("Nothing links here yet");
     expect(screen.queryByRole("note")).toBeNull();
+    expect(screen.queryByText(/Nothing found on the relays/)).toBeNull();
   });
 });

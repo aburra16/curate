@@ -200,10 +200,21 @@ The "Relationships" tab reads these, from the list relay and the tag hub, never 
 
 - **Copies of an item:** `{ "kinds": [39999], "#q": ["<item address>", "<item event id>"] }`. A copy is a 39999 whose `d` starts with `copy-` and whose `q` names the item.
 - **Items that mention it:** `{ "kinds": [39999, 9999], "#e": ["<event id>"] }` and `{ "kinds": [39999, 9999], "#a": ["<address>"] }`. Copies and taggings are left out, and so are a header's own items.
-- **Tags applied to it:** `{ "kinds": [39999], "#e": ["<event id>"] }` and `{ "kinds": [39999], "#a": ["<address>"] }` find Brainstorm's taggings. Curate counts a tagging only when its per-tag header joins a namespace Brainstorm honours, and counts each person once, by their latest apply or dispute.
-- **The lists it is on:** the headers its `z` tags name, read by address or by id.
+- **The lists it is on:** the headers its `z` tags name, read by address or by id. An item with no `z` at all is filed under the 9998 list its first `e` names, as a 9998 list is named by its header's id.
 
 Copies and mentions by accounts outside the reader's web of trust are folded, and only for accounts the scoring service answered for. A tagging counts only when its author is inside it; it is not folded.
+
+### How tags are counted
+
+`{ "kinds": [39999], "#e": ["<event id>"] }` and `{ "kinds": [39999], "#a": ["<address>"] }` find the candidate taggings. Curate counts a candidate like this:
+
+1. A tagging names its tag's header in a `z` of the form `39999:<pubkey>:tagging:<slug>-tagging`. Read the header at that address. A tagging whose header can't be read counts for nothing.
+2. The header is honoured only if one of its `z` tags is `39998:<pubkey>:tagging-with-specific-tag`, where `<pubkey>` is `82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833` or `a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599`. That is the honoured namespace. A tagging under any other namespace counts for nothing.
+3. The header's `a` is `39999:<tag author pubkey>:<slug>`, the address of the tag's own element. That names the tag. Read the element at that address for the name to show: its `name` tag, else its `names` tag, else the name in its JSON content (`{"tag":{"name":"Cosy"}}`), else the slug.
+4. The tagging's `polarity` tag says which way it goes. A value of 0.5 or more, or no `polarity` tag, applies the tag. A value of -0.5 or less disputes it. Anything between counts for nothing.
+5. Each person counts once, by their latest tagging of that tag on that event, and only people inside the reader's web of trust count.
+
+Separately, the reader's own latest stance is shown ("you applied", "you disputed") whether or not they are inside their web of trust.
 
 ## Whose web of trust
 

@@ -3,6 +3,8 @@
  * the tag hub, for tags) through the reader's web of trust:
  *
  * - **Lists:** the lists an item names in its `z`, each by its header's name.
+ *   An item with no `z` is filed by its `e` under a 9998 list, once that id
+ *   is read to be a list header.
  * - **Copies:** curation copies of it, 39999s whose `d` starts `copy-` and
  *   whose `q` names it.
  * - **Tags:** taggings of it, counted as Brainstorm counts them
@@ -30,7 +32,7 @@
 import type { Filter, NostrEvent } from "nostr-tools";
 import { HONORED_TAGGING_AUTHORITIES } from "@/config/tagging";
 import { isBlankEvent } from "@/lib/blankEvent";
-import { coordinateOf, isDListHeader, isDListItem, parseCoordinate } from "@/lib/dlistFields";
+import { coordinateOf, headerReferenceOf, isDListHeader, isDListItem, parseCoordinate } from "@/lib/dlistFields";
 import { newestPerAddress } from "@/lib/newestPerAddress";
 import { classifyEventTaggings, type ClassifiedTag, type TagRef } from "@/lib/tagging/classify";
 import { filterTagsAppliedToEvent } from "@/lib/tagging/filters";
@@ -41,7 +43,7 @@ import { readRelaysReporting, type RelayRead } from "@/services/nostr";
 import { listRelays, TAG_HUB } from "@/services/relays";
 import { inWebOfTrust } from "@/services/trust";
 
-/** A copy or a mention, with the list it is on: its first `z`, by name when that header was read. */
+/** A copy or a mention, with the list it is on: its first `z` (or, with none, the 9998 its `e` names), by name when that header was read. */
 export interface Related {
   event: NostrEvent;
   listName: string | null;
@@ -96,6 +98,23 @@ const addressOfEvent = (ev: NostrEvent): string | null =>
 const zHandles = (ev: NostrEvent): string[] =>
   ev.tags.filter((t) => t[0] === "z" && isHandle(t[1])).map((t) => t[1]);
 
+/**
+ * What an event with no `z` at all is filed under: its `e`, as a 9998 list is
+ * named by its header's id (`headerReferenceOf`, which `filedHere` follows
+ * too). It is a list only once what it names is read to be a list header.
+ */
+const filedByE = (ev: NostrEvent): string | null => {
+  if (ev.tags.some((t) => t[0] === "z")) return null;
+  const ref = headerReferenceOf(ev);
+  return isHandle(ref ?? undefined) ? ref : null;
+};
+
+/** Every handle an event may be filed under, in order: its `z`s, else its `e`. */
+const listCandidates = (ev: NostrEvent): string[] => {
+  const byE = filedByE(ev);
+  return byE ? [byE] : zHandles(ev);
+};
+
 const isTagging = (ev: NostrEvent): boolean => ev.tags.some((t) => t[0] === "z" && DESCRIPTOR.test(t[1] ?? ""));
 
 /** Filters for the events at these coordinates: one per kind and author, its `d`s in chunks. */
@@ -143,6 +162,8 @@ interface Gathered {
   tagNames: Map<string, string>;
   /** List reference -> its header's plural name, for the headers found. */
   listNames: Map<string, string>;
+  /** The list references that were read to be list headers, named or not. */
+  listHeaders: Set<string>;
   unread: string[];
 }
 
@@ -210,20 +231,22 @@ async function gather(event: NostrEvent): Promise<Gathered> {
   );
 
   const listRefs = unique([
-    ...(header ? [] : zHandles(event)),
-    ...[...copies, ...mentions].map((ev) => zHandles(ev)[0]).filter((ref) => ref !== undefined),
+    ...(header ? [] : listCandidates(event)),
+    ...[...copies, ...mentions].map((ev) => listCandidates(ev)[0]).filter((ref) => ref !== undefined),
   ]);
   const readListNames = async () => {
     const coordinates = listRefs.filter((ref) => parseCoordinate(ref));
     const headerIds = listRefs.filter((ref) => HEX64.test(ref));
     const byId = chunks(headerIds).map((chunk): Filter => ({ ids: chunk }));
     const found = await read(lists, [...coordinateFilters(coordinates), ...byId]);
-    const byRef = new Map<string, string>();
+    const names = new Map<string, string>();
+    const headers = new Set<string>();
     for (const [ref, h] of atReferences(found, listRefs)) {
+      if (isDListHeader(h)) headers.add(ref);
       const name = namesOf(h).plural.trim();
-      if (name) byRef.set(ref, name);
+      if (name) names.set(ref, name);
     }
-    return byRef;
+    return { names, headers };
   };
 
   const readTags = async () => {
@@ -249,8 +272,11 @@ async function gather(event: NostrEvent): Promise<Gathered> {
     return { taggingHeaders, tagNames };
   };
 
-  const [listNames, { taggingHeaders, tagNames }] = await Promise.all([readListNames(), readTags()]);
-  return { header, copies, mentions, taggings, taggingHeaders, tagNames, listNames, unread: [...unread] };
+  const [{ names: listNames, headers: listHeaders }, { taggingHeaders, tagNames }] = await Promise.all([
+    readListNames(),
+    readTags(),
+  ]);
+  return { header, copies, mentions, taggings, taggingHeaders, tagNames, listNames, listHeaders, unread: [...unread] };
 }
 
 /** People, not events: each person's latest stance on the tag. */
@@ -275,8 +301,14 @@ function relationshipsOf(
 ): Relationships {
   const trusted = (pubkey: string) => inWebOfTrust(ranks, pubkey);
   const outside = (ev: NostrEvent) => answered.has(ev.pubkey) && !trusted(ev.pubkey);
+  /** The lists an event is on: its `z`s, or, with none, the header its `e` names. */
+  const listsOf = (ev: NostrEvent): string[] => {
+    const byE = filedByE(ev);
+    if (!byE) return zHandles(ev);
+    return g.listHeaders.has(byE) ? [byE] : [];
+  };
   const related = (ev: NostrEvent): Related => {
-    const listRef = zHandles(ev)[0] ?? null;
+    const listRef = listsOf(ev)[0] ?? null;
     return { event: ev, listRef, listName: listRef ? (g.listNames.get(listRef) ?? null) : null };
   };
   const shown = (events: NostrEvent[]) => events.filter((ev) => !outside(ev)).map(related);
@@ -313,7 +345,7 @@ function relationshipsOf(
   }
 
   return {
-    lists: g.header ? [] : unique(zHandles(event)).map((ref) => ({ ref, name: g.listNames.get(ref) ?? null })),
+    lists: g.header ? [] : unique(listsOf(event)).map((ref) => ({ ref, name: g.listNames.get(ref) ?? null })),
     copies: shown(g.copies),
     tags: [...summaries.values()].sort((a, b) => b.applied - a.applied || a.name.localeCompare(b.name)),
     mentions: shown(g.mentions),

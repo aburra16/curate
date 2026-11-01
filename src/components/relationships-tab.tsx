@@ -430,7 +430,12 @@ export function RelationshipsTab({ event, ranks, answered, eventHref }: Relation
       ) : null}
 
       {hasFolded ? <OutsideFold {...folded} /> : null}
-      {empty ? <p className="text-[13px] leading-[1.55] text-ink-soft">Nothing links here yet</p> : null}
+      {empty ? (
+        <p className="text-[13px] leading-[1.55] text-ink-soft">
+          {/* A relay that didn't answer may hold what links here: only a full read says nothing does. */}
+          {r.unread.length ? "Nothing found on the relays that answered" : "Nothing links here yet"}
+        </p>
+      ) : null}
       {r.unread.length ? (
         <p role="note" className="mt-7 text-[12px] leading-[1.5] text-mute">
           Didn&rsquo;t answer: {r.unread.join(", ")}. Anything only they hold is missing here.

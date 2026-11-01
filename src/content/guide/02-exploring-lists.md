@@ -1,6 +1,6 @@
 ---
 title: Finding and reading lists
-summary: How to find a list on Discover, read its page, and open any item to see it the way its list describes it, every tag it carries, or the event as signed.
+summary: How to find a list on Discover, read its page, and open an item to see it as its list describes it, its tags, the event as signed, or what it links to.
 ---
 
 You can read every list in Curate without connecting anything. Reading never signs anything and needs no account.
@@ -91,13 +91,13 @@ The tab shows what an item, or a list's header, is connected to. Curate reads it
 
 - **"On these lists"** names each list the item says it belongs to, and each name is a link to that list. An item has this section, and a header does not.
 - **"Copies"** shows copies of the item that people made on their own lists. Each shows the copy's title, who made it and the list it is on, and links to it there. An item has this section, and a header does not.
-- **"Tags"** shows labels that people have put on the event, such as "Cosy". Each tag shows only the parts that apply: "applied by" and a number, "disputed by" and a number, and, if you are connected and have applied or disputed it yourself, "you applied" or "you disputed". A tag that only you applied shows just "you applied". The numbers count only people inside your web of trust.
+- **"Tags"** shows labels that people have put on the event, such as "Cosy". Each tag shows only the parts that apply: "applied by" and a number, "disputed by" and a number, and, if you are connected and have applied or disputed it yourself, "you applied" or "you disputed". The numbers count only people inside your web of trust. If you are inside your own, your tag counts in "applied by" or "disputed by" too. If you are not, a tag only you applied shows just "you applied".
 - **"Mentioned by"** shows items on other lists that point at this one, under the list each is on. For a header, these are lists that include it, such as a list of lists. Copies and tags are not counted here, because they have sections of their own.
 - **"This item names"**, or "This list names" for a header, shows what the event itself points at. A person is shown by name, and a list is a link to its page. An item, or any event the item names by its id, opens in the panel. Anything else is shown as text with a "Copy" button.
 
 Copies and mentions from accounts outside your web of trust wait behind a line such as "From outside your web of trust (3)". Click it to open them. The page [Whose items you see, and how votes count](/guide/trust-and-votes) explains the web of trust. If there is nothing to show, the tab says "Nothing links here yet".
 
-If a relay does not answer while Curate reads the tab, a quiet line at the bottom names it, such as "Didn’t answer: wss://relay.example", and anything only that relay holds is missing from the tab.
+If a relay does not answer while Curate reads the tab, a quiet line at the bottom names it, such as "Didn’t answer: wss://relay.example", and anything only that relay holds is missing from the tab. If that leaves the tab empty, it says "Nothing found on the relays that answered" instead of "Nothing links here yet", because the relay that did not answer may hold something.
 
 ## Show everything
 
