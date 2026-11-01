@@ -376,6 +376,63 @@ describe("Relationships", () => {
     expect(relationships.loadRelationships.mock.calls[1][0]).toBe(next);
   });
 
+  it("starts without it when the reader comes back to an event, and reads only once they choose it again", async () => {
+    const props = { header: false, definition: food, eventHref, onClose: vi.fn() };
+    const next = event({ id: "22".repeat(32), tags: [["d", "next"], ["z", FOOD], ["name", "Next"]] });
+    const { rerender } = render(<EventPanel event={steak} {...props} />);
+    openTab("Relationships");
+    await screen.findByText("Nothing links here yet");
+    openTab("Pretty");
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(1);
+
+    // Another event, then back: Pretty is where the reader left this one, and Relationships wasn't chosen on this visit.
+    rerender(<EventPanel event={next} {...props} />);
+    rerender(<EventPanel event={steak} {...props} />);
+    await act(async () => {});
+    expect(tab("Pretty").getAttribute("aria-selected")).toBe("true");
+    expect(screen.queryByText("Nothing links here yet")).toBeNull();
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(1);
+
+    // The same when the other event is still being read.
+    rerender(<EventPanel event={null} notice="Reading the event from the relays\u2026" {...props} />);
+    rerender(<EventPanel event={steak} {...props} />);
+    await act(async () => {});
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(1);
+
+    openTab("Relationships");
+    await screen.findByText("Nothing links here yet");
+    expect(relationships.loadRelationships).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps Tab inside the panel after Relationships was chosen and left, whose hidden controls can't take focus", async () => {
+    const OTHER = `39999:${CURATOR}:other`;
+    relationships.loadRelationships.mockResolvedValue({
+      ...NOTHING,
+      names: [{ tag: "a", value: OTHER }, { tag: "t", value: "food" }],
+    });
+    panel();
+    openTab("Relationships");
+    await screen.findByRole("link", { name: OTHER });
+    openTab("Raw");
+
+    const dialog = screen.getByRole("dialog");
+    // The tab is drawn, with controls, behind `hidden`.
+    expect(dialog.querySelectorAll("[hidden] a[href], [hidden] button").length).toBeGreaterThan(0);
+    const reachable = [...dialog.querySelectorAll<HTMLElement>('button, [tabindex="0"], a[href]')].filter(
+      (el) => !el.closest("[hidden]"),
+    );
+    const first = reachable[0];
+    const last = reachable[reachable.length - 1];
+    expect(first).toBe(screen.getByRole("button", { name: "Close" }));
+
+    last.focus();
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+    first.focus();
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
   it("opens a link to an event in the panel's own link format", async () => {
     const OTHER = `39999:${CURATOR}:other`;
     relationships.loadRelationships.mockResolvedValue({ ...NOTHING, names: [{ tag: "a", value: OTHER }] });

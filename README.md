@@ -12,16 +12,20 @@ shows comes from relays.
   you turn on "Show everything".
 - **A list** (`/list?c=<coordinate>`): the version of the list that governs for you (your own copy, then
   your Assistant's, then Brainstorm's, then the community's), its fields, and its items as rows. Items from
-  accounts outside your web of trust fold away behind one line. A row opens a panel with three views of the
+  accounts outside your web of trust fold away behind one line. A row opens a panel with four views of the
   event: Item (the item drawn the way its list defines it, as Brainstorm's item page draws it: its picture,
   title, summary, links, facts, audio or video, and a map that loads only when you ask, drawn with MapLibre
-  from OpenFreeMap's tiles on `map-tiles-server.brainstorm.world`), Pretty and Raw.
+  from OpenFreeMap's tiles on `map-tiles-server.brainstorm.world`), Pretty, Raw and Relationships (the lists
+  the item is on, copies of it, the tags applied to it, the list items that mention it and what it names
+  itself, read through your web of trust; copies and mentions from outside it fold away, and nothing is read
+  until you open the tab). A list's header has Pretty, Raw and Relationships.
 - **Create** (`/create`): make a list. The rest of writing (items, your own version of a list, votes)
   happens on the list's page; see "Writing" below.
 - **Settings** (`/settings`): extra relays to read lists from.
 
 Lists are read from `wss://dcosl.brainstorm.world` and, in parallel, the search index at
-`wss://search.brainstorm.world`, which also answers counts. Trust ranks come from the `30382:rank`
+`wss://search.brainstorm.world`, which also answers counts. The Relationships tab reads the list relays and
+the tag hub (`wss://tags.brainstorm.world/relay`) for tags, and never the search index. Trust ranks come from the `30382:rank`
 provider your own kind 10040 names; signed out, or with none named, from the one Brainstorm's house names
 in its kind 10040. A rank only decides what is shown and what is counted; Curate never shows anyone's rank.
 

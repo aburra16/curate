@@ -194,6 +194,17 @@ The votes on items, by address and by id:
 
 Keep only the newest event at each address. Curate also ignores blank events: an event with empty content and no tags that say anything, which some apps publish in place of a deletion.
 
+## What an event is connected to
+
+The "Relationships" tab reads these, from the list relay and the tag hub, never the search index. Each is a filter for one event, asked by its id, and by its address too when it has one:
+
+- **Copies of an item:** `{ "kinds": [39999], "#q": ["<item address>", "<item event id>"] }`. A copy is a 39999 whose `d` starts with `copy-` and whose `q` names the item.
+- **Items that mention it:** `{ "kinds": [39999, 9999], "#e": ["<event id>"] }` and `{ "kinds": [39999, 9999], "#a": ["<address>"] }`. Copies and taggings are left out, and so are a header's own items.
+- **Tags applied to it:** `{ "kinds": [39999], "#e": ["<event id>"] }` and `{ "kinds": [39999], "#a": ["<address>"] }` find Brainstorm's taggings. Curate counts a tagging only when its per-tag header joins a namespace Brainstorm honours, and counts each person once, by their latest apply or dispute.
+- **The lists it is on:** the headers its `z` tags name, read by address or by id.
+
+Copies, mentions and taggings by accounts outside the reader's web of trust are folded, and only for accounts the scoring service answered for.
+
 ## Whose web of trust
 
 Curate takes trust scores from the service a person's kind 10040 names in its `30382:rank` row, and reads those scores as kind 30382 events (NIP-85 trusted assertions). A person who names none, and anyone not signed in, gets the service Brainstorm's own account names. An author scored at or above the line Brainstorm calls verified is inside the web of trust. Curate never shows a score.

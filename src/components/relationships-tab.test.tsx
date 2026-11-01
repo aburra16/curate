@@ -129,6 +129,21 @@ describe("loading", () => {
     expect(await screen.findByRole("link", { name: "Coffee places" })).toBeTruthy();
     expect(service.loadRelationships).toHaveBeenCalledTimes(2);
   });
+
+  it("announces a failed read, and puts focus on the tab's page, not the document, when it tries again", async () => {
+    service.loadRelationships.mockRejectedValueOnce(new Error("boom"));
+    service.loadRelationships.mockReturnValueOnce(new Promise(() => {}));
+    const { container } = tab();
+    expect((await screen.findByRole("alert")).textContent).toBe("Could not read what this is connected to.");
+
+    const retry = screen.getByRole("button", { name: "Try again" });
+    retry.focus();
+    fireEvent.click(retry);
+    expect(retry.isConnected).toBe(false);
+    expect(document.activeElement).toBe(container.firstElementChild);
+    expect(document.activeElement).not.toBe(document.body);
+    expect(screen.getAllByText("Reading\u2026").length).toBeGreaterThan(0);
+  });
 });
 
 describe("what it reads, and when", () => {
@@ -257,7 +272,14 @@ describe("the sections of an item", () => {
     tab();
     await screen.findByRole("heading", { name: "Mentioned by 3" });
     const groups = section("Mentioned by").getAllByRole("group");
-    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Cafes worth the walk", "Not on a list"]);
+    // Each is named by its own heading, not by a second copy of the same words.
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual([null, null]);
+    expect(groups.map((g) => within(g).getByRole("heading", { level: 4 }).textContent)).toEqual([
+      "Cafes worth the walk",
+      "Not on a list",
+    ]);
+    expect(screen.getByRole("group", { name: "Cafes worth the walk" })).toBe(groups[0]);
+    expect(screen.getByRole("group", { name: "Not on a list" })).toBe(groups[1]);
     const walks = within(groups[0]);
     expect(walks.getByRole("link", { name: "Cafes worth the walk" }).getAttribute("href")).toBe(`/list?c=${encodeURIComponent(WALKS)}`);
     const rows = walks.getAllByRole("listitem");
@@ -273,7 +295,7 @@ describe("the sections of an item", () => {
     const strays = within(groups[1]);
     expect(strays.queryByRole("link", { name: "Strays" })).toBeNull();
     expect(strays.getByText("Strays")).toBeTruthy();
-    expect(strays.getByRole("button", { name: "Copy event id" })).toBeTruthy();
+    expect(strays.getByRole("button", { name: `Copy event id ${stray.id.slice(0, 8)}…${stray.id.slice(-4)}` })).toBeTruthy();
   });
 
   it("This item names shows a person by name, links a list or an item, and gives anything else to copy", async () => {
@@ -298,7 +320,7 @@ describe("the sections of an item", () => {
 
     expect(person.getByTestId("person").textContent).toBe(PROPRIETOR.slice(0, 4));
     expect(hashtag.getByText("coffee")).toBeTruthy();
-    expect(hashtag.getByRole("button", { name: "Copy hashtag" })).toBeTruthy();
+    expect(hashtag.getByRole("button", { name: "Copy hashtag coffee" })).toBeTruthy();
     // An event or an item opens in the panel; a list opens its page.
     expect(byId.getByRole("link", { name: OTHER_ID }).getAttribute("href")).toBe(eventHref(OTHER_ID));
     expect(itemAddress.getByRole("link", { name: OTHER_ITEM }).getAttribute("href")).toBe(eventHref(OTHER_ITEM));
@@ -306,7 +328,8 @@ describe("the sections of an item", () => {
     // Anything that is not a list or an item is its value, to copy.
     expect(other.queryByRole("link")).toBeNull();
     expect(other.getByText(`30023:${OWNER}:an-article`)).toBeTruthy();
-    expect(other.getByRole("button", { name: "Copy address" })).toBeTruthy();
+    // The name carries the value, an address with its key cut short.
+    expect(other.getByRole("button", { name: `Copy address 30023:${OWNER.slice(0, 8)}…${OWNER.slice(-4)}:an-article` })).toBeTruthy();
   });
 
   it("copies a value to the clipboard", async () => {
@@ -314,7 +337,7 @@ describe("the sections of an item", () => {
     vi.stubGlobal("navigator", { clipboard: { writeText } });
     service.loadRelationships.mockResolvedValue(found({ names: [{ tag: "t", value: "coffee" }] }));
     tab();
-    fireEvent.click(await screen.findByRole("button", { name: "Copy hashtag" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Copy hashtag coffee" }));
     expect(writeText).toHaveBeenCalledWith("coffee");
     vi.unstubAllGlobals();
   });
@@ -381,7 +404,21 @@ describe("people outside the web of trust", () => {
     expect(screen.getByRole("link", { name: "From a stranger" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "A stranger's copy" })).toBeTruthy();
     // The people involved are named, never ranked.
-    expect(within(screen.getByRole("group", { name: "Copies" })).getByTestId("person").textContent).toBe(hex("98").slice(0, 4));
+    const copies = screen.getByRole("heading", { name: "Copies 1" }).closest("section")!;
+    expect(within(copies).getByTestId("person").textContent).toBe(hex("98").slice(0, 4));
+  });
+
+  it("keep the headings in order when they are all there is: sections, then each list under its section", async () => {
+    service.loadRelationships.mockResolvedValue(
+      found({ folded: { copies: [related(outsiderCopy, FAVOURITES, "Favourite cafes")], mentions: [related(outsider, WALKS, "Cafes worth the walk")] } }),
+    );
+    tab();
+    fireEvent.click(await screen.findByRole("button", { name: "From outside your web of trust (2)" }));
+    expect(screen.getAllByRole("heading").map((h) => [h.tagName, h.textContent])).toEqual([
+      ["H3", "Copies 1"],
+      ["H3", "Mentioned by 1"],
+      ["H4", "Cafes worth the walk"],
+    ]);
   });
 
   it("are all there is: the fold shows, and the page does not say nothing links here", async () => {

@@ -12,17 +12,25 @@ function Dialog({
   shown,
   removed = false,
   disabled = false,
+  unseen = false,
 }: {
   onClose: () => void;
   returnFocus?: () => HTMLElement | null;
   shown: string | null;
   removed?: boolean;
   disabled?: boolean;
+  /** Controls drawn but hidden, before the first and after the last. */
+  unseen?: boolean;
 }) {
   const dialog = useRef<HTMLDivElement>(null);
   const onKeyDown = useDialog(dialog, onClose, returnFocus, shown);
   return (
     <div ref={dialog} role="dialog" aria-label="Test" tabIndex={-1} onKeyDown={onKeyDown}>
+      {unseen ? (
+        <div hidden>
+          <button type="button">Unseen first</button>
+        </div>
+      ) : null}
       <button type="button">First</button>
       {removed ? null : (
         <button type="button" disabled={disabled}>
@@ -30,6 +38,11 @@ function Dialog({
         </button>
       )}
       <button type="button">Last</button>
+      {unseen ? (
+        <div hidden>
+          <a href="#unseen">Unseen last</a>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -81,6 +94,22 @@ describe("useDialog", () => {
     expect(document.activeElement).toBe(button("First"));
 
     fireEvent.keyDown(button("First"), { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(button("Last"));
+  });
+
+  it("wraps around the controls that can be reached, not the hidden ones drawn beside them", () => {
+    render(<Dialog shown="one" onClose={() => {}} unseen />);
+
+    button("Last").focus();
+    fireEvent.keyDown(button("Last"), { key: "Tab" });
+    expect(document.activeElement).toBe(button("First"));
+
+    fireEvent.keyDown(button("First"), { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(button("Last"));
+
+    // The dialog itself, before any control has focus, goes back to the last one.
+    dialog().focus();
+    fireEvent.keyDown(dialog(), { key: "Tab", shiftKey: true });
     expect(document.activeElement).toBe(button("Last"));
   });
 

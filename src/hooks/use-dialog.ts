@@ -7,7 +7,8 @@ const FOCUSABLE =
 
 /**
  * A modal dialog's behaviour: focus moves into it when it opens and returns
- * to what opened it when it closes; Tab stays inside it; Escape closes it,
+ * to what opened it when it closes; Tab stays inside it, among the controls
+ * that can be reached (not those inside a `hidden` part); Escape closes it,
  * wherever focus has fallen; the page behind it doesn't scroll. Returns the
  * dialog's key handler (Tab).
  *
@@ -66,7 +67,8 @@ export function useDialog(
 
   return (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab" || !dialog.current) return;
-    const focusable = [...dialog.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
+    // A control inside a hidden part (a view that is kept drawn, out of sight) can't take focus.
+    const focusable = [...dialog.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => !el.closest("[hidden]"));
     if (!focusable.length) {
       e.preventDefault();
       return;

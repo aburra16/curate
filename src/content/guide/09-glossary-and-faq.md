@@ -13,6 +13,10 @@ summary: The words this guide uses, each in a sentence or two, and answers to co
 
 **Tag.** One labelled piece of an event, such as `["name", "Corner Press"]`. An item's fields are stored as tags.
 
+**Applied tag.** A label that people put on an event, such as "Cosy". It is not the same as a nostr tag, the labelled piece of an event. An event's "Relationships" tab shows its applied tags, and how many people inside your web of trust applied or disputed each.
+
+**Copy of an item.** An item that someone made on their own list to stand for another person's item. An item's "Relationships" tab shows its copies. A list's other versions are different: see "Version".
+
 **Relay.** A server, a computer on the internet that stores events and hands them to any app that asks. Many relays exist, and the same event can be on several.
 
 **List relay.** The relay Curate saves every change to, and the main one it reads lists from: dcosl.brainstorm.world. A change counts as saved when the list relay accepts it.

@@ -560,8 +560,12 @@ export function EventPanel({
   const picked = chosen && chosen.id === event?.id && tabs.includes(chosen.tab) ? chosen.tab : null;
   const current = picked ?? (tab && tabs.includes(tab) ? tab : tabs[0]);
   const tabRefs = useRef(new Map<PanelTab, HTMLButtonElement>());
-  // The event whose Relationships the reader has left for another tab: it stays drawn, hidden, so coming back reads nothing again.
-  const [leftRelationships, setLeftRelationships] = useState<string | null>(null);
+  // Relationships, once chosen on an event, stays drawn (hidden) while the reader moves among its tabs, so coming back reads
+  // nothing again. It belongs to this visit to the event: showing another event, or none, starts afresh.
+  const shownId = event?.id ?? null;
+  const [relationships, setRelationships] = useState<{ id: string | null; left: boolean }>({ id: shownId, left: false });
+  if (relationships.id !== shownId) setRelationships({ id: shownId, left: false });
+  const keepRelationships = relationships.id === shownId && relationships.left;
 
   const role: Role = header ? "header" : foreign ? "foreign" : "item";
   const title = event ? titleOf(event, role, definition) : "Event";
@@ -577,7 +581,7 @@ export function EventPanel({
 
   const choose = (t: PanelTab) => {
     if (!event) return;
-    if (current === "relationships") setLeftRelationships(event.id);
+    if (current === "relationships") setRelationships({ id: event.id, left: true });
     setChosen({ id: event.id, tab: t });
   };
   const moveTab = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -672,7 +676,7 @@ export function EventPanel({
                   <Pretty event={event} definition={classifiedBy} header={header} eventHref={eventHref} />
                 ) : null}
                 {current === "raw" ? <Raw event={event} copies={header ? copies : []} /> : null}
-                {current === "relationships" || leftRelationships === event.id ? (
+                {current === "relationships" || keepRelationships ? (
                   <div hidden={current !== "relationships"}>
                     <RelationshipsTab event={event} ranks={NO_RANKS} answered={NOBODY} eventHref={eventHref} />
                   </div>

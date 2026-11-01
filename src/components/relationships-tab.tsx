@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import type { NostrEvent } from "nostr-tools/pure";
 import { UNTITLED_LIST } from "@/app/discover-model";
 import { listHref } from "@/app/list/list-model";
@@ -10,6 +10,7 @@ import { CopyButton } from "@/components/copy-button";
 import { UserIdentity } from "@/components/user-identity";
 import { useReader } from "@/hooks/use-reader";
 import { coordinateOf, DLIST_HEADER_KIND, DLIST_ITEM_KIND, formatCoordinate, isDListHeader, parseCoordinate } from "@/lib/dlistFields";
+import { shortHex } from "@/lib/format";
 import { jsonDataOf } from "@/services/jsonData";
 import { loadRelationships, type Related, type Relationships, type TagSummary } from "@/services/relationships";
 import { fetchAuthorRanks } from "@/services/trust";
@@ -42,6 +43,13 @@ function titleOf(ev: NostrEvent): string {
 
 /** The item as a list page names it: its address, else (for an event with none) its id. */
 const identityOf = (ev: NostrEvent): string => coordinateOf(ev) ?? ev.id;
+
+/** A value as a copy button's name says it: an id, or the key in an address, cut short, so it can be heard and told apart. */
+function spoken(value: string): string {
+  if (HEX64.test(value)) return shortHex(value, 8, 4);
+  const c = parseCoordinate(value);
+  return c ? `${c.kind}:${shortHex(c.pubkey, 8, 4)}:${c.d}` : value;
+}
 
 /** Where a copy or a mention opens: the list it is on, with its panel open. Null when it names no list. */
 const relatedHref = ({ event, listRef }: Related): string | null =>
@@ -113,8 +121,34 @@ function RelatedRow({ related, showList }: { related: Related; showList: boolean
           ) : null}
         </p>
       </div>
-      {href ? null : <CopyButton text={identityOf(event)} label={coordinateOf(event) ? "address" : "event id"} />}
+      {href ? null : (
+        <CopyButton text={identityOf(event)} label={`${coordinateOf(event) ? "address" : "event id"} ${spoken(identityOf(event))}`} />
+      )}
     </li>
+  );
+}
+
+/** One list's mentions: the list's name as the group's heading, then its items. */
+function MentionGroup({ listRef, name, rows }: { listRef: string | null; name: string | null; rows: Related[] }) {
+  const headingId = useId();
+  const label = name ?? (listRef ? UNTITLED_LIST : "Not on a list");
+  return (
+    <div role="group" aria-labelledby={headingId}>
+      <h4 id={headingId} className="mb-1.5 text-[13px] font-normal text-ink">
+        {listRef ? (
+          <Link href={listHref(listRef)} className={link}>
+            {label}
+          </Link>
+        ) : (
+          label
+        )}
+      </h4>
+      <ul>
+        {rows.map((m) => (
+          <RelatedRow key={m.event.id} related={m} showList={false} />
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -129,27 +163,9 @@ function MentionGroups({ mentions }: { mentions: Related[] }) {
   }
   return (
     <div className="flex flex-col gap-4">
-      {[...groups.values()].map(({ ref, name, rows }) => {
-        const label = name ?? (ref ? UNTITLED_LIST : "Not on a list");
-        return (
-          <div key={ref ?? ""} role="group" aria-label={label}>
-            <h4 className="mb-1.5 text-[13px] font-normal text-ink">
-              {ref ? (
-                <Link href={listHref(ref)} className={link}>
-                  {label}
-                </Link>
-              ) : (
-                label
-              )}
-            </h4>
-            <ul>
-              {rows.map((m) => (
-                <RelatedRow key={m.event.id} related={m} showList={false} />
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+      {[...groups.values()].map(({ ref, name, rows }) => (
+        <MentionGroup key={ref ?? ""} listRef={ref} name={name} rows={rows} />
+      ))}
     </div>
   );
 }
@@ -212,7 +228,7 @@ function NamedRow({ named, eventHref }: { named: Relationships["names"][number];
           <span className="break-words text-ink-soft [overflow-wrap:anywhere]">{value}</span>
         )}
       </div>
-      {target ? null : <CopyButton text={value} label={NAMED_WORDS[tag]} />}
+      {target ? null : <CopyButton text={value} label={`${NAMED_WORDS[tag]} ${spoken(value)}`} />}
     </li>
   );
 }
@@ -232,25 +248,32 @@ function OutsideFold({ copies, mentions }: Relationships["folded"]) {
         From outside your web of trust ({copies.length + mentions.length})
       </button>
       {open ? (
-        <div className="mt-3 flex flex-col gap-5">
+        <div className="mt-3">
           {copies.length ? (
-            <div role="group" aria-label="Copies">
-              <p className="mb-1.5 text-[11px] text-mute">Copies</p>
+            <Part title="Copies" count={copies.length}>
               <ul>
                 {copies.map((c) => (
                   <RelatedRow key={c.event.id} related={c} showList />
                 ))}
               </ul>
-            </div>
+            </Part>
           ) : null}
           {mentions.length ? (
-            <div role="group" aria-label="Mentioned by">
-              <p className="mb-1.5 text-[11px] text-mute">Mentioned by</p>
+            <Part title="Mentioned by" count={mentions.length}>
               <MentionGroups mentions={mentions} />
-            </div>
+            </Part>
           ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/** The tab's own page: what focus is given to when a control in it goes (Try again), and busy while it reads. */
+function Page({ root, busy, children }: { root: RefObject<HTMLDivElement | null>; busy?: boolean; children: ReactNode }) {
+  return (
+    <div ref={root} tabIndex={-1} aria-busy={busy} className="outline-none">
+      {children}
     </div>
   );
 }
@@ -272,6 +295,7 @@ type Read = { status: "loading" } | { status: "failed" } | { status: "ready"; re
 export function RelationshipsTab({ event, ranks, answered, eventHref }: RelationshipsTabProps) {
   const reader = useReader().pubkey;
   const [attempt, setAttempt] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
   // What a read uses of the page when it starts, so a later change of ranks doesn't start another.
   const page = useRef({ event, ranks, answered });
   useEffect(() => {
@@ -308,34 +332,44 @@ export function RelationshipsTab({ event, ranks, answered, eventHref }: Relation
   const header = isDListHeader(event);
   const namesTitle = header ? "This list names" : "This item names";
 
+  const tryAgain = () => {
+    // The button is about to go: focus moves to the tab's own page first, so it doesn't fall to the document.
+    root.current?.focus();
+    setAttempt((n) => n + 1);
+  };
+
   if (read.status === "loading") {
     const titles = header
       ? ["Tags", "Mentioned by", namesTitle]
       : ["On these lists", "Copies", "Tags", "Mentioned by", namesTitle];
     return (
-      <div aria-busy>
+      <Page root={root} busy>
         {titles.map((title) => (
           <Part key={title} title={title}>
             <p className={subtle}>Reading&hellip;</p>
           </Part>
         ))}
-      </div>
+      </Page>
     );
   }
 
   if (read.status === "failed") {
     return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p className={subtle}>Could not read what this is connected to.</p>
-        <button
-          type="button"
-          onClick={() => setAttempt((n) => n + 1)}
-          className="border border-rule px-2.5 py-1 text-[12px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
-          style={{ borderRadius: "var(--radius-input)" }}
-        >
-          Try again
-        </button>
-      </div>
+      <Page root={root}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p role="alert" className={subtle}>
+            Could not read what this is connected to.
+          </p>
+          <button
+            type="button"
+            onClick={tryAgain}
+            className="border border-rule px-2.5 py-1 text-[12px] text-ink-soft transition-colors hover:border-rule-strong hover:text-ink"
+            style={{ borderRadius: "var(--radius-input)" }}
+          >
+            Try again
+          </button>
+        </div>
+      </Page>
     );
   }
 
@@ -348,7 +382,7 @@ export function RelationshipsTab({ event, ranks, answered, eventHref }: Relation
   const empty = !lists.length && !copies.length && !r.tags.length && !r.mentions.length && !r.names.length && !hasFolded;
 
   return (
-    <div>
+    <Page root={root}>
       {lists.length ? (
         <Part title="On these lists" count={lists.length}>
           <ul>
@@ -402,6 +436,6 @@ export function RelationshipsTab({ event, ranks, answered, eventHref }: Relation
           Didn&rsquo;t answer: {r.unread.join(", ")}. Anything only they hold is missing here.
         </p>
       ) : null}
-    </div>
+    </Page>
   );
 }

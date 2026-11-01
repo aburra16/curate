@@ -74,15 +74,30 @@ Curate reads items from relays, the servers that store nostr events, in pages of
 
 Click an item's title, or anywhere on its row, to open its panel. The panel opens at the side of the screen, or over the whole screen on a narrow one, such as a phone. At the top it gives the item's title and a line such as "Item · kind 39999". A kind is a number that says what sort of nostr event this is.
 
-The panel has three tabs.
+The panel has four tabs.
 
 - **"Item"** shows the item the way its list describes it: the list's name, the item's title and summary, its picture, links, audio or video, and a "Show on map" button when the list gives places, or "Show area on map" when the item gives an area rather than a spot. If a required field is empty, a note says so, such as "Missing name. The list requires it." Fields not shown above wait behind a "More fields" button, which says how many there are. Anything the item carries that its list never asked for sits apart, under "Outside this list’s definition". The last line says which version of the list the item was read through.
 - **"Pretty"** shows every tag the item carries. A tag is one labelled piece of an event, such as `["name", "Corner Press"]`. Each tag is marked "field" (a field the list declares), "protocol" (a tag nostr itself uses, such as the one that points at the list), "metadata" (such as the app that wrote it) or "undeclared". Tags that point at a list or at another event are links, and a tag that names a person shows their name. Under the tags, "Identity" gives the event's id and address with "Copy" buttons, and "Provenance" gives its author, its date, and the relays it was "Seen on".
 - **"Raw"** shows the event exactly as it was signed, with a "Copy" button. This is the same text any other nostr app would see.
+- **"Relationships"** shows what the event is connected to, as your web of trust sees it. Curate reads it only when you open the tab. The part below, "The Relationships tab", says what each section shows.
 
 The panel has its own web address, so you can copy the page's address from your browser and share it. Press "Close", or the Escape key, to close it.
 
-"View event", at the top of a list's page, opens the list's header in the same panel. A header has only "Pretty" and "Raw". Its "Pretty" tab adds "Concept", which says which shared list it belongs to. When a list has several versions, its "Raw" tab has a menu, "Copy of the concept", to show each version's own event.
+"View event", at the top of a list's page, opens the list's header in the same panel. A header has no "Item" tab: it has "Pretty", "Raw" and "Relationships". Its "Pretty" tab adds "Concept", which says which shared list it belongs to. When a list has several versions, its "Raw" tab has a menu, "Copy of the concept", to show each version's own event.
+
+### The Relationships tab
+
+The tab shows what an item, or a list's header, is connected to. Curate reads it from relays when you open the tab, and not before. Each section has a count beside its name, and a section with nothing in it is left out.
+
+- **"On these lists"** names each list the item says it belongs to, and each name is a link to that list. An item has this section, and a header does not.
+- **"Copies"** shows copies of the item that other people made on their own lists. Each shows the copy's title, who made it and the list it is on, and links to it there. An item has this section, and a header does not.
+- **"Tags"** shows labels that people have put on the event, such as "Cosy". Each tag says "applied by" and how many people put it on, and "disputed by" and how many disagreed, if anyone did. If you are connected and have put a tag on it or disputed it yourself, it says "you applied" or "you disputed". Only people inside your web of trust are counted.
+- **"Mentioned by"** shows items on other lists that point at this one, under the list each is on. For a header, these are lists that include it, such as a list of lists. Copies and tags are not counted here, because they have sections of their own.
+- **"This item names"**, or "This list names" for a header, shows what the event itself points at. A person is shown by name, a list or another item is a link, and anything else is shown as text with a "Copy" button.
+
+Copies and mentions from accounts outside your web of trust wait behind a line such as "From outside your web of trust (3)". Click it to open them. The page [Whose items you see, and how votes count](/guide/trust-and-votes) explains the web of trust. If there is nothing to show, the tab says "Nothing links here yet".
+
+If a relay does not answer while Curate reads the tab, a quiet line at the bottom names it, such as "Didn’t answer: wss://relay.example", and anything only that relay holds is missing from the tab.
 
 ## Show everything
 
@@ -99,7 +114,7 @@ On Discover, it adds:
 
 ## When a relay doesn't answer
 
-Curate reads lists from relays. A relay is a server, a computer on the internet that stores nostr events and hands them to any app that asks. Curate always reads from dcosl.brainstorm.world, which Curate calls the list relay, and from Brainstorm's search index at search.brainstorm.world. Only the search index can count items. Curate also reads the tag hub, tags.brainstorm.world, to find the Dictionary and the link templates some lists use.
+Curate reads lists from relays. A relay is a server, a computer on the internet that stores nostr events and hands them to any app that asks. Curate always reads from dcosl.brainstorm.world, which Curate calls the list relay, and from Brainstorm's search index at search.brainstorm.world. Only the search index can count items. Curate also reads the tag hub, tags.brainstorm.world, to find the Dictionary, the link templates some lists use, and the tags in the "Relationships" tab.
 
 If one of them does not answer, a line near the top of the page names it, for example: "No answer from the index (search.brainstorm.world). What's shown comes from the other relays, so counts are missing." The page carries on with what the other relays sent.
 
