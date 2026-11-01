@@ -17,7 +17,7 @@ import type { NostrEvent } from "nostr-tools";
 import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearCountCache } from "@/components/concept-card";
-import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { clearSeenOn } from "@/services/nostr";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB } from "@/services/relays";
 import { setTransport } from "@/services/transport";
@@ -41,7 +41,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => nav.router,
 }));
 // Names come from the relays in the app; none are reachable here, so every identity falls back to its npub.
-vi.mock("@/lib/nostr/profiles", () => ({
+vi.mock("@/services/profiles", () => ({
   fetchProfile: async () => null,
   getCachedProfile: () => undefined,
 }));

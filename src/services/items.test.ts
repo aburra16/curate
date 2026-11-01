@@ -7,7 +7,7 @@
 import type { Filter, NostrEvent } from "nostr-tools";
 import { finalizeEvent, generateSecretKey, getEventHash, getPublicKey, verifiedSymbol } from "nostr-tools/pure";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { itemIdentity, type ItemEvent } from "@/services/concepts";
 import { clearSeenOn } from "@/services/nostr";
 import { DCOSL, INDEX } from "@/services/relays";

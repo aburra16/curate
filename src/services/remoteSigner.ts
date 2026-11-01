@@ -19,8 +19,8 @@ import { NostrConnectSigner, PrivateKeySigner, type NostrConnectSignerOptions } 
 import { isNIP04 } from "applesauce-signers/helpers/encryption";
 import type { NostrEvent } from "nostr-tools";
 import { bytesToHex } from "nostr-tools/utils";
-import { getPool } from "@/lib/nostr/ndk";
 import { publishUntilEnough } from "@/lib/publishQuorum";
+import { getPool } from "@/services/pool";
 import { activate, failureOf, SignerError, signerGeneration, withinTime } from "@/services/signer";
 
 /** The relays a pairing code asks the signer to answer on. nsec.app answers on its own relay only. */

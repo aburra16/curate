@@ -8,7 +8,7 @@
  *  - PROFILE_RELAYS: kind 0 profiles.
  */
 
-import { normalizeRelayUrl } from "@/lib/nostr/relays";
+import { normalizeRelayUrl } from "@/lib/curate/relayUrls";
 import { useSettings } from "@/stores/settings";
 
 export const DCOSL = "wss://dcosl.brainstorm.world";

@@ -10,7 +10,7 @@
 
 import type { NostrEvent } from "nostr-tools";
 import type { EventTemplate } from "@/lib/conceptCopy";
-import { normalizeRelayUrl } from "@/lib/nostr/relays";
+import { normalizeRelayUrl } from "@/lib/curate/relayUrls";
 import { publishUntilEnough, type PublishOutcome } from "@/lib/publishQuorum";
 import { writeRelaysOf } from "@/services/outbox";
 import { DCOSL, INDEX, relayKey, TAG_HUB } from "@/services/relays";

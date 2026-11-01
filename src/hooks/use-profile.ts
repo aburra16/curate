@@ -5,7 +5,7 @@ import {
   fetchProfile,
   getCachedProfile,
   type ProfileMeta,
-} from "@/lib/nostr/profiles";
+} from "@/services/profiles";
 
 /**
  * Hook to fetch and cache profile metadata for a pubkey.

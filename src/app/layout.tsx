@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Newsreader, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { SavedRelays } from "@/components/saved-relays";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ToastProvider } from "@/components/toast";
@@ -43,7 +42,6 @@ export default function RootLayout({
       className={`${newsreader.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
     >
       <body className="min-h-screen flex flex-col">
-        <SavedRelays />
         <ToastProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>

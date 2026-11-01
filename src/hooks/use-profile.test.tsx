@@ -6,12 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // The real profiles module (cache, TTL, batching) runs; only the relay pool
 // is replaced by one that answers every request with a single kind 0 event.
 const request = vi.fn();
-vi.mock("@/lib/nostr/ndk", () => ({
-  ensurePool: () => ({ pool: { request }, relays: ["wss://relay.test"] }),
+vi.mock("@/services/pool", () => ({
+  getPool: () => ({ request }),
 }));
 
 import { useProfile } from "@/hooks/use-profile";
-import { fetchProfile, getCachedProfile } from "@/lib/nostr/profiles";
+import { fetchProfile, getCachedProfile } from "@/services/profiles";
 
 const MINUTE = 60 * 1000;
 const TTL = 10 * MINUTE;

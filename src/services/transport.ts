@@ -14,8 +14,8 @@ import { TimeoutError } from "applesauce-core/observable";
 import { RelayClosedError } from "applesauce-relay";
 import type { Filter, NostrEvent } from "nostr-tools";
 import type { Subscription } from "rxjs";
-import { getPool } from "@/lib/nostr/ndk";
 import type { PublishOutcome } from "@/lib/publishQuorum";
+import { getPool } from "@/services/pool";
 
 /**
  * What a publish says when the relay never answered in time. The publish

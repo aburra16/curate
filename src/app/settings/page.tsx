@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/stores/settings";
-import { isValidRelayUrl, normalizeRelayUrl, DEFAULT_RELAYS } from "@/lib/nostr/relays";
-import { setRelayUrls } from "@/lib/nostr/ndk";
+import { isValidRelayUrl, normalizeRelayUrl, DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { useToast } from "@/components/toast";
 
 export default function SettingsPage() {
@@ -29,7 +28,6 @@ export default function SettingsPage() {
       return;
     }
     addRelay(url);
-    setRelayUrls([...relays, url]);
     setNewRelay("");
     setRelayError("");
     toast("Relay added.", "success");
@@ -37,14 +35,11 @@ export default function SettingsPage() {
 
   const handleRemoveRelay = (url: string) => {
     removeRelay(url);
-    const remaining = relays.filter((r) => r !== url);
-    setRelayUrls(remaining.length ? remaining : [...DEFAULT_RELAYS]);
     toast("Relay removed.", "info");
   };
 
   const handleReset = () => {
     resetRelays();
-    setRelayUrls([...DEFAULT_RELAYS]);
     toast("Relays reset to defaults.", "info");
   };
 

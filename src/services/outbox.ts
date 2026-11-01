@@ -8,8 +8,8 @@
  */
 
 import type { NostrEvent } from "nostr-tools";
+import { isValidRelayUrl, normalizeRelayUrl } from "@/lib/curate/relayUrls";
 import { newestPerAddress } from "@/lib/newestPerAddress";
-import { isValidRelayUrl, normalizeRelayUrl } from "@/lib/nostr/relays";
 import { readRelaysReporting } from "@/services/nostr";
 import { DCOSL, INDEX, PROFILE_RELAYS, relayKey, TAG_HUB } from "@/services/relays";
 

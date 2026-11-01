@@ -5,7 +5,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { DEFAULT_RELAYS, RETIRED_RELAYS, normalizeRelayUrl } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS, RETIRED_RELAYS, normalizeRelayUrl } from "@/lib/curate/relayUrls";
 import { safeStorage } from "@/lib/safeStorage";
 
 interface SettingsState {

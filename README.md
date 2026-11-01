@@ -1,8 +1,9 @@
 # Curate
 
 Curate is a browser for Decentralized Lists on nostr, with forms for building them. It reads lists the way
-[Brainstorm](https://brainstorm.world) does, and signs what you write with your own nostr extension. There
-is no server and no account: the site is static files, and everything it shows comes from relays.
+[Brainstorm](https://brainstorm.world) does, and signs what you write with your own nostr signer, a browser
+extension or a remote one. There is no server and no account: the site is static files, and everything it
+shows comes from relays.
 
 ## What it does
 
@@ -26,10 +27,11 @@ in its kind 10040. A rank only decides what is shown and what is counted; Curate
 
 ## Writing
 
-Reading never signs. To write, connect your nostr browser extension (nos2x, Alby and the like) with
-Connect in the header. Curate asks the extension to sign each change and never sees your private key. If
-the extension switches to another account while the page is open, Curate stops and asks you to connect
-again.
+Reading never signs. To write, connect a signer with Connect in the header. Use a browser extension (nos2x,
+Alby and the like), or a remote signer: scan the QR code with a signer app on your phone, or paste a
+`bunker://` link. Curate asks the signer to sign each change and never sees your private key; the key stays
+in the signer. A remote connection lasts until you disconnect or close the browser. If the signer switches
+to another account while the page is open, Curate stops and asks you to connect again.
 
 - **Create a list** (`/create`): a quick form for the list's names, a description, the fields each item
   holds and a short name. Brainstorm's checks run as you type, and Publish waits until none would stop the

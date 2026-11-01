@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { extraRelays, migrateSettings, useSettings } from "@/stores/settings";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB, listRelays } from "@/services/relays";
 

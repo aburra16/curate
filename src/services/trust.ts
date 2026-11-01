@@ -17,8 +17,8 @@
  */
 
 import type { NostrEvent } from "nostr-tools";
+import { isValidRelayUrl, normalizeRelayUrl } from "@/lib/curate/relayUrls";
 import { newestPerAddress } from "@/lib/newestPerAddress";
-import { isValidRelayUrl, normalizeRelayUrl } from "@/lib/nostr/relays";
 import { readRelays, readRelaysReporting } from "@/services/nostr";
 import { PROFILE_RELAYS } from "@/services/relays";
 

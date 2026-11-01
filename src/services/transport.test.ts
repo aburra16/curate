@@ -10,7 +10,7 @@ import { DCOSL } from "@/services/relays";
 // The default transport runs for real; only the relay pool underneath it is
 // replaced, by relays whose messages the test pushes by hand.
 const relayOf = vi.fn();
-vi.mock("@/lib/nostr/ndk", () => ({ getPool: () => ({ relay: relayOf }) }));
+vi.mock("@/services/pool", () => ({ getPool: () => ({ relay: relayOf }) }));
 
 import { PUBLISH_TIMED_OUT, transport } from "@/services/transport";
 

@@ -32,7 +32,7 @@ import { fakeTransport } from "@/test/fakeTransport";
 
 // The page's relay pool, which a test reaches only by setting `pool.current`.
 const pool = vi.hoisted(() => ({ current: null as unknown }));
-vi.mock("@/lib/nostr/ndk", () => ({
+vi.mock("@/services/pool", () => ({
   getPool: () => {
     if (!pool.current) throw new Error("this test has no relay pool");
     return pool.current;

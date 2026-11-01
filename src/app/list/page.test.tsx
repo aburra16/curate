@@ -17,7 +17,7 @@ import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { exactCopyTemplate, withdrawnTemplate } from "@/lib/conceptCopy";
 import { B_DEFERRED, definitionOf, type HeaderEvent } from "@/lib/conceptResolution";
-import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { clearSeenOn } from "@/services/nostr";
 import type { PublishResult } from "@/services/publish";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB } from "@/services/relays";

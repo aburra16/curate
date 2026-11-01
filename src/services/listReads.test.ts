@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import foodHeader from "@/test/fixtures/food.header.json";
 import foodItems from "@/test/fixtures/food.items.json";
 import { fakeTransport } from "@/test/fakeTransport";
-import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { clearSeenOn, seenOn } from "@/services/nostr";
 import { DCOSL, INDEX } from "@/services/relays";
 import { setTransport, type RelayTransport } from "@/services/transport";

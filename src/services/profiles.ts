@@ -6,8 +6,8 @@
  */
 
 import type { NostrEvent } from "nostr-tools/pure";
+import { getPool } from "@/services/pool";
 import { PROFILE_RELAYS } from "@/services/relays";
-import { ensurePool } from "./ndk";
 
 export interface ProfileMeta {
   pubkey: string;
@@ -54,7 +54,7 @@ function flushBatch() {
   if (pubkeys.length === 0) return;
 
   // Profiles come from the profile relays, whatever relay set Settings holds.
-  const { pool } = ensurePool();
+  const pool = getPool();
   const results = new Map<string, ProfileMeta>();
 
   pool.request([...PROFILE_RELAYS], { kinds: [0], authors: pubkeys }).subscribe({

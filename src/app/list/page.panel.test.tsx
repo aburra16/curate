@@ -12,7 +12,7 @@ import type { NostrEvent } from "nostr-tools";
 import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_RELAYS } from "@/lib/nostr/relays";
+import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { clearSeenOn } from "@/services/nostr";
 import { DCOSL, INDEX, PROFILE_RELAYS, TAG_HUB } from "@/services/relays";
 import { setTransport, type RelayTransport } from "@/services/transport";
