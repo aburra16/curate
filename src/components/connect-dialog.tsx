@@ -30,7 +30,7 @@ function Problem({ children }: { children: ReactNode }) {
   );
 }
 
-/** The code a signer app scans, to copy as a link too, and a Cancel that stops waiting. */
+/** The code a signer app scans, its link to open a signer app on this device or to copy, and a Cancel that stops waiting. */
 function PairingCode({ uri, onCancel }: { uri: string; onCancel: () => void }) {
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
   useEffect(() => {
@@ -45,6 +45,10 @@ function PairingCode({ uri, onCancel }: { uri: string; onCancel: () => void }) {
         <QRCodeSVG value={uri} size={240} title="Code for your signer to scan" className="h-auto max-w-full" />
       </div>
       <p className="text-[12px] leading-[1.5] text-ink-soft">Scan this code with your signer app.</p>
+      {/* On a phone the signer app may be on the same device: the person taps to open it. */}
+      <a href={uri} className="text-[13px] text-accent underline underline-offset-2 hover:text-ink transition-colors">
+        Open in a signer app on this device
+      </a>
       <p role="status" className="text-[12px] text-mute">
         Waiting for your signer…
       </p>
@@ -229,7 +233,8 @@ function Chooser({ onClose }: { onClose: () => void }) {
                 autoCapitalize="off"
                 spellCheck={false}
                 className={cn(
-                  "min-w-0 flex-1 border border-rule bg-surface px-3 py-2 font-mono text-[12px] text-ink placeholder:text-mute",
+                  // 16px, so a phone doesn't zoom into the field.
+                  "min-w-0 flex-1 border border-rule bg-surface px-3 py-2 font-mono text-[16px] text-ink placeholder:text-mute",
                   "focus:border-rule-strong focus:outline-none disabled:opacity-50",
                 )}
                 style={inputStyle}

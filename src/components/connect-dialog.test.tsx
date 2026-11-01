@@ -189,6 +189,23 @@ describe("ConnectDialog", () => {
     expect(useSigner.getState().status).toBe("connecting");
   });
 
+  it("offers the code's link to open in a signer app on this device, for the person to tap", () => {
+    pairing();
+    render(<ConnectDialog open onClose={() => {}} />);
+
+    fireEvent.click(button("Scan with your phone"));
+
+    const link = screen.getByRole("link", { name: "Open in a signer app on this device" });
+    expect(link.getAttribute("href")).toBe(CODE);
+    expect(link.getAttribute("target")).toBeNull();
+  });
+
+  it("draws the bunker link's field at 16px, so a phone doesn't zoom into it", () => {
+    render(<ConnectDialog open onClose={() => {}} />);
+
+    expect(screen.getByLabelText("Paste a bunker link").className).toContain("text-[16px]");
+  });
+
   it("starts no pairing until the person asks for one", () => {
     render(<ConnectDialog open onClose={() => {}} />);
 
