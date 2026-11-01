@@ -15,14 +15,17 @@
  * - **Names:** its own `p`, `e`, `a` and `t` values.
  *
  * A list header has no lists and no copies. What names the item is its id,
- * its address, and, for a curation copy (`itemIdentity`), its original.
+ * its address, and, for a curation copy (`isCuration`), its original.
  *
  * A relay may send what it wasn't asked for, so every event read is checked
  * against what was asked. A relay that doesn't answer reads as nothing and
- * is named in `unread`. What was read is kept per event for the session; who
- * counts is decided on each call, so ranks that arrive later fold anew
- * without a read. Copies and mentions fold only for authors the scorer
- * answered for. Ranks never leave this module.
+ * is named in `unread`. What was read is kept per event for the session,
+ * unless a relay didn't answer: then the next call reads again. Who counts
+ * is decided on each call, so ranks that arrive later fold anew without a
+ * read. The people involved are known only once the reads are in, so a
+ * caller whose ranks cover some people (a list's authors) passes `rankMore`,
+ * asked once per call for everyone else. Copies and mentions fold only for
+ * authors the scorer answered for. Ranks never leave this module.
  */
 import type { Filter, NostrEvent } from "nostr-tools";
 import { HONORED_TAGGING_AUTHORITIES } from "@/config/tagging";
@@ -32,7 +35,7 @@ import { newestPerAddress } from "@/lib/newestPerAddress";
 import { classifyEventTaggings, type ClassifiedTag, type TagRef } from "@/lib/tagging/classify";
 import { filterTagsAppliedToEvent } from "@/lib/tagging/filters";
 import { tagElementAddr } from "@/lib/tagging/handles";
-import { itemIdentity } from "@/services/concepts";
+import { isCuration } from "@/services/concepts";
 import { jsonDataOf, namesOf } from "@/services/jsonData";
 import { readRelaysReporting, type RelayRead } from "@/services/nostr";
 import { listRelays, TAG_HUB } from "@/services/relays";
@@ -148,7 +151,7 @@ async function gather(event: NostrEvent): Promise<Gathered> {
   const own = addressOfEvent(event);
   const named = new Set<string>([event.id, ...(own ? [own] : [])]);
   // A curation copy is its original too, by every handle its `q` gives for it: its id and its address.
-  if (itemIdentity(event) !== (coordinateOf(event) ?? event.id)) {
+  if (isCuration(event)) {
     for (const t of event.tags) if (t[0] === "q" && isHandle(t[1])) named.add(t[1]);
   }
   const ids = [...named].filter((v) => HEX64.test(v));
@@ -170,6 +173,8 @@ async function gather(event: NostrEvent): Promise<Gathered> {
   const isSelf = (ev: NostrEvent) => ev.id === event.id || (own !== null && addressOfEvent(ev) === own);
   const live = (events: NostrEvent[]) => newestPerAddress(events).filter((ev) => !isSelf(ev) && !isBlankEvent(ev));
   const namesThis = (ev: NostrEvent, letter: string) => ev.tags.some((t) => t[0] === letter && named.has(t[1]));
+  /** A curation copy of this item: a 39999 copy (`d` starting `copy-`, and a `q`) whose `q` names it. */
+  const isCopyOfThis = (ev: NostrEvent) => ev.kind === 39999 && isCuration(ev) && namesThis(ev, "q");
   /** A header's own items name it too (by `z`, or by `e` with no `z`): they are its items, not mentions. */
   const filedHere = (ev: NostrEvent) => {
     if (!header) return false;
@@ -190,19 +195,19 @@ async function gather(event: NostrEvent): Promise<Gathered> {
     ]),
   ]);
 
-  const copies = live(copyEvents).filter(
-    (ev) => ev.kind === 39999 && !!ev.tags.find((t) => t[0] === "d")?.[1]?.startsWith("copy-") && namesThis(ev, "q"),
-  );
-  const copyIds = new Set(copies.map((ev) => ev.id));
+  const copies = live(copyEvents).filter(isCopyOfThis);
+  // A copy is never a mention, whether or not the read of copies was answered.
   const mentions = live(mentionEvents).filter(
     (ev) =>
       isDListItem(ev) &&
       (namesThis(ev, "e") || namesThis(ev, "a")) &&
-      !copyIds.has(ev.id) &&
+      !isCopyOfThis(ev) &&
       !isTagging(ev) &&
       !filedHere(ev),
   );
-  const taggings = live(taggingEvents).filter((ev) => ev.kind === 39999 && (namesThis(ev, "e") || namesThis(ev, "a")));
+  const taggings = live(taggingEvents).filter(
+    (ev) => ev.kind === 39999 && isTagging(ev) && (namesThis(ev, "e") || namesThis(ev, "a")),
+  );
 
   const listRefs = unique([
     ...(header ? [] : zHandles(event)),
@@ -318,29 +323,55 @@ function relationshipsOf(
   };
 }
 
-/** Event id -> what was read about it, this session. */
+/** Event id -> what was read about it, this session, when every relay answered. */
 const gathered = new Map<string, Promise<Gathered>>();
+
+/** What was read about `event`: kept, unless a relay didn't answer or the read failed. */
+function gatheredFor(event: NostrEvent): Promise<Gathered> {
+  const held = gathered.get(event.id);
+  if (held) return held;
+  const read = gather(event);
+  gathered.set(event.id, read);
+  const forget = () => {
+    if (gathered.get(event.id) === read) gathered.delete(event.id);
+  };
+  read.then((g) => {
+    if (g.unread.length) forget();
+  }, forget);
+  return read;
+}
 
 /**
  * What `event` is connected to, as the reader sees it. `ranks` and
  * `answered` are the reader's scorer's (the list page's `useAuthorRanks`):
  * a copy or mention folds when its author was answered for and is outside
  * the line, and a tagging counts only when its author is inside it.
- * `reader` is who is reading, null when no one is signed in.
+ * `reader` is who is reading, null when no one is signed in. `rankMore`,
+ * when given, is the same scorer (services/trust `fetchAuthorRanks`): it is
+ * asked once for every tagger, copier and mentioner not in `answered`. If it
+ * fails, they are unranked: none of them counts, and none folds.
  */
 export async function loadRelationships(
   event: NostrEvent,
   ranks: Map<string, number>,
   answered: ReadonlySet<string>,
   reader: string | null,
+  rankMore?: (pubkeys: string[]) => Promise<{ ranks: Map<string, number>; answered?: ReadonlySet<string> }>,
 ): Promise<Relationships> {
-  let read = gathered.get(event.id);
-  if (!read) {
-    read = gather(event);
-    gathered.set(event.id, read);
-    read.catch(() => gathered.delete(event.id));
+  const g = await gatheredFor(event);
+  let known = ranks;
+  let heard = answered;
+  const unanswered = unique([...g.taggings, ...g.copies, ...g.mentions].map((ev) => ev.pubkey)).filter(
+    (pk) => !answered.has(pk),
+  );
+  if (rankMore && unanswered.length) {
+    const more = await rankMore(unanswered).catch(() => null);
+    if (more) {
+      known = new Map([...ranks, ...more.ranks]);
+      heard = new Set([...answered, ...(more.answered ?? [])]);
+    }
   }
-  return relationshipsOf(event, await read, ranks, answered, reader);
+  return relationshipsOf(event, g, known, heard, reader);
 }
 
 /** Forget what was read. Tests start each case from here. */

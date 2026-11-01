@@ -4,29 +4,31 @@
  * names itself, each read through the reader's web of trust.
  *
  * The relays hold almost no item taggings or copies yet, so the events in
- * src/test/fixtures/relationships.json were built by hand in the shapes
+ * src/test/fixtures/relationships.json are built by hand in the shapes
  * Brainstorm-UI's event-tagging builders write (tag elements, per-tag
- * tagging headers, taggings) and signed with nostr-tools' `finalizeEvent`
- * under fixed test keys, one per role: each role's secret key is one byte
- * repeated 32 times (OWNER 0x11, CURATOR 0x22, TAG_AUTHOR 0x33, TAGGER 0x44,
- * DISPUTER 0x55, MENTIONER 0x66, STRANGER 0x77, ROGUE 0x88, PROPRIETOR
- * 0x99). They verify, as everything read from a relay must.
+ * tagging headers, taggings) and signed under fixed test keys, one per role,
+ * by scripts/sign-relationships-fixture.mjs: each role's secret key is one
+ * byte repeated 32 times (OWNER 0x11, CURATOR 0x22, TAG_AUTHOR 0x33, TAGGER
+ * 0x44, DISPUTER 0x55, MENTIONER 0x66, STRANGER 0x77, ROGUE 0x88,
+ * PROPRIETOR 0x99). They verify, as everything read from a relay must.
  *
  * The fake relays answer every request with everything they hold
  * (src/test/fakeTransport), as a careless relay may, so each case also shows
- * that only what names the item is kept.
+ * that only what names the item is kept. What is asked of which relay is
+ * pinned on relays that match filters as a relay does (src/test/relayCorpus).
  */
-import type { NostrEvent } from "nostr-tools";
+import type { Filter, NostrEvent } from "nostr-tools";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { coordinateOf } from "@/lib/dlistFields";
 import { clearSeenOn } from "@/services/nostr";
-import { DCOSL, listRelays, TAG_HUB } from "@/services/relays";
+import { DCOSL, INDEX, listRelays, TAG_HUB } from "@/services/relays";
 import { setTransport } from "@/services/transport";
 import { VERIFIED_RANK } from "@/services/trust";
 import { useRelayStatus } from "@/stores/relay-status";
 import { useSettings } from "@/stores/settings";
 import { fakeTransport, type FakeRelay } from "@/test/fakeTransport";
+import { relayCorpus, type RelayCall } from "@/test/relayCorpus";
 import fixture from "@/test/fixtures/relationships.json";
 import { clearRelationshipsCache, loadRelationships, type Related } from "./relationships";
 
@@ -42,6 +44,7 @@ const STRANGER = fx.strangerMention.pubkey;
 const ROGUE = fx.overpricedElement.pubkey;
 const PROPRIETOR = fx.item.tags.find((t) => t[0] === "p")![1];
 
+const ITEM = coordinateOf(fx.item)!;
 const COSY = `39999:${TAG_AUTHOR}:cosy`;
 const QUIET = `39999:${TAG_AUTHOR}:quiet`;
 const GOOD_WIFI = `39999:${TAG_AUTHOR}:good-wifi`;
@@ -111,6 +114,32 @@ const ranks = rankAll();
 const answered = new Set(ranks.keys());
 
 const ids = (related: Related[]) => related.map((r) => r.event.id);
+
+/** The page's ranks when only the list's own author is ranked. */
+const pageRanks = new Map([[OWNER, VERIFIED_RANK]]);
+const pageAnswered = new Set([OWNER]);
+
+/** The scorer's answer for whoever it is asked about: as `rankAll` ranks them, each answered for. */
+const scorer = async (pubkeys: string[]) => {
+  const all = rankAll();
+  return { ranks: new Map(pubkeys.map((pk) => [pk, all.get(pk) ?? 0])), answered: new Set(pubkeys) };
+};
+
+/** Each distinct read, by its filters, with the relays it went to. `readWhere` finds the one read a filter of it fits. */
+function readsIn(calls: RelayCall[]) {
+  const reads = new Map<string, { filters: Filter[]; relays: Set<string> }>();
+  for (const c of calls.filter((call) => call.op === "req")) {
+    const key = JSON.stringify(c.filters);
+    const read = reads.get(key) ?? { filters: c.filters, relays: new Set<string>() };
+    read.relays.add(c.relay);
+    reads.set(key, read);
+  }
+  return (fits: (f: Filter) => boolean) => {
+    const found = [...reads.values()].filter((r) => r.filters.some(fits));
+    expect(found).toHaveLength(1);
+    return found[0];
+  };
+}
 
 beforeEach(() => {
   clearRelationshipsCache();
@@ -268,6 +297,21 @@ describe("loadRelationships, when relays fail", () => {
     expect(ids(r.mentions)).toEqual([fx.mention.id]);
   });
 
+  it("keeps a copy out of the mentions when the read of copies wasn't answered", async () => {
+    const t = relays();
+    const answer = t.req;
+    vi.spyOn(t, "req").mockImplementation((relay, filters, onEvent, timeoutMs) =>
+      filters.some((f) => "#q" in f)
+        ? Promise.resolve({ state: "error", reason: "refused" } as const)
+        : answer(relay, filters, onEvent, timeoutMs),
+    );
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    expect(r.copies).toEqual([]);
+    expect(r.unread).toEqual([DCOSL]);
+    // The copy names the item by `a`, so the read of mentions finds it.
+    expect([...ids(r.mentions), ...ids(r.folded.mentions)]).toEqual([fx.mention.id, fx.strangerMention.id]);
+  });
+
   it("names the tag hub once when it fails, with the tags it holds lost and the rest kept", async () => {
     relays({ [DCOSL]: HUB });
     const r = await loadRelationships(fx.item, ranks, answered, null);
@@ -294,6 +338,134 @@ describe("loadRelationships, kept for the session", () => {
 
     await loadRelationships(fx.copy, ranks, answered, null);
     expect(req.mock.calls.length).toBeGreaterThan(asked);
+  });
+
+  it("reads again after a relay didn't answer, and nothing more once every relay has", async () => {
+    const failing = relays({ [DCOSL]: HUB });
+    const failingReq = vi.spyOn(failing, "req");
+    expect((await loadRelationships(fx.item, ranks, answered, null)).unread).toEqual([TAG_HUB]);
+    const asked = failingReq.mock.calls.length;
+    await loadRelationships(fx.item, ranks, answered, null);
+    expect(failingReq.mock.calls.length).toBe(asked * 2);
+
+    const healthy = relays();
+    const healthyReq = vi.spyOn(healthy, "req");
+    const answeredRead = await loadRelationships(fx.item, ranks, answered, null);
+    expect(answeredRead.unread).toEqual([]);
+    expect(answeredRead.tags).toHaveLength(3);
+    const askedOnce = healthyReq.mock.calls.length;
+    await loadRelationships(fx.item, ranks, answered, null);
+    expect(healthyReq.mock.calls.length).toBe(askedOnce);
+  });
+});
+
+describe("loadRelationships, ranking everyone involved", () => {
+  it("asks rankMore once, for exactly the taggers, copiers and mentioners the page didn't rank", async () => {
+    relays();
+    // Without it, nobody the page didn't rank counts, and nobody folds.
+    const unranked = await loadRelationships(fx.item, pageRanks, pageAnswered, null);
+    expect(unranked.tags).toEqual([]);
+    expect(unranked.folded).toEqual({ copies: [], mentions: [] });
+
+    const rankMore = vi.fn(scorer);
+    const r = await loadRelationships(fx.item, pageRanks, pageAnswered, null, rankMore);
+    expect(rankMore).toHaveBeenCalledTimes(1);
+    expect([...rankMore.mock.calls[0][0]].sort()).toEqual([CURATOR, DISPUTER, MENTIONER, STRANGER, TAGGER].sort());
+    expect(r.tags.map((t) => [t.address, t.applied, t.disputed])).toEqual([
+      [COSY, 1, 1],
+      [GOOD_WIFI, 1, 0],
+      [QUIET, 1, 0],
+    ]);
+    expect(ids(r.copies)).toEqual([fx.copy.id]);
+    expect(ids(r.mentions)).toEqual([fx.mention.id]);
+    expect(ids(r.folded.mentions)).toEqual([fx.strangerMention.id]);
+  });
+
+  it("doesn't ask rankMore when the page answered for everyone", async () => {
+    relays();
+    const rankMore = vi.fn(scorer);
+    await loadRelationships(fx.item, ranks, answered, null, rankMore);
+    expect(rankMore).not.toHaveBeenCalled();
+  });
+
+  it("leaves them unranked when rankMore fails, and still returns the reader's own stance", async () => {
+    relays();
+    const rankMore = vi.fn(async (): Promise<{ ranks: Map<string, number> }> => {
+      throw new Error("the scorer's relay is down");
+    });
+    const r = await loadRelationships(fx.item, pageRanks, pageAnswered, TAGGER, rankMore);
+    expect(rankMore).toHaveBeenCalledTimes(1);
+    expect(r.tags).toEqual([
+      { name: "Cosy", address: COSY, applied: 0, disputed: 0, mine: "apply" },
+      { name: "good-wifi", address: GOOD_WIFI, applied: 0, disputed: 0, mine: "apply" },
+    ]);
+    expect(ids(r.mentions)).toEqual([fx.strangerMention.id, fx.mention.id]);
+    expect(r.folded).toEqual({ copies: [], mentions: [] });
+  });
+});
+
+describe("loadRelationships, what it asks and where", () => {
+  const EXTRA = "wss://relay.example.com";
+
+  /** Relays that match filters, with a second list relay the reader added; every request is recorded. */
+  function corpus() {
+    useSettings.setState({ relays: [...DEFAULT_RELAYS, EXTRA] });
+    const lists = listRelays();
+    const held = { [DCOSL]: HUB_EVENTS, [lists[1]]: [], [TAG_HUB]: TAG_EVENTS, [INDEX]: [] };
+    const { transport, calls } = relayCorpus(held);
+    setTransport(transport);
+    return { lists, calls };
+  }
+
+  it("asks the list relays for copies, mentions and list names, the tag relays for tags, and never the index", async () => {
+    const { lists, calls } = corpus();
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    // Matched as a relay matches, everything is found as before.
+    expect(r.unread).toEqual([]);
+    expect(ids(r.copies)).toEqual([fx.copy.id]);
+    expect(r.tags.map((t) => t.address)).toEqual([COSY, GOOD_WIFI, QUIET]);
+    expect(ids(r.mentions)).toEqual([fx.mention.id]);
+    expect(r.lists.map((l) => l.name)).toEqual(["Coffee places", null]);
+
+    expect(calls.some((c) => c.relay === INDEX)).toBe(false);
+    const listSet = new Set(lists);
+    const tagSet = new Set([...lists, TAG_HUB]);
+    const readWhere = readsIn(calls);
+
+    const copies = readWhere((f) => "#q" in f);
+    expect(copies.filters).toEqual([{ kinds: [39999], "#q": [fx.item.id, ITEM] }]);
+    expect(copies.relays).toEqual(listSet);
+
+    const mentions = readWhere((f) => !!f.kinds?.includes(9999));
+    expect(mentions.filters).toEqual([
+      { kinds: [39999, 9999], "#e": [fx.item.id] },
+      { kinds: [39999, 9999], "#a": [ITEM] },
+    ]);
+    expect(mentions.relays).toEqual(listSet);
+
+    const listNames = readWhere((f) => f.kinds?.[0] === 39998);
+    expect(listNames.relays).toEqual(listSet);
+
+    const taggings = readWhere((f) => f.kinds?.length === 1 && f.kinds[0] === 39999 && ("#e" in f || "#a" in f));
+    expect(taggings.filters).toEqual([
+      { kinds: [39999], "#e": [fx.item.id] },
+      { kinds: [39999], "#a": [ITEM] },
+    ]);
+    expect(taggings.relays).toEqual(tagSet);
+
+    const headers = readWhere((f) => !!f["#d"]?.some((d) => d.startsWith("tagging:")));
+    expect(headers.relays).toEqual(tagSet);
+
+    const elements = readWhere((f) => !!f["#d"]?.includes("cosy"));
+    expect(elements.relays).toEqual(tagSet);
+  });
+
+  it("asks for an event that isn't addressable by its id alone", async () => {
+    const { calls } = corpus();
+    await loadRelationships(fx.strangerMention, ranks, answered, null);
+    const readWhere = readsIn(calls);
+    expect(readWhere((f) => "#q" in f).filters).toEqual([{ kinds: [39999], "#q": [fx.strangerMention.id] }]);
+    expect(calls.some((c) => c.filters.some((f) => "#a" in f))).toBe(false);
   });
 });
 

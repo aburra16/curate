@@ -186,7 +186,7 @@ export function itemIdentity(ev: ItemEvent): string {
 }
 
 /** A curation copy: an event that counts as another one. */
-const isCuration = (ev: ItemEvent): boolean => itemIdentity(ev) !== (coordinateOf(ev) ?? ev.id);
+export const isCuration = (ev: ItemEvent): boolean => itemIdentity(ev) !== (coordinateOf(ev) ?? ev.id);
 
 /**
  * Whether `a` is the version to keep over `b`. The newer. On a tie the
