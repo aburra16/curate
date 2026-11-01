@@ -1,6 +1,6 @@
 ---
 title: Shared concepts and your own version
-summary: Many lists can be versions of one shared idea. Which version you see, how to make and edit your own, and what withdrawing it does.
+summary: Many lists can be versions of one shared idea, and this page explains which version you see, how to make and edit your own, and what withdrawing does.
 ---
 
 ## One idea, many versions
@@ -59,6 +59,8 @@ This appears when you have a version of the list, but another version is on show
 ### "Edit list"
 
 This appears when the list on show is one you wrote: your own list, or your own version. It opens a form headed "Edit list".
+
+It also appears when you wrote the community header but your Assistant's version or Brainstorm's version is on show. Then it edits your own header, the community header, not the version on show.
 
 - You can change the names, the description and the fields. A list needs at least one field, and the form says "Add at least one field." until it has one.
 - The short name stays as it is.

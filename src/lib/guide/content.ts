@@ -88,8 +88,10 @@ const markdown = new Marked({
     // The guide's text is Curate's own and uses no raw HTML: should any slip in, it shows as the text it is.
     html: ({ text }) => escapeHtml(text),
     // A wide table scrolls inside a box of its own, and stays a table, which a screen reader reads as one.
+    // The box takes focus, so a keyboard can scroll it too.
     table(this: Renderer, token: Tokens.Table) {
-      return `<div class="guide-table">${Renderer.prototype.table.call(this, token)}</div>\n`;
+      const table = Renderer.prototype.table.call(this, token);
+      return `<div class="guide-table" tabindex="0" role="region" aria-label="Table, scrolls sideways">${table}</div>\n`;
     },
   },
 });

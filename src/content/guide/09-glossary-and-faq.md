@@ -77,7 +77,7 @@ You can delete items you added: see [Adding, editing and deleting items](/guide/
 
 ### Why don't I see my item?
 
-- **It may be folded.** If your account is outside the web of trust Curate is using, your item waits under the line "N more from accounts outside your web of trust". Open the line, or turn on "Show everything".
+- **It may be folded.** If your account is outside the web of trust Curate is using, your item waits under a line such as "3 more from accounts outside your web of trust". Open the line, or turn on "Show everything".
 - **A relay may be slow.** If a relay didn't answer, a line near the top of the page names it. Try again in a moment, or press "Load more".
 - **It may not be loaded yet.** Curate loads items in pages. Press "Load more", or search for the item.
 - **It may not have been saved.** Look for "Not saved to the list relay:" where you published it, and press "Retry".
@@ -97,6 +97,6 @@ No. Your signer holds your key and signs for you. Curate only receives the signe
 
 ### Can I use another app?
 
-Yes. A DList and its items are nostr events, signed by the people who wrote them and kept on relays. Any app that understands DLists can read them, show them and add to them. What you write in Curate stays yours, wherever you take it.
+Yes. A DList and its items are nostr events, signed by the people who wrote them and kept on relays. Any app that understands DLists can read them, show them and add to them.
 
 Back to the start: [What is a DList?](/guide/what-is-a-dlist)

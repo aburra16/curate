@@ -18,7 +18,7 @@ This page is for people who build on DLists, and for AI assistants explaining a 
 
 Curate writes kinds 39998, 39999, 7 and 5. It reads headers and items of all four kinds, and votes. It doesn't read deletions itself: a relay that honours one stops sending what it deletes.
 
-A 39999 or 9999 is a header, not an item, when it says so: `["z", "list"]`, or a `z` naming an address that ends in `:concept-header`. Curate reads those as headers.
+A 39999 or 9999 is a header, not an item, when it says so: `["z", "list"]`, which is the NIP's nonstandard way to declare a list, or a `z` naming an address that ends in `:concept-header`, which is a convention Curate shares with Brainstorm. Curate reads both as headers.
 
 ## A header's tags
 
@@ -29,17 +29,20 @@ A 39999 or 9999 is a header, not an item, when it says so: `["z", "list"]`, or a
 | `["description", "…"]` | What belongs on the list. |
 | `["required", "name", "The shop's name"]` | A field every item must fill in. The second element is the item tag the field is read from. |
 | `["recommended", "website", "Its website"]` | A field items should fill in. |
-| `["optional", "address", "Street address"]` | A field items may fill in. Curate reads the NIP's `allowed` the same way. |
+| `["optional", "address", "Street address"]` | A field items may fill in. The NIP's word for this is `allowed`, which Curate reads the same way. |
 | `["field-type", "website", "url"]` | The type of a declared field: `url`, `tel`, `email` or `address` (another event's `kind:pubkey:d` or `naddr`). A field with no `field-type` is `text`. |
 | `["b", "39998:<pubkey>:coffee-shops", "pointer"]` | The concept this header is a version of. A header that points at its own address puts itself forward as a shared concept. |
 | `["b", "b-tag-deferred"]` | A withdrawn version: it belongs to no concept. |
-| `["client", "Curate"]` | The app that signed it. Curate puts this on every event it signs. |
+| `["client", "Curate"]` | The app that signed it (NIP-89). Curate puts this on every event it signs. |
 
-The third element on `required`, `recommended` and `optional` is a short description of the field, for people. It is optional, and Curate writes it when the author gives one.
+The NIP gives field tags two elements. The third, a short description of the field for people, is optional: Curate writes it when the author gives one, and an app that doesn't know it can ignore it.
 
-`field-type` and `b` are conventions Curate shares with Brainstorm. They are not in the NIP, and an app that doesn't know them can ignore them.
+Which of these are in the NIP:
 
-A header may also carry `display`, `image` and `link` tags, which say how items are drawn: which field is the title, the list's picture, links built from a field. Curate reads them and keeps them when a list is edited, but its form doesn't write them. On a list without them, an item's title is its first required field, and its summary is a field called `summary` or `description`.
+- **In the NIP:** `names`, which it requires, `description`, which its examples use, and the field tags `required`, `allowed`, `recommended` and `disallowed`. The `d` tag on an editable header comes from NIP-01.
+- **Not in the NIP:** `optional`, `field-type`, `b`, `display`, `image` and `link`. These are conventions Curate shares with Brainstorm, and an app that doesn't know them can ignore them. The NIP's own word for a field items may leave out is `allowed`. Curate writes `optional` and reads `allowed` the same way. It ignores `disallowed`.
+
+The `display`, `image` and `link` tags say how items are drawn: which field is the title, the list's picture, links built from a field. Curate reads them and keeps them when a list is edited, but its form doesn't write them. On a list without them, an item's title is its first required field, and its summary is a field called `summary` or `description`.
 
 ## An item's tags
 
@@ -163,6 +166,8 @@ Every list header:
 ]
 ```
 
+A relay can't match the end of a tag value, so the 39999 and 9999 headers whose `z` ends in `:concept-header` need a second round: take the 39998 events with `["d", "concept-header"]` from the first answer, and ask for `{ "kinds": [39999, 9999], "#z": [<their addresses>] }`.
+
 One list's header, and every version of it:
 
 ```json
@@ -214,7 +219,7 @@ When a person asks you about a list, work from the events, and describe Curate's
 2. **Say what it is.** The plural in `names` is its name, and `description` says what belongs. The `required`, `recommended` and `optional` tags are its fields, each with its description and its `field-type`.
 3. **Check for versions.** Ask for headers whose `b` names the list's address. If there are several, the person sees their own version first, then their Assistant's, then Brainstorm's, then the community header. Their fields can differ.
 4. **Read the items.** Ask for kinds 39999 and 9999 whose `z` names the list or any version. Keep the newest per address, and drop blank ones. Each item's fields are tags named after the header's fields. Tags the header doesn't declare are extras, which Curate shows under "Outside this list’s definition".
-5. **Remember the web of trust.** The person may not see every item. Items from accounts outside their web of trust are folded under "N more from accounts outside your web of trust", and only votes from inside it are counted. Counts marked "counted before the web-of-trust filter" include everyone.
+5. **Remember the web of trust.** The person may not see every item. Items from accounts outside their web of trust are folded under a line such as "3 more from accounts outside your web of trust", and only votes from inside it are counted. Counts marked "counted before the web-of-trust filter" include everyone.
 6. **Point to the right button.** You can't sign for the person. To add an item they press "+ Add" and the list's singular name; to make a list, "Create"; to change a version, "Make my own version", "Edit my version", "Edit list" or "Withdraw my version". The other pages of this guide explain each one.
 
 Next: [Glossary and questions](/guide/glossary-and-faq).

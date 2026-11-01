@@ -175,6 +175,12 @@ describe("the guide's pages", () => {
     expect(page.summary.length).toBeLessThanOrEqual(160);
   });
 
+  it.each(pages.map((p) => [p.slug, p] as const))("%s has a summary of one sentence", (_, page) => {
+    expect(page.summary).toMatch(/[.?]$/);
+    // A sentence ending, then a capital: a second sentence.
+    expect(page.summary.slice(0, -1)).not.toMatch(/[.?!]\s+[A-Z]/);
+  });
+
   it.each(pages.map((p) => [p.slug, p] as const))("%s links only to pages the guide has", (_, page) => {
     for (const slug of linkedSlugs(page.markdown)) expect(slugs).toContain(slug);
   });
@@ -217,10 +223,12 @@ describe("guideHtml", () => {
     expect(html).toContain("a&lt;b");
   });
 
-  it("renders a table, still a table, inside a box that scrolls it sideways", () => {
+  it("renders a table, still a table, inside a box that scrolls it sideways and that a keyboard can reach", () => {
     const html = guideHtml(page("| Name | Type |\n| --- | --- |\n| Website | Link |\n"));
 
-    expect(html).toMatch(/^<div class="guide-table"><table>[\s\S]*<\/table>\s*<\/div>\s*$/);
+    expect(html).toMatch(
+      /^<div class="guide-table" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>[\s\S]*<\/table>\s*<\/div>\s*$/,
+    );
     expect(html).toContain("<th>Name</th>");
     expect(html).toContain("<td>Website</td>");
   });

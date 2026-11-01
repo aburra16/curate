@@ -1,6 +1,6 @@
 ---
 title: Connecting to write
-summary: Reading needs nothing. To write, connect a signer, a browser extension or a remote signer on your phone, and Curate asks it to sign each change.
+summary: Reading needs nothing, and to write you connect a signer, a browser extension or a remote signer on your phone, which Curate asks to sign each change.
 ---
 
 ## Reading needs nothing

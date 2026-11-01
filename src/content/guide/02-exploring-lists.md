@@ -12,7 +12,7 @@ Discover is Curate's front page. You reach it from "Discover" in the top bar, ne
 It shows one card for each list. A card holds:
 
 - the list's name, and its description if it has one;
-- the account that made it, by its nostr name, or by a shortened form of its public key (its npub) when it has no name;
+- the account that made it, by the name on its nostr profile. Nostr is the open network DLists live on. An account with no name shows its NIP-05 address, a web-style name such as `alice@example.com`, or else a shortened form of its public key, the code that identifies an account, written as an npub;
 - "3 versions" (or another number) when several people have made their own version of the list. The page [Shared concepts and your own version](/guide/versions) explains versions;
 - how many items it holds, such as "12 coffee shops", followed by "counted before the web-of-trust filter".
 
@@ -35,7 +35,7 @@ Say you open the coffee shops list. At the top you see:
 - a menu such as "3 versions", when there are several. It lets you read another version;
 - "View event", which opens the list's header itself, in the panel described under "An item's panel" below.
 
-Under that is "Fields". It lists what each item on the list holds. Each field shows its name, whether it is required, recommended or optional, its type and its description. The type is one of these words:
+Under that is "Fields". It lists what each item on the list holds. Each field shows its name, whether it is required, recommended or optional, its type and its description. The type is usually one of these words:
 
 | Type shown | What the field holds |
 | --- | --- |
@@ -44,6 +44,8 @@ Under that is "Fields". It lists what each item on the list holds. Each field sh
 | tel | A phone number |
 | email | An email address |
 | address | The address of another nostr event |
+
+A list made in another app can use a type of its own, which Curate shows as written.
 
 If a list says nothing about its fields, you see "This list declares no fields."
 
@@ -66,7 +68,7 @@ Each item shows:
 
 New items that people add while you have the page open appear without a reload.
 
-Curate reads items from the relays in pages of about 500. "Load more" fetches the next page. When very many items are loaded, Curate shows 500 at a time, and "Show more" shows the next 500.
+Curate reads items from relays, the servers that store nostr events, in pages of about 500. "Load more" fetches the next page. When very many items are loaded, Curate shows 500 at a time, and "Show more" shows the next 500.
 
 ## An item's panel
 

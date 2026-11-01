@@ -17,7 +17,7 @@ Fill in the boxes. For Corner Press:
 - website: https://cornerpress.example
 - address: 12 Mill Lane
 
-As you type, Curate runs Brainstorm's checks on the item, the same rules Brainstorm holds items to. A required field left empty stops the item from publishing, and says so in red. Other notes are shown in grey and don't stop it. For example, if the website box holds something that isn't a web address, a note says it isn't an http(s) URL.
+As you type, Curate runs Brainstorm's checks on the item, the same rules Brainstorm holds items to. A required field left empty stops the item from publishing, and says so in red. Other notes are shown in grey and don't stop it. For example, if the website box holds something that isn't a web address, a note says it isn't an http(s) URL, meaning a web address that starts with http:// or https://.
 
 When every required field has something in it, press "Publish". Your signer asks you to approve, and the button says "Publishing…". "Cancel" closes the form without publishing.
 

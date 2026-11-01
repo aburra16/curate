@@ -11,7 +11,7 @@ The "D" stands for "decentralized". It means the list is not kept in one place, 
 
 ## An example: favourite coffee shops
 
-Say you want a list of good coffee shops in your city. You start a DList called "Coffee shops", and you say what each entry should hold: a name, a website and an address.
+Say you want a list of good coffee shops in your city. You start a DList called "coffee shops", and you say what each entry should hold: a name, a website and an address.
 
 Then other people add the places they love. One person adds Corner Press. Another adds Blue Door. You did not have to approve them, and each entry stays with the person who added it.
 

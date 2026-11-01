@@ -1,13 +1,13 @@
 ---
 title: Whose items you see, and how votes count
-summary: Your web of trust decides which items a list shows you and whose votes are counted. Here is whose web of trust Curate uses, and how voting works.
+summary: Your web of trust decides which items a list shows you and whose votes count, and this page explains whose web of trust Curate uses and how voting works.
 ---
 
 Anyone can add an item to a DList. That is the point of one, and it also means a list can collect items you would not want to see. Curate uses your web of trust to sort them.
 
 ## What a web of trust is
 
-A web of trust is a way to work out which accounts to trust, based on who trusts whom. A scoring service works out a score for each account from the point of view of one person, and publishes the scores on nostr for apps to read.
+A web of trust is a way to work out which accounts to trust, based on who trusts whom. A scoring service works out a score for each account from the point of view of one person, and publishes the scores on nostr, the open network DLists live on, for apps to read.
 
 Curate reads the score of each person who added an item or voted. An account whose score reaches a set line is inside your web of trust. An account below the line is outside it.
 
@@ -49,7 +49,7 @@ A vote is a small public event, called a reaction, that points at the item. An u
 
 To vote you need to be connected. If you are not, a vote button opens the Connect chooser.
 
-A vote counts once the list relay, dcosl.brainstorm.world, has saved it. If the list relay refuses it, a note under the buttons says "Not saved to the list relay:" followed by the relay's reason, with a "Retry" button that sends the same vote again.
+A vote counts once the list relay has saved it. A relay is a server that stores nostr events, and the list relay is the one Curate saves every change to: dcosl.brainstorm.world. If the list relay refuses it, a note under the buttons says "Not saved to the list relay:" followed by the relay's reason, with a "Retry" button that sends the same vote again.
 
 ## Why the list's author doesn't decide
 
