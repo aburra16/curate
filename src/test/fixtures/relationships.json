@@ -1,0 +1,816 @@
+{
+  "ownerList": {
+    "id": "bc9f6863cce03195379134c485e1b222e19c73507bba591af89e22b6d4155b98",
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1792000000,
+    "kind": 39998,
+    "tags": [
+      [
+        "d",
+        "coffee-places"
+      ],
+      [
+        "names",
+        "Coffee place",
+        "Coffee places"
+      ]
+    ],
+    "content": "",
+    "sig": "dc8fe7ef368fa7ce50ee68a4a35132343dbdcca3b42ccb9acc894dd7778143dfb6358882b91bb07ed33b99ca27097e5a22f644ddd6128f1a54ccfc4e34769557"
+  },
+  "otherItem": {
+    "id": "4a5a53d0bde670a4351c3ed2eefedee24617acc1a19c68ddfe08c22dbde1f0ef",
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1792000001,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "other-cafe"
+      ],
+      [
+        "z",
+        "39998:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:coffee-places"
+      ],
+      [
+        "name",
+        "Other Cafe"
+      ]
+    ],
+    "content": "",
+    "sig": "d176faf4f380459dc25d00797d643aa0c7541478a80348929dbe874895fe96517e2f31741cf2227509ac92533970167755aa4fb2a80d37489e96da68ab0b3bb0"
+  },
+  "item": {
+    "id": "c3fab8f6c1e24b4b7ba5633ffec4d2a2f86901aff3a4e319f5f177174b1e650e",
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1792000002,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:coffee-places"
+      ],
+      [
+        "z",
+        "39998:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:closed-places"
+      ],
+      [
+        "name",
+        "Blue Door Cafe"
+      ],
+      [
+        "p",
+        "8985087b1818714f67e494a076ca0284c060fabc5d2ba66885b4ac60f801d3f5"
+      ],
+      [
+        "t",
+        "coffee"
+      ],
+      [
+        "t",
+        "coffee"
+      ],
+      [
+        "e",
+        "4a5a53d0bde670a4351c3ed2eefedee24617acc1a19c68ddfe08c22dbde1f0ef"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:other-cafe"
+      ]
+    ],
+    "content": "",
+    "sig": "6154ca201f328e02c7b5ffb587e6852fe7e4ecabcac261fbde7081881c7cd9b29a9106d7659a229fd1f17f060c530cecade74dfdbe6a8816d4dfab1e98adf49f"
+  },
+  "curatorList": {
+    "id": "54508e5df621ade43238241d310186d587f4fbec9963ce90e2d648d17e254ea9",
+    "pubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+    "created_at": 1792000003,
+    "kind": 39998,
+    "tags": [
+      [
+        "d",
+        "favourite-cafes"
+      ],
+      [
+        "names",
+        "Favourite cafe",
+        "Favourite cafes"
+      ]
+    ],
+    "content": "",
+    "sig": "8097d336b30ec24969253a0b8d8ee4ad244c74f57fb46a83b9a3a6c671541dc38c35a357194e88fa0e5387aa583a3bbf58115ea9b4ed6f223ff61cdb50d0a9e8"
+  },
+  "copy": {
+    "id": "fbc188be12b338988cf5232ca3637486ca0734c3f5df6b5df695d3a22453dd3b",
+    "pubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+    "created_at": 1792000004,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "copy-blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27:favourite-cafes"
+      ],
+      [
+        "q",
+        "c3fab8f6c1e24b4b7ba5633ffec4d2a2f86901aff3a4e319f5f177174b1e650e",
+        "wss://dcosl.brainstorm.world",
+        "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+      ],
+      [
+        "q",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe",
+        "wss://dcosl.brainstorm.world"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "name",
+        "Blue Door Cafe"
+      ]
+    ],
+    "content": "",
+    "sig": "0ed195c371d2907b95de7b3525862296da2067d7edb6b198bc1ef4fcf0b90f3f63301db917e36d252b437bb2d7639f686fbdb5763063155af08fb8c216de3e0b"
+  },
+  "otherCopy": {
+    "id": "2c235dc34c7728dd08615f53ed1b4a99c7536bf9e8dde06f34fff805c655128f",
+    "pubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+    "created_at": 1792000004,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "copy-other-cafe"
+      ],
+      [
+        "z",
+        "39998:466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27:favourite-cafes"
+      ],
+      [
+        "q",
+        "4a5a53d0bde670a4351c3ed2eefedee24617acc1a19c68ddfe08c22dbde1f0ef",
+        "wss://dcosl.brainstorm.world",
+        "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+      ],
+      [
+        "q",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:other-cafe",
+        "wss://dcosl.brainstorm.world"
+      ]
+    ],
+    "content": "",
+    "sig": "3251f0496c65929c535f34b5a1ba2bcfbdc52b6c48fcef1b9b471ab9d0411cbbab93214245862bb5378c4e822b4647d41cb9b99ea9418b463fc0d4e49098379b"
+  },
+  "mentionList": {
+    "id": "49244af1fcee7a076d5f2a7a4b99df7bcb5357e44694cc68a3ce804495fd9aab",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000005,
+    "kind": 39998,
+    "tags": [
+      [
+        "d",
+        "cafes-worth-the-walk"
+      ],
+      [
+        "names",
+        "Cafe worth the walk",
+        "Cafes worth the walk"
+      ]
+    ],
+    "content": "",
+    "sig": "cdf2f6d2241ee836211c74a873706330c005be741a20e07f33e65d3d9f42108532fba3b936a4d27ded4ad75856adebdf221e190659f5d1967b3b32db5ab8a8a8"
+  },
+  "mention": {
+    "id": "bc16a8719f48095d4e3e2bb119496117a884e4805f87ac2c87af1ae4a1e40972",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000006,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "walk-1"
+      ],
+      [
+        "z",
+        "39998:5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30:cafes-worth-the-walk"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "name",
+        "Start here"
+      ]
+    ],
+    "content": "",
+    "sig": "6dd492aade025d5b91a34fe208093e43dcdb50e1b34bc6818570654972b6bebed8d6952ddd895560246c499f4c610f305000341b4401305f4d3b734bfc09344d"
+  },
+  "quoting": {
+    "id": "1da7d3058f99b7991befd6e9f57026eb350150d71d7684c5e07b7b63c7786df3",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000006,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "walk-2"
+      ],
+      [
+        "z",
+        "39998:5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30:cafes-worth-the-walk"
+      ],
+      [
+        "q",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "name",
+        "Quoted"
+      ]
+    ],
+    "content": "",
+    "sig": "135f23c2473f6eaed0e75fb67ed62b174892070bec5c4c17cb921296a2d2ea26d655d56f50ac31b1a365a835e9779a6d1fd3454644938bea5c0b08b7b32238c7"
+  },
+  "strangerMention": {
+    "id": "ecc67ae8e6c91609d4b05da8a6641f7080263892cc1e9e95e352817dc1928139",
+    "pubkey": "7962d45b38e8bcf82fa8efa8432a01f20c9a53e24c7d3f11df197cb8e70926da",
+    "created_at": 1792000007,
+    "kind": 9999,
+    "tags": [
+      [
+        "z",
+        "39998:5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30:cafes-worth-the-walk"
+      ],
+      [
+        "e",
+        "c3fab8f6c1e24b4b7ba5633ffec4d2a2f86901aff3a4e319f5f177174b1e650e"
+      ],
+      [
+        "name",
+        "Also good"
+      ]
+    ],
+    "content": "",
+    "sig": "1ecf8cc1b97a7165964105e2d0046cfe3954026cdf89fd7a063a74f99835f5a01e02e41b199456a2a22078f637f59320106b98e03c5966b9851184b289f4e570"
+  },
+  "reaction": {
+    "id": "726aad77e5a0ee0ecad34c3ed491bcbe07565ee9d77d8596deb1548fedb0b0c8",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000008,
+    "kind": 7,
+    "tags": [
+      [
+        "e",
+        "c3fab8f6c1e24b4b7ba5633ffec4d2a2f86901aff3a4e319f5f177174b1e650e"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "p",
+        "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+      ],
+      [
+        "k",
+        "39999"
+      ]
+    ],
+    "content": "+",
+    "sig": "2aab33825ef78dff21bad64ceeb4463fd9da501c9b8cd69ce0be6af327e205abc9016a39aef873751836600901c1907c3e74372014d2fad3353bac4f904387f2"
+  },
+  "smallList": {
+    "id": "e48c50f61ee1d46593eb228b08d79656e784f9616c25156b2f201f8897d75900",
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1792000009,
+    "kind": 9998,
+    "tags": [
+      [
+        "names",
+        "Corner shop",
+        "Corner shops"
+      ]
+    ],
+    "content": "",
+    "sig": "ddd56401bc4d1e9c54665cf917ec7f453363faec55212dbfdfcdfef264cd7fc0968583234d9cd3132112d0b0e7daa29e1a846b07eedc06595eb0b0d45e20c1e5"
+  },
+  "cornerItem": {
+    "id": "917efb9799fec5c5a876593b38cc5922a03366d2a398f6e96160efd3c1ccaba8",
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1792000010,
+    "kind": 9999,
+    "tags": [
+      [
+        "e",
+        "e48c50f61ee1d46593eb228b08d79656e784f9616c25156b2f201f8897d75900"
+      ],
+      [
+        "name",
+        "Corner Shop"
+      ]
+    ],
+    "content": "",
+    "sig": "a2e0d66fb034c28ae3bfd7851953845f075f8b7b4bc3ba1acad94efd0669e1bcc02a911a1605e643f165ec0208b56fb0649a2580bd819bcd5db7b54023aeecb5"
+  },
+  "listOfLists": {
+    "id": "3a98675a081007f461bbece24773bab056c59c93d269f1a7a87ab11320c70c12",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000011,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "lists-i-follow-1"
+      ],
+      [
+        "z",
+        "39998:5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30:lists-i-follow"
+      ],
+      [
+        "e",
+        "e48c50f61ee1d46593eb228b08d79656e784f9616c25156b2f201f8897d75900"
+      ]
+    ],
+    "content": "",
+    "sig": "48100f3744d6e856974f6b24f5807f3fe8269f77bc3164037ea12e7a6ae1e3997b9778acce68887c097d608e658f8560ebab503a360cf5841fa331b227ca116f"
+  },
+  "cosyElement": {
+    "id": "c003bdcc04f808f216fda976d2025a93fa301e5e814a79c8500d15145a37eb26",
+    "pubkey": "3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+    "created_at": 1792000020,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "cosy"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag"
+      ],
+      [
+        "z",
+        "tag-for-nostr-event"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ],
+    "content": "{\"tag\":{\"slug\":\"cosy\",\"name\":\"Cosy\",\"description\":\"\"}}",
+    "sig": "e6ce027b5da6add2689ac23905cc4e5615c17d362bf7d6fae8eb29fdf849fd6b8ee6e8cc88552776526e010185e65967277c603e37c34aa5b42841a07b994c55"
+  },
+  "quietElement": {
+    "id": "8865ac954ad3b424c78aac9f0604d659178c77653d3a929bdb3849d8ff3ac305",
+    "pubkey": "3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+    "created_at": 1792000020,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "quiet"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag"
+      ],
+      [
+        "z",
+        "tag-for-nostr-event"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ],
+      [
+        "name",
+        "Quiet corner"
+      ]
+    ],
+    "content": "{\"tag\":{\"slug\":\"quiet\",\"name\":\"Quiet\",\"description\":\"\"}}",
+    "sig": "ed715db0556470e95bc473f68d5fecd1f007660e236d08059079764f4a01b3e5a28a3f27d4f78e965612bf3332288fce69ef3a7e54f8695b1551f6aaf9a24fc5"
+  },
+  "overpricedElement": {
+    "id": "b284a5e53be35d25266d84eb8bd2a396be14a2beecc0f5e3eff1023e99917ac5",
+    "pubkey": "1617d38ed8d8657da4d4761e8057bc396ea9e4b9d29776d4be096016dbd2509b",
+    "created_at": 1792000020,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "overpriced"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tag"
+      ],
+      [
+        "z",
+        "tag-for-nostr-event"
+      ],
+      [
+        "client",
+        "Brainstorm"
+      ]
+    ],
+    "content": "{\"tag\":{\"slug\":\"overpriced\",\"name\":\"Overpriced\",\"description\":\"\"}}",
+    "sig": "e993beeb08b8ee38c989197413efff6f3401e836bd2ac6170cd1b05e77685b80880beebb15729bf21652a3268e48f74c01b19c05dff39107e147966937f1cf27"
+  },
+  "cosyHeader": {
+    "id": "4fe1a7cbd525aa8544b4fb630f607f866de0d45e9a695bb9f0c8bcbefa2c6849",
+    "pubkey": "3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+    "created_at": 1792000021,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "tagging:cosy-tagging"
+      ],
+      [
+        "names",
+        "Tagging of an event as Cosy",
+        "Taggings of events as Cosy"
+      ],
+      [
+        "description",
+        "Applies the Cosy tag to an event."
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tagging-with-specific-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tagging-with-specific-tag"
+      ],
+      [
+        "a",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:cosy"
+      ]
+    ],
+    "content": "",
+    "sig": "8d30774a6250fdc3cef5aaef114d0b16271dab06b8d57e8adc606ac1494650db5b50106ab7fc84cc3db57296b2d6178175a1620ecc169e3c90a5fe1c0969551a"
+  },
+  "quietHeader": {
+    "id": "87d02956e6bdbca084fa5ff3962506aa201ff07cb86697285eddc2ceb035174a",
+    "pubkey": "3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+    "created_at": 1792000021,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "tagging:quiet-tagging"
+      ],
+      [
+        "names",
+        "Tagging of an event as Quiet",
+        "Taggings of events as Quiet"
+      ],
+      [
+        "description",
+        "Applies the Quiet tag to an event."
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tagging-with-specific-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tagging-with-specific-tag"
+      ],
+      [
+        "a",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:quiet"
+      ]
+    ],
+    "content": "",
+    "sig": "ab199d37ede5615591a88a93017837215fc376db2d0249516144b17af05c6bc14b77b4da7d39c90d1444243ac3334240c66d668b2a8d2c2b2df175ed1761303e"
+  },
+  "goodWifiHeader": {
+    "id": "4147515cd8e0822db1d6ed231c52b40e835d8a28dc378570050b313da1595297",
+    "pubkey": "3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+    "created_at": 1792000021,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "tagging:good-wifi-tagging"
+      ],
+      [
+        "names",
+        "Tagging of an event as Good Wifi",
+        "Taggings of events as Good Wifi"
+      ],
+      [
+        "description",
+        "Applies the Good Wifi tag to an event."
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:tagging-with-specific-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:tagging-with-specific-tag"
+      ],
+      [
+        "a",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:good-wifi"
+      ]
+    ],
+    "content": "",
+    "sig": "58e344c490a2e8f2703818d2b46228fdf59bf102cd45cc5570f1e4904f44a035475be7d4fc57ccba36662ebcf5a269ff42d90ec52a3f0ac2dc39c7579e707409"
+  },
+  "overpricedHeader": {
+    "id": "92606207542e65eb2489378dbb00c9f30b9055d05bc4c10cc68263b6c368ccf0",
+    "pubkey": "1617d38ed8d8657da4d4761e8057bc396ea9e4b9d29776d4be096016dbd2509b",
+    "created_at": 1792000021,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "tagging:overpriced-tagging"
+      ],
+      [
+        "names",
+        "Tagging of an event as Overpriced",
+        "Taggings of events as Overpriced"
+      ],
+      [
+        "description",
+        "Applies the Overpriced tag to an event."
+      ],
+      [
+        "z",
+        "39998:1617d38ed8d8657da4d4761e8057bc396ea9e4b9d29776d4be096016dbd2509b:tagging-with-specific-tag"
+      ],
+      [
+        "a",
+        "39999:1617d38ed8d8657da4d4761e8057bc396ea9e4b9d29776d4be096016dbd2509b:overpriced"
+      ]
+    ],
+    "content": "",
+    "sig": "fce6d5469d38574142df920194944bde0161ff41033938194986c7bdd4e63db5eedbc6a53e0bcd4418fc22bf06e182424d4d88097444eb93caaceeb08dd003ae"
+  },
+  "cosyByTagger": {
+    "id": "b7d96ebe0737a17f2d6929e5454768a8454b9888c74d199b673730f0d0809460",
+    "pubkey": "2c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991",
+    "created_at": 1792000030,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-cosy-4f355bdc-2c0b7cf9"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:tagging:cosy-tagging"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ],
+    "content": "",
+    "sig": "cbd8771a9c34f9fd02b14f622143c79107ddf4c50429df691fe051b91a5212d91c0d5da2a35544bfece2e0961f6601d3334273e794fa699d2c2518deb9dfb870"
+  },
+  "cosyByDisputer": {
+    "id": "4511d3e6c944d4992f1ae17ab8dbf070557f30ab935289522e138d144bfacf4e",
+    "pubkey": "9ac20335eb38768d2052be1dbbc3c8f6178407458e51e6b4ad22f1d91758895b",
+    "created_at": 1792000031,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-cosy-4f355bdc-9ac20335"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:tagging:cosy-tagging"
+      ],
+      [
+        "polarity",
+        "-1"
+      ]
+    ],
+    "content": "",
+    "sig": "e531281ddc9de9f02441bc3c1c4a2a3e3fa1bfea7f116bd4e5a4daf9135944c11b34160e705e9059c7887476960ce4e3bf014662e759547c7afa2be54fe720f7"
+  },
+  "cosyByStranger": {
+    "id": "a2ce387d35b56fde7185d53590714d9aef17fbc725d36a3e9799281af1814716",
+    "pubkey": "7962d45b38e8bcf82fa8efa8432a01f20c9a53e24c7d3f11df197cb8e70926da",
+    "created_at": 1792000032,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-cosy-4f355bdc-7962d45b"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:tagging:cosy-tagging"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ],
+    "content": "",
+    "sig": "2af6cc0b112a8d2f6e52dac40afcba0557aeed7d97c856198ef7a6174226eda31edd9f54a1d891503811a0d552164493b3dc5a03a7bdcd30e025e8b93799810a"
+  },
+  "quietByMentioner": {
+    "id": "f4355dd73178b3f9136897bf891828b15e7010260460eb23fea34189159fcead",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000033,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-quiet-c3fab8f6-5ab4689e"
+      ],
+      [
+        "e",
+        "c3fab8f6c1e24b4b7ba5633ffec4d2a2f86901aff3a4e319f5f177174b1e650e"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:tagging:quiet-tagging"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ],
+    "content": "",
+    "sig": "f9c1be7afd6e0e93ff9c9639684d4d48436e38470c26522dbf3e4a4debc7f18aaae765abcf63ea0aa42fd99bb215f231001683a5e9b2afc6a75adaef50857d6f"
+  },
+  "goodWifiByTagger": {
+    "id": "b6802c20f3263f69660f99feae7e91d393d126725f8e58fc4dfee29ac3abbd06",
+    "pubkey": "2c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991",
+    "created_at": 1792000034,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-good-wifi-4f355bdc-2c0b7cf9"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:tagging:good-wifi-tagging"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ],
+    "content": "",
+    "sig": "810a8743d32cae435104195176989fd83dd731ebba58197c556d5ccc384dd07f2110c421696aef3ac366ccd3755ea4387f74c6cdb5866155fdb424d89cfefde5"
+  },
+  "cosyOnOtherItem": {
+    "id": "481f1d58b915bbfb79e96913ee2bd1fb580d4e5309c5b16faf0af58d78a1251c",
+    "pubkey": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+    "created_at": 1792000036,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-cosy-4f355bdc-5ab4689e"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:other-cafe"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1:tagging:cosy-tagging"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ],
+    "content": "",
+    "sig": "41d1ed6f38d96efd1ce89b8e5ae19885e32119ecd67c2ad0e2fff3a9b32856949d072281543cdcda06c78b0023b3d47bfb233f27f4b523a817ba24937358f316"
+  },
+  "overpricedByTagger": {
+    "id": "b3f28cd09bda2fd6a79d1d71ae5acd8f9b60838730e26d7e2565a0d24236e538",
+    "pubkey": "2c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991",
+    "created_at": 1792000035,
+    "kind": 39999,
+    "tags": [
+      [
+        "d",
+        "event-tag-overpriced-4f355bdc-2c0b7cf9"
+      ],
+      [
+        "a",
+        "39999:4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa:blue-door-cafe"
+      ],
+      [
+        "z",
+        "39998:82b75e474dda005e912bcbb910391c60c2b89cc7faf5d3c30b7c59a324973833:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39998:a68dbf561cfe3da1b76f1e65c7d4d9cc116f79921b38a815fd75cb5460b4b599:nostr-event-tag"
+      ],
+      [
+        "z",
+        "39999:1617d38ed8d8657da4d4761e8057bc396ea9e4b9d29776d4be096016dbd2509b:tagging:overpriced-tagging"
+      ],
+      [
+        "polarity",
+        "1"
+      ]
+    ],
+    "content": "",
+    "sig": "d4f0662649b4bcc46e5107894b35a3077ed59e2065529ba4188f0b34235bdc7c3408640c28ef4382323a054bf7558b0708b838ddb20e8ef8c5a603c8c8c88ebe"
+  }
+}
