@@ -213,6 +213,21 @@
       "sha256": "a8252e4e3452a05ea02799cf4a41ef97c622259075983171a1132fa7790967ad"
     },
     {
+      "upstream": "client/src/lib/tagging-sdk/event-tagging/handles.js",
+      "local": "src/lib/tagging/handles.js",
+      "sha256": "e6527f54cab2de0ee87d57aa173bca379ee1d2d511aed80de846d1de94bf1707"
+    },
+    {
+      "upstream": "client/src/lib/tagging-sdk/event-tagging/filters.js",
+      "local": "src/lib/tagging/filters.js",
+      "sha256": "e8dd914b46f46fe53a6bd4b2ba605c5a5a2dec53ecceb7eedcadb678f788b306"
+    },
+    {
+      "upstream": "client/src/lib/tagging-sdk/event-tagging/classify.js",
+      "local": "src/lib/tagging/classify.js",
+      "sha256": "8b73d32cc7d37efb3ab09f1ec8dff0d9df0ad4c2f0ac13363c293a122a9c5ad5"
+    },
+    {
       "upstream": "client/public/built-on/built-on-brainstorm.js",
       "local": "src/lib/built-on-brainstorm.js",
       "commit": "9cedf9c0d1a9f7654cddc081c3eac80d9327d709",
