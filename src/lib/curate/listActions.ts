@@ -19,7 +19,7 @@
 import { draftProblems, exactCopyTemplate, type CopyDraft, type EventTemplate } from "@/lib/conceptCopy";
 import { definitionOf, versionOf, type HeaderEvent } from "@/lib/conceptResolution";
 import { editedHeaderTemplate } from "@/lib/curate/headerEdit";
-import { freeShortName, ownShortNames } from "@/lib/curate/newList";
+import { freeShortName, hasNoFields, NO_FIELDS, ownShortNames } from "@/lib/curate/newList";
 import { checkHeader, type Problem } from "@/lib/listCheck";
 import { listDraftOf, listHeaderTemplate } from "@/lib/listDraft";
 import { newestPerAddress } from "@/lib/newestPerAddress";
@@ -128,10 +128,13 @@ export function listEditTemplate(edit: ListEdit, reader: string, draft: CopyDraf
  * What Brainstorm's checks find in the header `draft` would publish. The
  * draft's own problems come first, as problems that stop the write: the
  * header check reads the names and fields back from tags, where a name left
- * empty can pass for another. The rest of what the header check notes follows.
+ * empty can pass for another. So does taking away every field the list had,
+ * which would leave it with nothing to add; a list that never declared one
+ * is saved as it stands. The rest of what the header check notes follows.
  */
 export function listEditProblems(edit: ListEdit, reader: string, draft: CopyDraft, shortName?: string): Problem[] {
-  const own = draftProblems(draft);
+  const emptied = hasNoFields(draft) && !hasNoFields(listEditDraft(edit));
+  const own = [...draftProblems(draft), ...(emptied ? [NO_FIELDS] : [])];
   return [
     ...own.map((message): Problem => ({ code: "unpublishable", field: null, message, blocking: true })),
     ...checkHeader(listEditTemplate(edit, reader, draft, shortName).tags).problems.filter(

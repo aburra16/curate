@@ -5,6 +5,7 @@ import { checkHeader } from "@/lib/listCheck";
 import { groupConcepts, isWithdrawn } from "@/services/concepts";
 import foodCopies from "@/test/fixtures/food.copies.json";
 import foodHeader from "@/test/fixtures/food.header.json";
+import tagsHeaders from "@/test/fixtures/tags.headers.json";
 import {
   listActionsFor,
   listEditDraft,
@@ -290,6 +291,25 @@ describe("what stops a change", () => {
     draft.fields[0] = { ...draft.fields[0], name: "full name" };
 
     expect(blocking(edit, CURATOR, draft)).toEqual(["Not a field name: full name (no spaces; d, z and b are taken)."]);
+  });
+
+  it("stops a change that takes away every field, since no item could be added to the list", () => {
+    const edit: ListEdit = { kind: "edit", header: root };
+
+    expect(blocking(edit, CURATOR, { ...listEditDraft(edit), fields: [] })).toEqual(["Add at least one field."]);
+  });
+
+  it("stops a version made without any of the fields it was copied with", () => {
+    const edit: ListEdit = { kind: "make-mine", community: root };
+
+    expect(blocking(edit, READER, { ...listEditDraft(edit), fields: [] })).toEqual(["Add at least one field."]);
+  });
+
+  it("lets a list that never declared a field be saved, or copied, as it stands", () => {
+    const tags = (tagsHeaders as HeaderEvent[]).find((h) => !h.tags.some((t) => ["required", "recommended", "optional"].includes(t[0])))!;
+
+    expect(blocking({ kind: "edit", header: tags }, tags.pubkey)).toEqual([]);
+    expect(blocking({ kind: "make-mine", community: tags }, READER)).toEqual([]);
   });
 
   it("says each problem once, and keeps what the header check adds", () => {

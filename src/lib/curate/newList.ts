@@ -108,11 +108,21 @@ export function shortNameProblems(d: string, taken: ReadonlySet<string>): string
   ];
 }
 
+/** What a list with no fields is told: Curate's item form would have nothing to fill in. */
+export const NO_FIELDS = "Add at least one field.";
+
+/** Whether the draft would publish a list with no fields: none it includes. */
+export function hasNoFields(draft: CopyDraft): boolean {
+  return !draft.fields.some((f) => f.enabled);
+}
+
 /**
  * What stops the list from publishing, in words; empty when it can go.
- * Brainstorm's own checks of a draft (names, field names, repeats), then the
- * short name's. `taken` holds the short names of the person's own lists.
+ * Brainstorm's own checks of a draft (names, field names, repeats), then a
+ * list with no fields, which nothing could be added to, then the short
+ * name's. `taken` holds the short names of the person's own lists.
  */
 export function createProblems(q: QuickList, d: string, taken: ReadonlySet<string>): string[] {
-  return [...draftProblems(draftOfQuickList(q)), ...shortNameProblems(d, taken)];
+  const draft = draftOfQuickList(q);
+  return [...draftProblems(draft), ...(hasNoFields(draft) ? [NO_FIELDS] : []), ...shortNameProblems(d, taken)];
 }

@@ -157,6 +157,22 @@ describe("Create", () => {
     expect(screen.getByText("Listed twice: title.")).toBeTruthy();
   });
 
+  it("asks for a field when every field row is removed, and holds Publish", async () => {
+    render(<CreatePage />);
+    await nameIt();
+
+    click("Remove field 1");
+
+    expect(screen.getByText("Add at least one field.")).toBeTruthy();
+    expect(publishButton().disabled).toBe(true);
+
+    click("Add a field");
+    type("Field 1 name", "title");
+
+    expect(screen.queryByText("Add at least one field.")).toBeNull();
+    expect(publishButton().disabled).toBe(false);
+  });
+
   it("starts without complaints, and asks for what is missing once the person has begun", () => {
     render(<CreatePage />);
 

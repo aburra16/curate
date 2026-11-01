@@ -237,6 +237,10 @@ describe("createProblems", () => {
     ]);
   });
 
+  it("asks for a field when the list has none, since no item could be added to it", () => {
+    expect(createProblems({ ...cafes, fields: [] }, CAFES, taken)).toEqual(["Add at least one field."]);
+  });
+
   it("refuses an empty short name, and one the author already has", () => {
     expect(createProblems(cafes, "", taken)).toEqual(["Give the list an identifier (its d tag)."]);
     expect(createProblems(cafes, CAFES, new Set([CAFES]))).toEqual([

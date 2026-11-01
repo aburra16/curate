@@ -685,6 +685,20 @@ describe("changing a list", () => {
       expect(signAndPublish).not.toHaveBeenCalled();
     });
 
+    it("stops a change that takes away every field, and says so", async () => {
+      signIn(COPIER);
+      open(FOOD);
+      await title();
+      click("Edit list");
+
+      while (screen.queryAllByRole("button", { name: /^Remove field/ }).length > 0) {
+        fireEvent.click(screen.getAllByRole("button", { name: /^Remove field/ })[0]);
+      }
+
+      expect(screen.getByText("Add at least one field.")).toBeTruthy();
+      expect((button("Publish") as HTMLButtonElement).disabled).toBe(true);
+    });
+
     it("keeps the form and what was typed when the list relay refuses, and finishes after a Retry that works", async () => {
       vi.mocked(signAndPublish).mockResolvedValue(refusedByList);
       vi.mocked(retryPublish).mockImplementation(async () => signedBy(COPIER, published()));
