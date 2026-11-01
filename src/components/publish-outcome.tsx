@@ -9,8 +9,9 @@ import { useSigner } from "@/stores/signer";
  * missed it); not saved gives the list relay's words and a Retry that resends
  * the same event, disabled while a write is in flight; a write that stopped
  * before any relay was asked shows why. A remote signer that stopped
- * answering or refused (it may have been revoked) also offers Connect again.
- * Nothing shows before a write or while one is in flight.
+ * answering or refused (it may have been revoked) also offers Connect again,
+ * as does any signer that signed as another account. Nothing shows before a
+ * write or while one is in flight.
  */
 export function PublishOutcome({
   state,
@@ -26,7 +27,9 @@ export function PublishOutcome({
   const showChooser = useConnectDialog((s) => s.show);
 
   if (state.phase === "error") {
-    const reconnectable = (state.reason === "timeout" || state.reason === "refused") && signing === "remote";
+    const reconnectable =
+      state.reason === "account-changed" ||
+      ((state.reason === "timeout" || state.reason === "refused") && signing === "remote");
     if (!reconnectable) {
       return (
         <p role="alert" className="text-[12px] leading-[1.5] text-red-400">

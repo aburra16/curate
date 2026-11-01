@@ -137,7 +137,7 @@ describe("PublishOutcome", () => {
       expect(useSigner.getState()).toMatchObject({ status: "disconnected", pubkey: null, method: null });
     });
 
-    it.each<SignerFailure | undefined>(["not-connected", "account-changed", "no-extension", undefined])(
+    it.each<SignerFailure | undefined>(["not-connected", "no-extension", undefined])(
       "does not offer it after %s",
       (reason) => {
         render(<PublishOutcome state={failed(reason)} busy={false} onRetry={() => {}} />);
@@ -145,6 +145,22 @@ describe("PublishOutcome", () => {
         expect(connectAgain()).toBeNull();
       },
     );
+
+    it.each([
+      ["a remote signer", "remote"],
+      ["the browser extension", "extension"],
+    ] as const)("offers it when the account changed under %s", (_, method) => {
+      useSigner.getState().setConnected(CURATOR, method);
+      const state: WriteState = {
+        phase: "error",
+        message: "Your signer is now signing as a different account. Connect again to write.",
+        reason: "account-changed",
+      };
+      render(<PublishOutcome state={state} busy={false} onRetry={() => {}} />);
+
+      expect(screen.getByRole("alert").textContent).toContain("signing as a different account");
+      expect(connectAgain()).toBeTruthy();
+    });
 
     it("does not offer it when the signer is the browser extension", () => {
       useSigner.getState().setConnected(CURATOR, "extension");
