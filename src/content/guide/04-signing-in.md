@@ -43,11 +43,11 @@ Under "Remote signer", press "Scan with your phone". Curate shows a square code,
 
 1. Open your signer app and scan the code.
 2. Approve the connection in the app.
-3. Curate says "Waiting for your signer…" until the app answers, then the window closes.
+3. Curate says "Waiting for your signer…" until the app answers. The code then goes away, and Curate says "Your signer connected. Waiting for it to share your account. If it asks you to approve, do that there." Once it has your account, the window closes.
 
 If you are already on your phone, use "Open in a signer app on this device" instead of scanning. "Copy link" copies the code as text, for a signer that takes a pasted link. "Cancel" stops waiting.
 
-Curate waits about three minutes. If no signer answers in that time, it says "No signer paired in time." and you can try again.
+Curate waits about three minutes. If no signer answers in that time, it says "No signer paired in time." and you can try again. A signer that has answered then has a minute to share your account. If it doesn't, Curate says "Your signer connected but didn't share your account in time. Check it for a request to approve, then try again."
 
 ### With a bunker link
 

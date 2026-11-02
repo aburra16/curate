@@ -15,6 +15,7 @@ import type { EventTemplate } from "@/lib/conceptCopy";
 import { clearOutboxCache } from "@/services/outbox";
 import { signAndPublish } from "@/services/publish";
 import {
+  ACCOUNT_TIMEOUT_MS,
   connectBunker,
   NIP46_RELAYS,
   onRemoteAuth,
@@ -214,15 +215,61 @@ describe("startPairing", () => {
     });
   });
 
+  it("names first a relay that answers, because some signers try the relays in order and wait on each", () => {
+    expect(NIP46_RELAYS[0]).toBe("wss://relay.primal.net");
+    expect(NIP46_RELAYS).not.toContain("wss://relay.nsec.app");
+  });
+
+  it("says when a signer has answered the code, before the account has come back", async () => {
+    const bunker = fakeBunker(CURATOR);
+    bunker.silence();
+    vi.useFakeTimers();
+    const answered = vi.fn();
+
+    const { uri, done, cancel } = startPairing(bunker.methods, answered);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(answered).not.toHaveBeenCalled();
+    bunker.pair(uri);
+
+    expect(await hasSettled(done)).toBe(false);
+    expect(answered).toHaveBeenCalledTimes(1);
+    expect(bunker.requests).toEqual(["get_public_key"]);
+    cancel();
+    await failure(done);
+  });
+
+  it("gives a signer that answered its own time to share the account, however late it answered", async () => {
+    const bunker = fakeBunker(CURATOR);
+    bunker.silence();
+    vi.useFakeTimers();
+
+    const { uri, done } = startPairing(bunker.methods);
+    const outcome = failure(done);
+    await vi.advanceTimersByTimeAsync(PAIRING_TIMEOUT_MS - 1);
+    bunker.pair(uri);
+    await vi.advanceTimersByTimeAsync(ACCOUNT_TIMEOUT_MS - 1);
+    expect(await hasSettled(done)).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(await outcome).toMatchObject({
+      reason: "timeout",
+      message: "Your signer connected but didn't share your account in time. Check it for a request to approve, then try again.",
+    });
+    expect(activeSigner()).toBeNull();
+    expect(keptSession()).toBeNull();
+  });
+
   it("turns away an answer that doesn't carry the code's secret", async () => {
     const bunker = fakeBunker(CURATOR);
     vi.useFakeTimers();
+    const answered = vi.fn();
 
-    const { uri, done, cancel } = startPairing(bunker.methods);
+    const { uri, done, cancel } = startPairing(bunker.methods, answered);
     bunker.pair(uri, "ack");
 
     expect(await hasSettled(done)).toBe(false);
     expect(bunker.requests).toEqual([]);
+    expect(answered).not.toHaveBeenCalled();
     cancel();
     await failure(done);
     expect(activeSigner()).toBeNull();

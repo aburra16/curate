@@ -23,14 +23,21 @@ import { publishUntilEnough } from "@/lib/publishQuorum";
 import { getPool } from "@/services/pool";
 import { activate, failureOf, SignerError, signerGeneration, withinTime } from "@/services/signer";
 
-/** The relays a pairing code asks the signer to answer on. nsec.app answers on its own relay only. */
-export const NIP46_RELAYS = ["wss://relay.nsec.app", "wss://relay.primal.net"];
+/**
+ * The relays a pairing code asks the signer to answer on, in the order a signer
+ * tries them. Some signers connect to them one at a time and wait on each, so a
+ * relay that doesn't answer keeps the signer's answer from the relays after it.
+ */
+export const NIP46_RELAYS = ["wss://relay.primal.net", "wss://nos.lol"];
 
 /** The kinds Curate asks a remote signer to sign: deletions, votes, lists and their items. */
 export const SIGNED_KINDS = [5, 7, 39998, 39999];
 
 /** How long pairing waits: long enough to find the phone, open the signer and approve. */
 export const PAIRING_TIMEOUT_MS = 180_000;
+
+/** How long a signer that has answered the code has to share the account: it may ask its owner first. */
+export const ACCOUNT_TIMEOUT_MS = 60_000;
 
 /** How long a remote signer has to answer one request before Curate gives up on it. */
 export const REQUEST_TIMEOUT_MS = 30_000;
@@ -59,6 +66,9 @@ type SharedOptions = Methods & Pick<NostrConnectSignerOptions, "onAuth">;
 const PERMISSIONS = NostrConnectSigner.buildSigningPermissions(SIGNED_KINDS);
 
 const NO_ANSWER = "The signer didn't answer in time.";
+
+const NO_ACCOUNT =
+  "Your signer connected but didn't share your account in time. Check it for a request to approve, then try again.";
 
 const approvalListeners = new Set<(url: string) => void>();
 
@@ -196,12 +206,18 @@ async function adopt(signer: NostrConnectSigner, pubkey: string, started: number
  * Start pairing a signer app by code. `uri` is the `nostrconnect://` code to
  * show (as a QR code or to copy); it names Curate, this page and the kinds
  * Curate will ask to sign. `done` resolves to the account's pubkey once a
- * signer has answered with the code's secret, with that signer in use and its
- * session kept. It rejects with a `SignerError`: `timeout` when no signer has
- * paired within `PAIRING_TIMEOUT_MS`, `not-connected` after `cancel` or when
- * the signer in use changed meanwhile. A `cancel` once paired does nothing.
+ * signer has answered with the code's secret and shared the account, with that
+ * signer in use and its session kept. `onAnswered` is called when the secret
+ * arrives, while the account is still to come. It rejects with a `SignerError`:
+ * `timeout` when no signer has answered within `PAIRING_TIMEOUT_MS`, or one has
+ * and hasn't shared the account within `ACCOUNT_TIMEOUT_MS`, `not-connected`
+ * after `cancel` or when the signer in use changed meanwhile. A `cancel` once
+ * paired does nothing.
  */
-export function startPairing(methods?: Methods): { uri: string; done: Promise<string>; cancel: () => void } {
+export function startPairing(
+  methods?: Methods,
+  onAnswered?: () => void,
+): { uri: string; done: Promise<string>; cancel: () => void } {
   const started = signerGeneration();
   const signer = new PairingSigner({ relays: NIP46_RELAYS, signer: new PrivateKeySigner(), ...shared(methods) });
   const uri = signer.getNostrConnectURI({ name: "Curate", url: location.origin, permissions: PERMISSIONS });
@@ -210,14 +226,16 @@ export function startPairing(methods?: Methods): { uri: string; done: Promise<st
   const stopped = new Promise<never>((_, reject) => {
     stop.signal.addEventListener("abort", () => reject(stop.signal.reason), { once: true });
   });
-  const timer = setTimeout(
-    () => stop.abort(new SignerError("timeout", "No signer paired in time.")),
-    PAIRING_TIMEOUT_MS,
-  );
+  const giveUpAfter = (ms: number, message: string) =>
+    setTimeout(() => stop.abort(new SignerError("timeout", message)), ms);
+  let timer = giveUpAfter(PAIRING_TIMEOUT_MS, "No signer paired in time.");
   let settled = false;
 
   const paired = (async () => {
     await signer.waitForSigner(stop.signal);
+    clearTimeout(timer);
+    timer = giveUpAfter(ACCOUNT_TIMEOUT_MS, NO_ACCOUNT);
+    onAnswered?.();
     return signer.getPublicKey();
   })();
 

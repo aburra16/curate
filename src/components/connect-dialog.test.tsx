@@ -189,6 +189,52 @@ describe("ConnectDialog", () => {
     expect(useSigner.getState().status).toBe("connecting");
   });
 
+  describe("once a signer has answered the code", () => {
+    const signerAnswers = () => act(() => vi.mocked(startPairing).mock.calls.at(-1)?.[1]?.());
+
+    it("puts the code away and says what it is waiting for, with Cancel still there", () => {
+      const { cancel } = pairing();
+      render(<ConnectDialog open onClose={() => {}} />);
+      fireEvent.click(button("Scan with your phone"));
+
+      signerAnswers();
+
+      expect(screen.queryByTestId("pairing-code")).toBeNull();
+      expect(screen.queryByText("Scan this code with your signer app.")).toBeNull();
+      expect(screen.getByRole("status").textContent).toBe(
+        "Your signer connected. Waiting for it to share your account. If it asks you to approve, do that there.",
+      );
+      fireEvent.click(button("Cancel"));
+      expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it("closes when the account comes back", async () => {
+      const { pair } = pairing();
+      const onClose = vi.fn();
+      render(<ConnectDialog open onClose={onClose} />);
+      fireEvent.click(button("Scan with your phone"));
+      signerAnswers();
+
+      await act(async () => pair(CURATOR));
+
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it("says what went wrong when the account doesn't come back, and a new try shows a code", async () => {
+      const { fail } = pairing();
+      render(<ConnectDialog open onClose={() => {}} />);
+      fireEvent.click(button("Scan with your phone"));
+      signerAnswers();
+
+      await act(async () => fail(new SignerError("timeout", "Your signer didn't share your account.")));
+
+      expect(screen.getByRole("alert").textContent).toBe("Your signer didn't share your account.");
+      pairing();
+      fireEvent.click(button("Scan with your phone"));
+      expect(screen.getByTestId("pairing-code")).toBeTruthy();
+    });
+  });
+
   it("offers the code's link to open in a signer app on this device, for the person to tap", () => {
     pairing();
     render(<ConnectDialog open onClose={() => {}} />);

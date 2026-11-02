@@ -76,12 +76,28 @@ function PairingCode({ uri, onCancel }: { uri: string; onCancel: () => void }) {
   );
 }
 
+/** Where the code was, once a signer has answered it: what is still to come, and a Cancel that stops waiting. */
+function SignerAnswered({ onCancel }: { onCancel: () => void }) {
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <p role="status" className="text-[12px] leading-[1.5] text-ink-soft">
+        Your signer connected. Waiting for it to share your account. If it asks you to approve, do that there.
+      </p>
+      <button type="button" onClick={onCancel} className="text-[12px] text-mute hover:text-ink-soft transition-colors">
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 /** The chooser's contents; mounted only while it is open, so each opening starts fresh. */
 function Chooser({ onClose }: { onClose: () => void }) {
   const { status, error, connectExtension, connectBunker, startPairing } = useConnectSigner();
   const [way, setWay] = useState<Way | null>(null);
   // What is waiting for a signer: a pairing, or a bunker. One that has ended (connected, failed or cancelled) is left here, and isn't shown.
   const [attempt, setAttempt] = useState<Pairing | BunkerAttempt | null>(null);
+  // Whether a signer has answered the code; its account is then still to come.
+  const [answered, setAnswered] = useState(false);
   const [link, setLink] = useState("");
   const dialog = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -100,7 +116,7 @@ function Chooser({ onClose }: { onClose: () => void }) {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   }, []);
   // The control that had focus can go with a change of view (the button that was pressed is replaced or disabled): focus comes back into the dialog.
-  const view = [way, busy, code !== null, problem].join("|");
+  const view = [way, busy, code !== null, answered, problem].join("|");
 
   // An attempt still waiting is stopped before the chooser goes, so what opened it is usable again when focus goes back to it.
   const close = () => {
@@ -123,7 +139,8 @@ function Chooser({ onClose }: { onClose: () => void }) {
 
   const scan = () => {
     setWay("pairing");
-    setAttempt(startPairing());
+    setAnswered(false);
+    setAttempt(startPairing(() => setAnswered(true)));
   };
 
   const stopWaiting = () => {
@@ -204,7 +221,9 @@ function Chooser({ onClose }: { onClose: () => void }) {
           </h3>
 
           <div className="flex flex-col gap-1.5">
-            {code ? (
+            {code && answered ? (
+              <SignerAnswered onCancel={stopWaiting} />
+            ) : code ? (
               <PairingCode uri={code} onCancel={stopWaiting} />
             ) : (
               <>

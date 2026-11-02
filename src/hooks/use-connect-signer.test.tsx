@@ -237,6 +237,36 @@ describe("useConnectSigner", () => {
       expect(useSigner.getState()).toMatchObject({ status: "connected", pubkey: CURATOR, method: "remote" });
     });
 
+    it("tells the page when a signer has answered the code", () => {
+      pairing();
+      const answered = vi.fn();
+      const { result } = renderHook(() => useConnectSigner());
+      act(() => {
+        result.current.startPairing(answered);
+      });
+      expect(answered).not.toHaveBeenCalled();
+
+      act(() => vi.mocked(startPairing).mock.calls[0][1]?.());
+
+      expect(answered).toHaveBeenCalledTimes(1);
+      expect(useSigner.getState().status).toBe("connecting");
+    });
+
+    it("tells the page nothing once the pairing has been stopped", () => {
+      pairing();
+      const answered = vi.fn();
+      const { result } = renderHook(() => useConnectSigner());
+      let started: ReturnType<typeof result.current.startPairing> = null;
+      act(() => {
+        started = result.current.startPairing(answered);
+      });
+      act(() => started?.cancel());
+
+      act(() => vi.mocked(startPairing).mock.calls[0][1]?.());
+
+      expect(answered).not.toHaveBeenCalled();
+    });
+
     it("stopping it puts the store back, and stops the pairing once however often it is asked", () => {
       const { cancel } = pairing();
       const { result } = renderHook(() => useConnectSigner());
