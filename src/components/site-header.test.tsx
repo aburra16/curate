@@ -16,12 +16,13 @@ vi.mock("@/services/signer", async () => ({
   ...(await vi.importActual<typeof import("@/services/signer")>("@/services/signer")),
   connectExtension: vi.fn(),
   disconnect: vi.fn(),
+  restoreExtension: vi.fn(),
 }));
 vi.mock("@/hooks/use-profile", () => ({ useProfile: () => null }));
 
 import { SiteHeader } from "@/components/site-header";
 import { connectBunker, onRemoteAuth, restoreRemote, startPairing } from "@/services/remoteSigner";
-import { disconnect, SignerError } from "@/services/signer";
+import { disconnect, restoreExtension, SignerError } from "@/services/signer";
 import { useApprovalLink } from "@/stores/approval-link";
 import { useConnectDialog } from "@/stores/connect-dialog";
 import { useSigner } from "@/stores/signer";
@@ -37,6 +38,8 @@ const stopListening = vi.fn();
 beforeEach(() => {
   vi.mocked(restoreRemote).mockReset();
   vi.mocked(restoreRemote).mockResolvedValue(null);
+  vi.mocked(restoreExtension).mockReset();
+  vi.mocked(restoreExtension).mockResolvedValue(false);
   vi.mocked(disconnect).mockReset();
   vi.mocked(disconnect).mockResolvedValue();
   vi.mocked(connectBunker).mockReset();
@@ -121,6 +124,57 @@ describe("SiteHeader", () => {
     expect(await screen.findByRole("button", { name: "Disconnect" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Connect" })).toBeNull();
     expect(useSigner.getState()).toMatchObject({ status: "connected", pubkey: CURATOR, method: "remote" });
+  });
+
+  describe("after a page load that left the extension connected", () => {
+    beforeEach(() => useSigner.setState({ pubkey: CURATOR, extensionConnected: true, method: null, status: "disconnected" }));
+
+    it("is connected again, as the same account", async () => {
+      vi.mocked(restoreExtension).mockResolvedValue(true);
+      render(<SiteHeader />);
+
+      expect(await screen.findByRole("button", { name: "Disconnect" })).toBeTruthy();
+      expect(restoreExtension).toHaveBeenCalledWith(CURATOR, expect.any(Function));
+      expect(useSigner.getState()).toMatchObject({ status: "connected", pubkey: CURATOR, method: "extension" });
+    });
+
+    it("stays disconnected, quietly, when the extension doesn't come back", async () => {
+      render(<SiteHeader />);
+
+      await waitFor(() => expect(restoreExtension).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(screen.getByRole("button", { name: "Connect" })).toBeTruthy();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(useSigner.getState().status).toBe("disconnected");
+    });
+
+    it("puts a kept remote session first", async () => {
+      vi.mocked(restoreRemote).mockResolvedValue(CURATOR);
+      render(<SiteHeader />);
+
+      expect(await screen.findByRole("button", { name: "Disconnect" })).toBeTruthy();
+      expect(restoreExtension).not.toHaveBeenCalled();
+      expect(useSigner.getState()).toMatchObject({ status: "connected", method: "remote" });
+    });
+
+    it("stops wanting the extension back once the person starts connecting another way", async () => {
+      render(<SiteHeader />);
+      await waitFor(() => expect(restoreExtension).toHaveBeenCalledTimes(1));
+      const wanted = vi.mocked(restoreExtension).mock.calls[0][1];
+      expect(wanted()).toBe(true);
+
+      act(() => useSigner.getState().setConnecting());
+
+      expect(wanted()).toBe(false);
+    });
+  });
+
+  it("does not ask for the extension after a Disconnect", async () => {
+    render(<SiteHeader />);
+
+    await waitFor(() => expect(restoreRemote).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(restoreExtension).not.toHaveBeenCalled();
   });
 
   it("stays disconnected when no session was kept", async () => {

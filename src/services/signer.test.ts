@@ -2,7 +2,7 @@
 import { PrivateKeySigner, type ISigner } from "applesauce-signers";
 import type { EventTemplate } from "nostr-tools";
 import { generateSecretKey, verifyEvent } from "nostr-tools/pure";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SESSION_KEY } from "./remoteSigner";
 import {
   activate,
@@ -10,6 +10,8 @@ import {
   CLIENT_TAG,
   connectExtension,
   disconnect,
+  EXTENSION_WAIT_MS,
+  restoreExtension,
   SignerError,
   signTemplate,
 } from "./signer";
@@ -102,6 +104,64 @@ describe("connectExtension", () => {
     expect(err.reason).toBe("refused");
     expect(err.message).toBe("The signer didn't connect: The person said no");
     expect(activeSigner()).toBeNull();
+  });
+});
+
+describe("restoreExtension", () => {
+  const wanted = () => true;
+
+  afterEach(() => vi.useRealTimers());
+
+  it("puts the extension back in use for the account, and asks it nothing", async () => {
+    const pubkey = await CURATOR.getPublicKey();
+    const shim = installExtension(CURATOR);
+    const asked = vi.spyOn(shim, "getPublicKey");
+
+    expect(await restoreExtension(pubkey, wanted)).toBe(true);
+
+    expect(activeSigner()).toEqual({ method: "extension", pubkey });
+    expect(asked).not.toHaveBeenCalled();
+    expect((await signTemplate(NOTE)).pubkey).toBe(pubkey);
+  });
+
+  it("waits for an extension that arrives after the page", async () => {
+    const pubkey = await CURATOR.getPublicKey();
+    vi.useFakeTimers();
+
+    const restoring = restoreExtension(pubkey, wanted);
+    await vi.advanceTimersByTimeAsync(EXTENSION_WAIT_MS / 2);
+    expect(activeSigner()).toBeNull();
+    installExtension(CURATOR);
+    await vi.advanceTimersByTimeAsync(EXTENSION_WAIT_MS / 2);
+
+    expect(await restoring).toBe(true);
+    expect(activeSigner()).toEqual({ method: "extension", pubkey });
+  });
+
+  it("gives up, putting nothing in use, when no extension arrives", async () => {
+    vi.useFakeTimers();
+
+    const restoring = restoreExtension(await CURATOR.getPublicKey(), wanted);
+    await vi.advanceTimersByTimeAsync(EXTENSION_WAIT_MS);
+
+    expect(await restoring).toBe(false);
+    expect(activeSigner()).toBeNull();
+  });
+
+  it("puts nothing in use when it is no longer wanted", async () => {
+    installExtension(CURATOR);
+
+    expect(await restoreExtension(await CURATOR.getPublicKey(), () => false)).toBe(false);
+
+    expect(activeSigner()).toBeNull();
+  });
+
+  it("still refuses a signature from another account", async () => {
+    installExtension(OTHER);
+
+    await restoreExtension(await CURATOR.getPublicKey(), wanted);
+
+    expect((await failure(signTemplate(NOTE))).reason).toBe("account-changed");
   });
 });
 

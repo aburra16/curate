@@ -82,6 +82,45 @@ describe("the signer store without working storage", () => {
 
     expect(JSON.parse(localStorage.getItem("curate-signer") ?? "{}").state).not.toHaveProperty("method");
   });
+
+  it("remembers that the extension connected, until it is disconnected", async () => {
+    const { useSigner } = await import("@/stores/signer");
+    const kept = () => JSON.parse(localStorage.getItem("curate-signer") ?? "{}").state;
+
+    useSigner.getState().setConnected(PUBKEY, "extension");
+    expect(kept()).toMatchObject({ pubkey: PUBKEY, extensionConnected: true });
+
+    useSigner.getState().setDisconnected();
+    expect(kept()).toMatchObject({ pubkey: null, extensionConnected: false });
+  });
+
+  it("does not remember a remote signer that way", async () => {
+    const { useSigner } = await import("@/stores/signer");
+
+    useSigner.getState().setConnected(PUBKEY, "extension");
+    useSigner.getState().setConnected(PUBKEY, "remote");
+
+    expect(JSON.parse(localStorage.getItem("curate-signer") ?? "{}").state).toMatchObject({ extensionConnected: false });
+  });
+
+  it("loads what it remembers, disconnected, until the signer is brought back", async () => {
+    localStorage.setItem("curate-signer", JSON.stringify({ state: { pubkey: PUBKEY, extensionConnected: true }, version: 1 }));
+    const { useSigner } = await import("@/stores/signer");
+
+    expect(useSigner.getState()).toMatchObject({
+      pubkey: PUBKEY,
+      extensionConnected: true,
+      method: null,
+      status: "disconnected",
+    });
+  });
+
+  it("loads what an earlier visit remembered, with the extension not marked as connected", async () => {
+    localStorage.setItem("curate-signer", JSON.stringify({ state: { pubkey: PUBKEY }, version: 1 }));
+    const { useSigner } = await import("@/stores/signer");
+
+    expect(useSigner.getState()).toMatchObject({ pubkey: PUBKEY, extensionConnected: false, status: "disconnected" });
+  });
 });
 
 describe("the settings store without working storage", () => {

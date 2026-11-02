@@ -34,8 +34,9 @@ in its kind 10040. A rank only decides what is shown and what is counted; Curate
 Reading never signs. To write, connect a signer with Connect in the header. Use a browser extension (nos2x,
 Alby and the like), or a remote signer: scan the QR code with a signer app on your phone, or paste a
 `bunker://` link. Curate asks the signer to sign each change and never sees your private key; the key stays
-in the signer. A remote connection lasts until you disconnect or close the tab. If the signer switches
-to another account while the page is open, Curate stops and asks you to connect again.
+in the signer. An extension stays connected until you disconnect, also after a reload and in new tabs, and
+a remote connection until you disconnect or close the tab. If the signer switches to another account while
+the page is open, Curate stops and asks you to connect again.
 
 - **Create a list** (`/create`): a quick form for the list's names, a description, the fields each item
   holds and a short name. Brainstorm's checks run as you type, and Publish waits until none would stop the

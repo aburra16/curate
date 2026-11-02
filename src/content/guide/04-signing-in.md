@@ -69,7 +69,7 @@ To talk to a remote signer, Curate makes a throwaway key of its own. That key ca
 
 ## How long it lasts
 
-- **A browser extension** stays connected while the page is open. If you reload the page, press "Connect" again.
+- **A browser extension** stays connected until you press "Disconnect", also after a reload and in new tabs. Curate remembers your account and asks your extension nothing until you next sign. If the extension isn't there when a page loads, press "Connect".
 - **A remote signer** stays connected until you press "Disconnect" or close the browser tab. A reload keeps it.
 
 ## When something goes wrong

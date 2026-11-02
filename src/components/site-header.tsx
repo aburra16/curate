@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { ApprovalNotice } from "@/components/approval-notice";
 import { ConnectDialog } from "@/components/connect-dialog";
 import { ShowEverything } from "@/components/show-everything";
-import { useConnectSigner, useRestoreRemote } from "@/hooks/use-connect-signer";
+import { useConnectSigner, useRestoreSigner } from "@/hooks/use-connect-signer";
 import { useProfile } from "@/hooks/use-profile";
 import { profileDisplayName } from "@/lib/format";
 import { onRemoteAuth } from "@/services/remoteSigner";
@@ -26,7 +26,7 @@ export function SiteHeader() {
   const showApproval = useApprovalLink((s) => s.show);
   const dismissApproval = useApprovalLink((s) => s.dismiss);
 
-  useRestoreRemote();
+  useRestoreSigner();
 
   // A signer can ask for approval at any time, while connecting or on a later signature.
   useEffect(() => onRemoteAuth(showApproval), [showApproval]);

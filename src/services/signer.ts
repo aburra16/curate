@@ -40,6 +40,11 @@ let active: Active | null = null;
 /** How many times the signer in use has changed. */
 let generation = 0;
 
+/** How long a page load waits for the browser's extension: extensions can arrive after the page. */
+export const EXTENSION_WAIT_MS = 3_000;
+
+const EXTENSION_POLL_MS = 100;
+
 /** A remote signer listens on relays until it is closed. */
 type Closable = ISigner & { close(): Promise<void> };
 
@@ -102,6 +107,15 @@ async function closeRemote(outgoing: Active | null): Promise<void> {
   if (outgoing?.method === "remote" && isClosable(outgoing.signer)) await outgoing.signer.close();
 }
 
+/** Whether the extension is on the page, or arrives within `EXTENSION_WAIT_MS`. */
+async function extensionArrives(): Promise<boolean> {
+  for (let waited = 0; !hasExtension(); waited += EXTENSION_POLL_MS) {
+    if (waited >= EXTENSION_WAIT_MS) return false;
+    await new Promise((resolve) => setTimeout(resolve, EXTENSION_POLL_MS));
+  }
+  return true;
+}
+
 /** The signer that started a signature is no longer the one in use. */
 function replaced(): SignerError {
   return new SignerError("not-connected", "The signer was disconnected before it signed.");
@@ -131,6 +145,19 @@ export async function connectExtension(): Promise<string> {
   }
   activate(signer, "extension", pubkey);
   return pubkey;
+}
+
+/**
+ * Put the browser's extension back in use for `pubkey`, the account it connected
+ * before this page loaded. Nothing is asked of it until the first signature, so
+ * a page load brings up no prompt, and `signTemplate` still refuses a signature
+ * from any other account. Returns whether it was put in use: not when no
+ * extension arrived in time, or when `wanted` says it no longer is by then.
+ */
+export async function restoreExtension(pubkey: string, wanted: () => boolean): Promise<boolean> {
+  if (!(await extensionArrives()) || !wanted()) return false;
+  activate(new ExtensionSigner(), "extension", pubkey);
+  return true;
 }
 
 /**
