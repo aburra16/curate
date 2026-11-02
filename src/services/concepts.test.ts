@@ -304,8 +304,8 @@ describe("itemIdentity", () => {
   });
 
   it("a curation copy counts as its original", () => {
-    const original = item([["d", "vcavallo-1i6dn0p"], ["z", GITHUB_ROOT]]);
-    const originalCoordinate = `39999:${A}:vcavallo-1i6dn0p`;
+    const original = item([["d", "octocat-1i6dn0p"], ["z", GITHUB_ROOT]]);
+    const originalCoordinate = `39999:${A}:octocat-1i6dn0p`;
     const copy = item(
       [
         ["d", "copy-x"],

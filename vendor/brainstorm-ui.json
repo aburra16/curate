@@ -1,6 +1,6 @@
 {
   "repo": "NosFabrica/Brainstorm-UI",
-  "commit": "3a617f66d017d37c8e9dd7c02423edd890c852d6",
+  "commit": "980a76e069b56ed9db19d9e581666b74ee50bfb4",
   "files": [
     {
       "upstream": "client/src/lib/dlistFields.ts",
@@ -10,12 +10,12 @@
     {
       "upstream": "client/src/lib/displayHints.ts",
       "local": "src/lib/displayHints.ts",
-      "sha256": "f85408d9aa90054a60fc458470a598f927e278974ceeb327d359a7a31fd47402"
+      "sha256": "9047bcea9809666eece89ceb9910c6fb6105918a18d8185fa26b2f16240cdec2"
     },
     {
       "upstream": "client/src/lib/itemPresentation.ts",
       "local": "src/lib/itemPresentation.ts",
-      "sha256": "9dfae0f0375930b0cdf4eb76e83dcf70ffabc0a412fd41e55af3c8a0298e207b"
+      "sha256": "915c9a3448e9f29ea2d8f6454bd0b6ea3127c3e9d5b08c5d2fb093da996fb386"
     },
     {
       "upstream": "client/src/lib/linkTemplates.ts",
@@ -30,7 +30,7 @@
     {
       "upstream": "client/src/lib/mediaKind.ts",
       "local": "src/lib/mediaKind.ts",
-      "sha256": "3cb297dd8be71ebb02a194b40329335fcbf48a3814a93f8ee922333aa24b8ee9"
+      "sha256": "a53e8f7698e32c433226883713ca9709f85d4da97f2ed141ab411e40bcc60075"
     },
     {
       "upstream": "client/src/lib/noteContent.ts",
@@ -45,12 +45,12 @@
     {
       "upstream": "client/src/lib/blankEvent.ts",
       "local": "src/lib/blankEvent.ts",
-      "sha256": "ae655d20bffaaa646586e8b8e3a965d9e1cdf63d7d191dc33e3e454ffdbf6f55"
+      "sha256": "cdfe79c7b32b0916d100f51a6fa5a773529eddc8562a8cfddf6f334ad40a82e2"
     },
     {
       "upstream": "client/src/lib/conceptResolution.ts",
       "local": "src/lib/conceptResolution.ts",
-      "sha256": "0281a8f53071efb4802b1efca0b045ab48e03c2103918026a41e25f147a8c4b4"
+      "sha256": "37a9bfe6ed4e439917b248e932b31080e58da560620c28b574bea2ab14e24a3c"
     },
     {
       "upstream": "client/src/lib/dictionaryConcepts.ts",
@@ -75,7 +75,7 @@
     {
       "upstream": "client/src/lib/conceptResolution.test.ts",
       "local": "src/lib/conceptResolution.test.ts",
-      "sha256": "c45ec4efa024027daf9fdd58e0f7a617642b87a19b26351b07f7c3f8a37130c6"
+      "sha256": "4138d520c05f2a97371bc4c08ca5cb78538159a98743580491338426806e101b"
     },
     {
       "upstream": "client/src/lib/dictionaryConcepts.test.ts",
@@ -85,17 +85,17 @@
     {
       "upstream": "client/src/lib/dictionaryItems.test.ts",
       "local": "src/lib/dictionaryItems.test.ts",
-      "sha256": "3e80680c74e8765f7dca74da9b22d8f5b9db87c29644666a3fee36e519a99d81"
+      "sha256": "baea234d25c1e29996ab6115f426b9f3503d801a2bb7390ba9f233c81bd51d07"
     },
     {
       "upstream": "client/src/lib/displayHints.test.ts",
       "local": "src/lib/displayHints.test.ts",
-      "sha256": "df832cef16499b45e72c7bb8c98123f0a6c0dd892447d3cd0d37cc7a1cd69fae"
+      "sha256": "5d929c6b0283b5d55b6d0d5c3cb9f8cb7e696ba8ef16999d9dd272ae11b67353"
     },
     {
       "upstream": "client/src/lib/dlistFields.test.ts",
       "local": "src/lib/dlistFields.test.ts",
-      "sha256": "650a703ca01965c786327e893b947767fdb23e94454727a06d1ba5d4c5cadb22"
+      "sha256": "7475614e09a946d3703ca09a2fa3b0b6db0632b0ae6496b1f582422ac890bc6e"
     },
     {
       "upstream": "client/src/lib/geohash.test.ts",
@@ -105,7 +105,7 @@
     {
       "upstream": "client/src/lib/linkTemplates.test.ts",
       "local": "src/lib/linkTemplates.test.ts",
-      "sha256": "088b4428e2c68268a6779b6b1d71f745d8be833207ce9603e0b30085b1eb8d7c"
+      "sha256": "c59fa46c77434ded42b23b7cce5e201efdd12c8859ba6b00745cf17084059d33"
     },
     {
       "upstream": "client/src/lib/listRef.test.ts",
@@ -115,27 +115,27 @@
     {
       "upstream": "client/src/lib/mediaKind.test.ts",
       "local": "src/lib/mediaKind.test.ts",
-      "sha256": "0147136def98627b260b337455f7fc752168c00b6769111f2a38cbe40899d37f"
+      "sha256": "b15152a015d5638284d9ebe72b26ef8e0e12072d750f7f5c5653aeff14ed2ac1"
     },
     {
       "upstream": "client/src/lib/noteContent.test.ts",
       "local": "src/lib/noteContent.test.ts",
-      "sha256": "8004f8ba6dc54c90a33ffeeb6d2f73b757d29e0e29cbc5cf170822d88a6c6089"
+      "sha256": "7f4fb4d0ada08add31d366c9c80e2a091c0a6dfe7b1ef1bae039d8978cd7d026"
     },
     {
       "upstream": "client/src/lib/conceptCopy.ts",
       "local": "src/lib/conceptCopy.ts",
-      "sha256": "831aaca91e5e501919d6f06146eb05b937efbd821952381e397e3bd401ab82f1"
+      "sha256": "dbbada52e635974fa864d6ee99405669fac5c13324fed3a29fefe7ec2fc181ee"
     },
     {
       "upstream": "client/src/lib/conceptCopy.test.ts",
       "local": "src/lib/conceptCopy.test.ts",
-      "sha256": "f567e2b1d4145f5ab9e55ca19fc86475b497b0014202fc8ff3f19dfce10a2619"
+      "sha256": "8f957ea850336efdee536fc447f19c629454b3d3da9f95e740833a4cf935e913"
     },
     {
       "upstream": "client/src/lib/listDraft.ts",
       "local": "src/lib/listDraft.ts",
-      "sha256": "bcbe599fa25baf045e0692d18e950320bf81b1f8027e433c999487fe5373665b"
+      "sha256": "60cee2679594a6f4f87a1c3d869be9ae14f571feec1fe3cfbc807f6ac35cb27a"
     },
     {
       "upstream": "client/src/lib/listDraft.test.ts",
@@ -150,7 +150,7 @@
     {
       "upstream": "client/src/lib/listItem.test.ts",
       "local": "src/lib/listItem.test.ts",
-      "sha256": "8ff765211e5d5bdc7d8cfe9b67bd2bed5fca7aeff6741166924c70637e79a194"
+      "sha256": "98f2cd1d810557940f88c3c39649f6bb98cf615e1ece1b056d79b54d2543c918"
     },
     {
       "upstream": "client/src/lib/listImport.ts",
@@ -165,7 +165,7 @@
     {
       "upstream": "client/src/lib/templateDrafts.ts",
       "local": "src/lib/templateDrafts.ts",
-      "sha256": "d36736566d268118f86de031dd00657f0485e14dd45b0bcd04f705b0c3cfd048"
+      "sha256": "f0affdae1930731fea33711cf45eb7ca66143895e1ead6319ab0030e94e84537"
     },
     {
       "upstream": "client/src/lib/templateDrafts.test.ts",
@@ -195,12 +195,12 @@
     {
       "upstream": "client/src/lib/itemEngagement.ts",
       "local": "src/lib/itemEngagement.ts",
-      "sha256": "e50e83e63502d030d955738fd52db65f8189fdfee4da9bb23fd636d30b525a38"
+      "sha256": "484f4a22c19c4d61b3b7642888c9f9a507e5e3d1655461441deb65cf9955d5d1"
     },
     {
       "upstream": "client/src/lib/itemEngagement.test.ts",
       "local": "src/lib/itemEngagement.test.ts",
-      "sha256": "830a7667cb25360e4f80af83003cf81608b7f884a74cd6b19bc475102c3e3c92"
+      "sha256": "5a9ae692802fb393b2593b8db4c02a42613b3326a265469144ec131d35bac3c6"
     },
     {
       "upstream": "client/src/lib/listCheck.ts",
@@ -230,7 +230,6 @@
     {
       "upstream": "client/public/built-on/built-on-brainstorm.js",
       "local": "src/lib/built-on-brainstorm.js",
-      "commit": "9cedf9c0d1a9f7654cddc081c3eac80d9327d709",
       "sha256": "c769ec4498b2beb0a1c942d58a2cdf22607fe68a84f2b0a4e38127edc0952f97"
     }
   ]
