@@ -1,0 +1,9 @@
+# curate.brainstorm.world is an official deployment of Curate, run by the
+# team behind Brainstorm. The team's full list of hosts:
+# https://github.com/NosFabrica/protocols/blob/main/ECOSYSTEM.md
+
+Contact: https://github.com/NosFabrica/Brainstorm-UI/security/advisories/new
+Expires: 2027-08-11T00:00:00.000Z
+Preferred-Languages: en
+Policy: https://github.com/aburra16/curate/blob/main/SECURITY.md
+Canonical: https://curate.brainstorm.world/.well-known/security.txt
