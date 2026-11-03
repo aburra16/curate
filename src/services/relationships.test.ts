@@ -20,7 +20,7 @@
 import type { Filter, NostrEvent } from "nostr-tools";
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "nostr-tools/utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_RELAYS } from "@/lib/curate/relayUrls";
 import { coordinateOf } from "@/lib/dlistFields";
 import { clearSeenOn } from "@/services/nostr";
@@ -322,6 +322,85 @@ describe("loadRelationships, when relays fail", () => {
     expect(r.tags).toEqual([]);
     expect(ids(r.copies)).toEqual([fx.copy.id]);
     expect(ids(r.mentions)).toEqual([fx.mention.id]);
+  });
+});
+
+describe("loadRelationships, when a relay stays silent", () => {
+  /** A hub that also holds the tagging headers, so a read-through takes every round of reads. */
+  const FULL_HUB = [...HUB_EVENTS, fx.cosyHeader, fx.quietHeader, fx.goodWifiHeader, fx.overpricedHeader];
+  const SILENT: FakeRelay = { events: [], end: EOSE, delayMs: 60_000 };
+
+  /** The call, with its fake time run out, and how long it took. */
+  const timed = async () => {
+    const started = Date.now();
+    const load = loadRelationships(fx.item, ranks, answered, null);
+    await vi.runAllTimersAsync();
+    const relationships = await load;
+    return { relationships, took: Date.now() - started };
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("waits for the tag hub once, however many rounds of reads follow", async () => {
+    vi.useFakeTimers();
+    relays({ [DCOSL]: { events: FULL_HUB, end: EOSE }, [TAG_HUB]: SILENT });
+    const { relationships: r, took } = await timed();
+    expect(took).toBe(8000);
+    expect(r.unread).toEqual([TAG_HUB]);
+    expect(r.lists.map((l) => l.name)).toEqual(["Coffee places", null]);
+    expect(ids(r.copies)).toEqual([fx.copy.id]);
+  });
+
+  it("waits for the list relay once too, and keeps what the tag hub holds", async () => {
+    vi.useFakeTimers();
+    relays({ [DCOSL]: SILENT, [TAG_HUB]: TAGS });
+    const { relationships: r, took } = await timed();
+    expect(took).toBe(8000);
+    expect(r.unread).toEqual([DCOSL]);
+    expect(r.tags.map((t) => t.address)).toEqual([COSY, GOOD_WIFI, QUIET]);
+  });
+
+  it("gives up after one wait when no relay answers at all", async () => {
+    vi.useFakeTimers();
+    relays({ [DCOSL]: SILENT, [TAG_HUB]: SILENT });
+    const { relationships: r, took } = await timed();
+    expect(took).toBe(8000);
+    expect(new Set(r.unread)).toEqual(new Set([DCOSL, TAG_HUB]));
+    expect(r.copies).toEqual([]);
+  });
+
+  it("asks it again on the next call", async () => {
+    vi.useFakeTimers();
+    relays({ [DCOSL]: HUB, [TAG_HUB]: SILENT });
+    expect((await timed()).relationships.tags).toEqual([]);
+    vi.useRealTimers();
+
+    relays();
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    expect(r.unread).toEqual([]);
+    expect(r.tags).toHaveLength(3);
+  });
+
+  it("still asks a relay that timed out on one read and answered another", async () => {
+    const t = relays();
+    const answer = t.req;
+    vi.spyOn(t, "req").mockImplementation((relay, filters, onEvent, timeoutMs) =>
+      filters.some((f) => "#q" in f)
+        ? Promise.resolve({ state: "timeout" } as const)
+        : answer(relay, filters, onEvent, timeoutMs),
+    );
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    expect(r.unread).toEqual([DCOSL]);
+    expect(r.lists.map((l) => l.name)).toEqual(["Coffee places", null]);
+  });
+
+  it("still asks a relay that sent events and then timed out", async () => {
+    relays({ [DCOSL]: { events: HUB_EVENTS, end: { state: "timeout" } }, [TAG_HUB]: TAGS });
+    const r = await loadRelationships(fx.item, ranks, answered, null);
+    expect(r.unread).toEqual([DCOSL]);
+    expect(r.lists.map((l) => l.name)).toEqual(["Coffee places", null]);
   });
 });
 

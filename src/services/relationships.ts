@@ -21,13 +21,14 @@
  *
  * A relay may send what it wasn't asked for, so every event read is checked
  * against what was asked. A relay that doesn't answer reads as nothing and
- * is named in `unread`. What was read is kept per event for the session,
- * unless a relay didn't answer: then the next call reads again. Who counts
- * is decided on each call, so ranks that arrive later fold anew without a
- * read. The people involved are known only once the reads are in, so a
- * caller whose ranks cover some people (a list's authors) passes `rankMore`,
- * asked once per call for everyone else. Copies and mentions fold only for
- * authors the scorer answered for. Ranks never leave this module.
+ * is named in `unread`, and one that stays silent is waited for once per
+ * read-through, not once per round of reads. What was read is kept per event
+ * for the session, unless a relay didn't answer: then the next call reads
+ * again. Who counts is decided on each call, so ranks that arrive later fold
+ * anew without a read. The people involved are known only once the reads are
+ * in, so a caller whose ranks cover some people (a list's authors) passes
+ * `rankMore`, asked once per call for everyone else. Copies and mentions fold
+ * only for authors the scorer answered for. Ranks never leave this module.
  */
 import type { Filter, NostrEvent } from "nostr-tools";
 import { HONORED_TAGGING_AUTHORITIES } from "@/config/tagging";
@@ -181,13 +182,22 @@ async function gather(event: NostrEvent): Promise<Gathered> {
   const lists = listRelays();
   const tagRelays = unique([...lists, TAG_HUB]);
   const unread = new Set<string>();
+  // Each round of reads needs the last one's answers, so a relay that has only ever timed out would cost a full wait per round.
+  const timedOut = new Set<string>();
+  const heardFrom = new Set<string>();
 
-  /** One read; the relays that didn't end it with EOSE are unread. */
+  /** One read, of the relays not known to be silent; the relays that didn't end it with EOSE are unread. */
   const read = async (relays: string[], filters: Filter[]): Promise<NostrEvent[]> => {
-    if (!filters.length) return [];
+    const asked = relays.filter((relay) => heardFrom.has(relay) || !timedOut.has(relay));
+    if (!filters.length || !asked.length) return [];
     const empty: RelayRead = { events: [], outcomes: {} };
-    const answer = await readRelaysReporting(relays, filters).catch(() => empty);
-    for (const relay of relays) if (answer.outcomes[relay]?.end.state !== "eose") unread.add(relay);
+    const answer = await readRelaysReporting(asked, filters).catch(() => empty);
+    for (const relay of asked) {
+      const outcome = answer.outcomes[relay];
+      if (outcome?.end.state !== "eose") unread.add(relay);
+      if (outcome?.end.state === "timeout" && !outcome.sent) timedOut.add(relay);
+      else if (outcome) heardFrom.add(relay);
+    }
     return answer.events;
   };
 
