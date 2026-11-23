@@ -7,7 +7,7 @@
  */
 import type { Filter, NostrEvent } from "nostr-tools";
 import { finalizeEvent, generateSecretKey } from "nostr-tools/pure";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import foodHeader from "@/test/fixtures/food.header.json";
 import foodItems from "@/test/fixtures/food.items.json";
 import { fakeTransport } from "@/test/fakeTransport";
@@ -227,6 +227,9 @@ describe("readListEvents", () => {
       if (relay === INDEX) throw new Error("status store failed");
       report(relay, end);
     });
+    // Each report swaps in a copy of the store's state, which carries this stand-in
+    // along. Restoring the spy fixes only the first copy, so put the real one back.
+    onTestFinished(() => useRelayStatus.setState({ report }));
 
     expect(ids(await readListEvents(ALL_KINDS))).toEqual([itemA.id]);
   });
